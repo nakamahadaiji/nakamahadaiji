@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>評価される目標作成アプリ</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --line: #d9deea;
+      --text: #1f2937;
+      --sub: #6b7280;
+      --accent: #2563eb;
+      --accent-soft: #dbeafe;
+      --good: #065f46;
+      --good-bg: #d1fae5;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .hero {
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 30px;
+      margin: 0 0 8px;
+    }
+
+    .lead {
+      margin: 0;
+      color: var(--sub);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+    }
+
+    .card h2 {
+      margin: 0 0 14px;
+      font-size: 20px;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .field label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .hint {
+      font-size: 13px;
+      color: var(--sub);
+      margin-top: 4px;
+    }
+
+    select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 15px;
+      background: #fff;
+      color: var(--text);
+    }
+
+    textarea {
+      min-height: 84px;
+      resize: vertical;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .secondary {
+      background: #eef2ff;
+      color: #3730a3;
+    }
+
+    .ghost {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--accent-soft);
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    .output-block {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 14px;
+      background: #fcfdff;
+    }
+
+    .output-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--sub);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .output-text {
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 15px;
+    }
+
+    .score-box {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: var(--good-bg);
+      color: var(--good);
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+
+    .mini {
+      font-size: 13px;
+      color: var(--sub);
+    }
+
+    @media (max-width: 920px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1>評価される目標作成アプリ</h1>
+      <p class="lead">担当業務を選ぶと、目標文・数字目標・結果欄テンプレを1件ずつ自動生成します。</p>
+    </div>
+
+    <div class="grid">
+      <section class="card">
+        <h2>入力</h2>
+
+        <div class="field">
+          <label for="policy">今年度の上位方針</label>
+          <select id="policy"></select>
+        </div>
+
+        <div class="field">
+          <label for="role">自分の立場</label>
+          <select id="role"></select>
+        </div>
+
+        <div class="field">
+          <label for="task">担当業務</label>
+          <select id="task"></select>
+          <div class="hint">立場に応じて候補が変わります。</div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="focus">強調したいこと</label>
+            <select id="focus"></select>
+          </div>
+          <div class="field">
+            <label for="level">数字の厳しさ</label>
+            <select id="level">
+              <option value="standard">標準</option>
+              <option value="safe">やや安全</option>
+              <option value="challenge">やや挑戦</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="memo">補足したいこと</label>
+          <textarea id="memo" placeholder="例：未提出者対応を早めたい／保護者との連携を強めたい／属人化を減らしたい"></textarea>
+          <div class="hint">空欄でも生成できます。</div>
+        </div>
+
+        <div class="buttons">
+          <button class="primary" id="generateBtn">生成する</button>
+          <button class="secondary" id="sampleBtn">サンプルを入れる</button>
+          <button class="ghost" id="resetBtn">リセット</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="badge">出力</div>
+        <h2>目標文・数字・結果欄テンプレ</h2>
+        <div id="scoreBox" class="score-box">評価されやすさ：まずは入力して生成してください</div>
+
+        <div class="output-block">
+          <div class="output-title">目標タイトル</div>
+          <div id="titleOut" class="output-text">-</div>
+        </div>
+
+        <div class="output-block">
+          <div class="output-title">目標文</div>
+          <div id="goalOut" class="output-text">-</div>
+        </div>
+
+        <div class="output-block">
+          <div class="output-title">数字目標</div>
+          <div id="metricOut" class="output-text">-</div>
+        </div>
+
+        <div class="output-block">
+          <div class="output-title">具体行動</div>
+          <div id="actionOut" class="output-text">-</div>
+        </div>
+
+        <div class="output-block">
+          <div class="output-title">結果欄テンプレ</div>
+          <div id="resultOut" class="output-text">-</div>
+        </div>
+
+        <p class="mini">※ 1件ずつ作るシンプル版です。前回の入力内容だけブラウザに保存します。</p>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const DATA = {
+      policies: [
+        "生徒・保護者CS向上",
+        "業務効率改善・DX",
+        "授業改善・満足度向上",
+        "進路実績向上",
+        "学校づくり・安定運営",
+        "広報・募集力強化"
+      ],
+      roles: {
+        "担任": [
+          {
+            task: "卒業進級支援",
+            title: "卒業率・進級率の向上",
+            metrics: {
+              safe: "卒業率92％以上、進級率85％以上",
+              standard: "卒業率95％以上、進級率90％以上",
+              challenge: "卒業率97％以上、進級率92％以上"
+            },
+            actions: "月次で進捗確認を行い、要支援生徒への個別面談、保護者連絡、提出状況の見える化を実施する。",
+            focusMap: {
+              数字: "卒業率・進級率を明確に設定し、達成度が見える形で進める。",
+              丁寧さ: "個別状況に応じた声かけと保護者連携を丁寧に行い、離脱予防につなげる。",
+              改善: "未達者の傾向を分析し、前倒し支援の仕組みを整える。",
+              連携: "担任・分掌・保護者間の情報共有を密にし、支援の抜け漏れを防ぐ。"
+            }
+          },
+          {
+            task: "レポート管理",
+            title: "レポート提出率の改善",
+            metrics: {
+              safe: "提出率80％以上",
+              standard: "提出率85％以上",
+              challenge: "提出率90％以上"
+            },
+            actions: "未提出者一覧を定期確認し、個別連絡、提出期限の再案内、必要に応じた保護者連携を行う。",
+            focusMap: {
+              数字: "提出率の向上を主指標とし、月次で確認する。",
+              丁寧さ: "未提出者に対して個別事情を踏まえた対応を行う。",
+              改善: "未提出が起こる時期と要因を分析し、再発防止につなげる。",
+              連携: "担任内共有と保護者連携を通じて早期対応を進める。"
+            }
+          },
+          {
+            task: "保護者連絡・学級通信",
+            title: "保護者連携の強化",
+            metrics: {
+              safe: "学級通信 月1回以上配信",
+              standard: "学級通信 月2回以上配信、同種問い合わせ件数の減少",
+              challenge: "学級通信 月2回以上配信、同種問い合わせ件数 前年比20％減"
+            },
+            actions: "学級通信や個別連絡を通じて必要情報を分かりやすく伝え、問い合わせが集中する内容は先回りして共有する。",
+            focusMap: {
+              数字: "配信回数と問い合わせ件数の変化を数値で把握する。",
+              丁寧さ: "保護者が不安になりやすい時期を意識して発信する。",
+              改善: "問い合わせ内容を蓄積し、次回の発信内容へ反映する。",
+              連携: "担任と分掌の発信内容をそろえ、学校として一貫した案内を行う。"
+            }
+          }
+        ],
+        "授業担当": [
+          {
+            task: "日本史授業改善",
+            title: "日本史授業の満足度向上",
+            metrics: {
+              safe: "授業評価4.2以上",
+              standard: "授業評価4.4以上",
+              challenge: "授業評価4.6以上"
+            },
+            actions: "授業アンケートや生徒反応をもとに改善を重ね、問いかけ・参加型活動・見やすい資料を活用する。",
+            focusMap: {
+              数字: "授業評価の平均値を継続的に追う。",
+              丁寧さ: "理解しにくい部分の説明や導入の工夫を増やす。",
+              改善: "アンケート結果をもとに毎月改善記録を残す。",
+              連携: "他教員の実践も参考にしながら授業の質向上を図る。"
+            }
+          },
+          {
+            task: "授業出席促進",
+            title: "授業出席率の向上",
+            metrics: {
+              safe: "出席率65％以上",
+              standard: "出席率70％以上",
+              challenge: "出席率75％以上"
+            },
+            actions: "参加しやすい導入づくり、個別声かけ、欠席傾向者への早期対応を行い、継続的な出席につなげる。",
+            focusMap: {
+              数字: "出席率を主指標として改善度を確認する。",
+              丁寧さ: "欠席傾向の背景に合わせた関わり方を工夫する。",
+              改善: "欠席が増えるタイミングを分析し、事前対応する。",
+              連携: "担任と情報共有しながら対象者支援を進める。"
+            }
+          },
+          {
+            task: "課題提出支援",
+            title: "課題提出率の向上",
+            metrics: {
+              safe: "課題提出率75％以上",
+              standard: "課題提出率85％以上",
+              challenge: "課題提出率90％以上"
+            },
+            actions: "課題の意図を明確に伝え、提出しやすい形式を工夫し、未提出者には個別フォローを行う。",
+            focusMap: {
+              数字: "課題提出率の改善を明確に示す。",
+              丁寧さ: "提出が苦手な生徒にも取り組みやすい支援を行う。",
+              改善: "未提出理由を分析し、課題設計を見直す。",
+              連携: "担任と連携して未提出者対応を早める。"
+            }
+          },
+          {
+            task: "探究授業設計",
+            title: "探究授業の質向上",
+            metrics: {
+              safe: "授業改善記録 月1回以上",
+              standard: "授業改善記録 月2回以上、満足度向上",
+              challenge: "授業改善記録 月3回以上、満足度4.5以上"
+            },
+            actions: "授業の流れ、問い、ワーク、外部連携の構成を見直し、生徒が参加しやすい探究授業づくりを進める。",
+            focusMap: {
+              数字: "改善回数や満足度を可視化する。",
+              丁寧さ: "生徒の実態に合わせて活動量や難度を調整する。",
+              改善: "実施後の反応をもとに授業構成を修正する。",
+              連携: "外部連携先や教員間で役割を整理しながら進める。"
+            }
+          }
+        ],
+        "進路担当": [
+          {
+            task: "就職支援",
+            title: "就職内定率の向上",
+            metrics: {
+              safe: "就職内定率50％以上",
+              standard: "就職内定率60％以上",
+              challenge: "就職内定率70％以上"
+            },
+            actions: "希望確認、個別面談、求人情報の共有、面接練習を計画的に行い、就職希望者への支援を継続する。",
+            focusMap: {
+              数字: "内定率を明確に設定し、進捗を見える化する。",
+              丁寧さ: "個々の希望や状況に合わせた支援を行う。",
+              改善: "内定に至らない要因を分析し、支援内容を見直す。",
+              連携: "担任や保護者と情報共有しながら支援を進める。"
+            }
+          },
+          {
+            task: "面接指導",
+            title: "面接指導の定着",
+            metrics: {
+              safe: "対象生徒の面接指導実施率80％以上",
+              standard: "対象生徒の面接指導実施率90％以上",
+              challenge: "対象生徒の面接指導実施率100％"
+            },
+            actions: "面接日程に合わせて練習機会を計画的に設定し、回答内容の改善まで支援する。",
+            focusMap: {
+              数字: "実施率で支援量を可視化する。",
+              丁寧さ: "一人ひとりの受験先や課題に合わせて指導する。",
+              改善: "頻出課題を整理し、指導テンプレを改善する。",
+              連携: "担任と連携し、実施漏れを防ぐ。"
+            }
+          },
+          {
+            task: "進路入力・確認",
+            title: "進路書類と入力の精度向上",
+            metrics: {
+              safe: "重大不備件数2件以下",
+              standard: "重大不備件数0件、提出遅延件数の減少",
+              challenge: "重大不備件数0件、提出遅延件数 前年比30％減"
+            },
+            actions: "チェックフローを整理し、確認項目の明文化と期限前リマインドを行い、書類と入力の精度向上を図る。",
+            focusMap: {
+              数字: "不備件数と遅延件数で改善を示す。",
+              丁寧さ: "個別事情をふまえつつ、必要な案内を漏れなく行う。",
+              改善: "不備の起きやすいポイントを分析し、チェック方法を見直す。",
+              連携: "担任・管理職・事務との連携で確認漏れを防ぐ。"
+            }
+          },
+          {
+            task: "調査書・書類対応",
+            title: "調査書関連業務の安定運用",
+            metrics: {
+              safe: "確認漏れ2件以下",
+              standard: "重大確認漏れ0件",
+              challenge: "重大確認漏れ0件、処理時間短縮"
+            },
+            actions: "発送前確認、期限管理、共有体制の整理を行い、調査書や関連書類の処理を安定して進める。",
+            focusMap: {
+              数字: "確認漏れ件数を指標として運用改善を示す。",
+              丁寧さ: "生徒・担任・管理職に必要な情報をもれなく共有する。",
+              改善: "ミスが起こりやすい工程を洗い出して再設計する。",
+              連携: "教員・事務・管理職が同じ流れで確認できるようにする。"
+            }
+          }
+        ],
+        "分掌担当": [
+          {
+            task: "マニュアル整備",
+            title: "担当業務マニュアルの作成",
+            metrics: {
+              safe: "主要業務マニュアル1件整備",
+              standard: "主要業務マニュアル3件整備",
+              challenge: "主要業務マニュアル5件整備"
+            },
+            actions: "担当業務の流れ、注意点、確認項目を文章化し、誰でも引き継げる形に整備する。",
+            focusMap: {
+              数字: "整備件数で成果を示す。",
+              丁寧さ: "初めて担当する人でも理解できる書き方を意識する。",
+              改善: "属人化の大きい業務から優先して整理する。",
+              連携: "関係者に確認してもらい、実用性の高い内容にする。"
+            }
+          },
+          {
+            task: "業務改善",
+            title: "分掌業務の改善実施",
+            metrics: {
+              safe: "改善提案1件、実装1件",
+              standard: "改善提案2件、実装1件以上",
+              challenge: "改善提案3件、実装2件以上"
+            },
+            actions: "現行業務の課題を洗い出し、工数削減やミス防止につながる改善案を提案・実行する。",
+            focusMap: {
+              数字: "提案数と実装数を成果として示す。",
+              丁寧さ: "現場運用に無理のない改善策を設計する。",
+              改善: "課題→原因→対策の流れで見直す。",
+              連携: "関係者とすり合わせながら実行する。"
+            }
+          },
+          {
+            task: "引継ぎ体制",
+            title: "引継ぎ可能体制の構築",
+            metrics: {
+              safe: "主要業務の引継ぎ整備率70％以上",
+              standard: "主要業務の引継ぎ整備率100％",
+              challenge: "主要業務の引継ぎ整備率100％、共有会2回以上実施"
+            },
+            actions: "共有フォルダ、手順書、確認リストを整え、担当変更時にも円滑に運営できる体制を整える。",
+            focusMap: {
+              数字: "整備率と共有回数で成果を示す。",
+              丁寧さ: "担当交代時に困りやすい点を先回りして整理する。",
+              改善: "引継ぎで起きた課題を反映し、資料を更新する。",
+              連携: "複数人で確認しながら体制を固める。"
+            }
+          },
+          {
+            task: "校務分掌の安定運用",
+            title: "校務分掌の安定運営",
+            metrics: {
+              safe: "重大ミス1件以下",
+              standard: "重大ミス0件",
+              challenge: "重大ミス0件、確認工程の標準化完了"
+            },
+            actions: "年間の重要業務を整理し、時期ごとの確認事項と担当を見える化して、安定した運営につなげる。",
+            focusMap: {
+              数字: "重大ミス件数で安定運用を示す。",
+              丁寧さ: "時期ごとの抜け漏れを防ぐ確認を丁寧に行う。",
+              改善: "事故が起きやすい工程を前倒しで見直す。",
+              連携: "分掌内の役割分担と報連相を明確にする。"
+            }
+          }
+        ],
+        "広報": [
+          {
+            task: "Instagram発信",
+            title: "Instagram発信の強化",
+            metrics: {
+              safe: "月4本以上投稿",
+              standard: "月8本以上投稿、閲覧数の向上",
+              challenge: "月12本以上投稿、問い合わせ件数の増加"
+            },
+            actions: "対象者の関心に合わせた投稿を継続し、学校や授業の魅力が伝わる発信を行う。",
+            focusMap: {
+              数字: "投稿数や閲覧数で成果を示す。",
+              丁寧さ: "伝わりやすい表現と見やすい構成を意識する。",
+              改善: "反応の良い投稿を分析し、次回へ反映する。",
+              連携: "教科や分掌の情報を集約し、学校全体の魅力を発信する。"
+            }
+          },
+          {
+            task: "note・授業案発信",
+            title: "授業案発信の強化",
+            metrics: {
+              safe: "月2本以上公開",
+              standard: "月4本以上公開、閲覧数の向上",
+              challenge: "月6本以上公開、問い合わせや流入の増加"
+            },
+            actions: "授業案や教育実践を記事として整理し、継続発信によって認知拡大と信頼形成につなげる。",
+            focusMap: {
+              数字: "公開本数や閲覧数で成果を示す。",
+              丁寧さ: "読者が使いやすい構成と表現を意識する。",
+              改善: "反応の良いテーマを分析し、次回の企画へ生かす。",
+              連携: "学校の実践や他業務ともつなげながら発信する。"
+            }
+          },
+          {
+            task: "問い合わせ導線",
+            title: "問い合わせ導線の改善",
+            metrics: {
+              safe: "問い合わせ件数 月1件以上",
+              standard: "問い合わせ件数 月3件以上",
+              challenge: "問い合わせ件数 月5件以上"
+            },
+            actions: "投稿内容や案内文を見直し、問い合わせにつながる導線を分かりやすく設計する。",
+            focusMap: {
+              数字: "問い合わせ件数を明確に追う。",
+              丁寧さ: "見た人が迷わない導線を整える。",
+              改善: "反応の弱い導線を見直して改善する。",
+              連携: "広報と学校現場の情報をつなげる。"
+            }
+          }
+        ]
+      },
+      focusOptions: ["数字", "丁寧さ", "改善", "連携"]
+    };
+
+    const policyEl = document.getElementById('policy');
+    const roleEl = document.getElementById('role');
+    const taskEl = document.getElementById('task');
+    const focusEl = document.getElementById('focus');
+    const levelEl = document.getElementById('level');
+    const memoEl = document.getElementById('memo');
+
+    const titleOut = document.getElementById('titleOut');
+    const goalOut = document.getElementById('goalOut');
+    const metricOut = document.getElementById('metricOut');
+    const actionOut = document.getElementById('actionOut');
+    const resultOut = document.getElementById('resultOut');
+    const scoreBox = document.getElementById('scoreBox');
+
+    function fillSelect(el, list) {
+      el.innerHTML = '';
+      list.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item;
+        opt.textContent = item;
+        el.appendChild(opt);
+      });
+    }
+
+    function updateTasks() {
+      const role = roleEl.value;
+      const taskList = DATA.roles[role].map(item => item.task);
+      fillSelect(taskEl, taskList);
+    }
+
+    function getSelectedTemplate() {
+      const role = roleEl.value;
+      const task = taskEl.value;
+      return DATA.roles[role].find(item => item.task === task);
+    }
+
+    function calcScore(policy, focus, memo, tpl) {
+      let point = 60;
+      if (policy) point += 10;
+      if (focus === '数字') point += 10;
+      if (focus === '改善' || focus === '連携') point += 8;
+      if (memo.length >= 10) point += 8;
+      if (tpl && tpl.actions.length > 20) point += 8;
+      if (point >= 90) return { label: '高め', reason: '学校方針・数字・具体行動がそろっています' };
+      if (point >= 78) return { label: '十分', reason: '評価シートとして必要要素が入っています' };
+      return { label: '標準', reason: '数字や具体行動をもう少し足すと強くなります' };
+    }
+
+    function buildGoal() {
+      const policy = policyEl.value;
+      const role = roleEl.value;
+      const focus = focusEl.value;
+      const level = levelEl.value;
+      const memo = memoEl.value.trim();
+      const tpl = getSelectedTemplate();
+      if (!tpl) return;
+
+      const metric = tpl.metrics[level] || tpl.metrics.standard;
+      const focusSentence = tpl.focusMap[focus] || '';
+      const memoSentence = memo ? ` また、${memo}ことを意識して取り組む。` : '';
+      const goal = `${policy}を踏まえ、${role}として${tpl.task}に取り組み、${metric}を目指す。${focusSentence}${memoSentence}`;
+      const result = `【実績】
+${metric}に対して、実績は（　　）であった。
+
+【要因】
+達成または未達となった要因は、（　　）である。
+
+【改善点】
+次年度は、（　　）を改善し、より安定して成果につなげられるようにする。`;
+      const score = calcScore(policy, focus, memo, tpl);
+
+      titleOut.textContent = tpl.title;
+      goalOut.textContent = goal;
+      metricOut.textContent = metric;
+      actionOut.textContent = tpl.actions;
+      resultOut.textContent = result;
+      scoreBox.textContent = `評価されやすさ：${score.label}（${score.reason}）`;
+      saveState();
+    }
+
+    function saveState() {
+      const state = {
+        policy: policyEl.value,
+        role: roleEl.value,
+        task: taskEl.value,
+        focus: focusEl.value,
+        level: levelEl.value,
+        memo: memoEl.value,
+        outputs: {
+          title: titleOut.textContent,
+          goal: goalOut.textContent,
+          metric: metricOut.textContent,
+          action: actionOut.textContent,
+          result: resultOut.textContent,
+          score: scoreBox.textContent
+        }
+      };
+      localStorage.setItem('evaluationGoalAppState', JSON.stringify(state));
+    }
+
+    function loadState() {
+      const saved = localStorage.getItem('evaluationGoalAppState');
+      if (!saved) {
+        focusEl.value = '数字';
+        return;
+      }
+
+      try {
+        const state = JSON.parse(saved);
+        if (state.policy) policyEl.value = state.policy;
+        if (state.role && DATA.roles[state.role]) {
+          roleEl.value = state.role;
+          updateTasks();
+        }
+        if (state.task) taskEl.value = state.task;
+        if (state.focus) focusEl.value = state.focus;
+        if (state.level) levelEl.value = state.level;
+        if (typeof state.memo === 'string') memoEl.value = state.memo;
+
+        if (state.outputs) {
+          titleOut.textContent = state.outputs.title || '-';
+          goalOut.textContent = state.outputs.goal || '-';
+          metricOut.textContent = state.outputs.metric || '-';
+          actionOut.textContent = state.outputs.action || '-';
+          resultOut.textContent = state.outputs.result || '-';
+          scoreBox.textContent = state.outputs.score || '評価されやすさ：まずは入力して生成してください';
+        }
+      } catch (e) {
+        focusEl.value = '数字';
+      }
+    }
+
+    function resetAll() {
+      localStorage.removeItem('evaluationGoalAppState');
+      memoEl.value = '';
+      levelEl.value = 'standard';
+      focusEl.value = '数字';
+      policyEl.selectedIndex = 0;
+      roleEl.selectedIndex = 0;
+      updateTasks();
+      titleOut.textContent = '-';
+      goalOut.textContent = '-';
+      metricOut.textContent = '-';
+      actionOut.textContent = '-';
+      resultOut.textContent = '-';
+      scoreBox.textContent = '評価されやすさ：まずは入力して生成してください';
+    }
+
+    function setSample() {
+      policyEl.value = '業務効率改善・DX';
+      roleEl.value = '分掌担当';
+      updateTasks();
+      taskEl.value = 'マニュアル整備';
+      focusEl.value = '改善';
+      levelEl.value = 'standard';
+      memoEl.value = '属人化を減らし、担当交代時にも困らない形にしたい';
+      buildGoal();
+    }
+
+    function init() {
+      fillSelect(policyEl, DATA.policies);
+      fillSelect(roleEl, Object.keys(DATA.roles));
+      fillSelect(focusEl, DATA.focusOptions);
+      updateTasks();
+      loadState();
+    }
+
+    roleEl.addEventListener('change', () => {
+      updateTasks();
+      saveState();
+    });
+    policyEl.addEventListener('change', saveState);
+    taskEl.addEventListener('change', saveState);
+    focusEl.addEventListener('change', saveState);
+    levelEl.addEventListener('change', saveState);
+    memoEl.addEventListener('input', saveState);
+
+    document.getElementById('generateBtn').addEventListener('click', buildGoal);
+    document.getElementById('resetBtn').addEventListener('click', resetAll);
+    document.getElementById('sampleBtn').addEventListener('click', setSample);
+    
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>オリジナル格付けチェック v26</title>
+<style>
+html,body{margin:0;padding:0;height:100%;background:#0d0d0d;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif}
+iframe{width:100%;height:100%;border:none;display:block;background:#0d0d0d}
+.loading{position:fixed;inset:0;display:grid;place-items:center;color:#f3d892;background:radial-gradient(circle at top,#2a2a2a 0%,#151515 35%,#0d0d0d 100%);font-weight:800;letter-spacing:.08em;z-index:10}.hidden{display:none}
+</style>
+</head>
+<body>
+<div id="loading" class="loading">読み込み中…</div>
+<iframe id="outerFrame"></iframe>
+<script>
+const loading=document.getElementById('loading');
+const outerFrame=document.getElementById('outerFrame');
+outerFrame.src='./kakuzuke-check-premium-v25.html'+window.location.search;
+
+outerFrame.addEventListener('load',()=>{
+  const outerDoc=outerFrame.contentDocument;
+  const innerFrame=outerDoc && outerDoc.getElementById('appFrame');
+  if(!innerFrame){ loading.classList.add('hidden'); return; }
+
+  function patchInner(){
+    const innerDoc=innerFrame.contentDocument;
+    const innerWin=innerFrame.contentWindow;
+    if(!innerDoc||!innerWin)return;
+    loading.classList.add('hidden');
+
+    if(!innerDoc.getElementById('v26-patch-style')){
+      const style=innerDoc.createElement('style');
+      style.id='v26-patch-style';
+      style.textContent=`
+        .grade-cell.active-rank .team-tag,
+        .grade-cell.active-rank .ghost-tag{
+          max-width:none !important;
+          overflow:visible !important;
+          text-overflow:clip !important;
+          white-space:nowrap !important;
+          font-size:18px !important;
+          padding:8px 12px !important;
+        }
+        body.mode-display #board-title{display:none !important;}
+        body.mode-display .answer-board{display:block !important; margin-bottom:14px !important;}
+        body.mode-display .grade-board{display:grid !important;}
+        body.mode-display .admin-grid{display:none !important;}
+        body.mode-display .check-strip{justify-content:flex-start !important;}
+      `;
+      innerDoc.head.appendChild(style);
+    }
+
+    function normalizeKochira(){
+      innerDoc.querySelectorAll('#grade-body .grade-cell.active-rank').forEach(cell=>{
+        const tag=cell.querySelector('.team-tag, .ghost-tag, .void-tag');
+        if(tag && tag.textContent.trim()!=='---') tag.textContent='こちら';
+      });
+    }
+
+    const originalRenderBoard=innerWin.renderBoard;
+    if(!innerWin.__v26_render_patched && typeof originalRenderBoard==='function'){
+      innerWin.__v26_render_patched=true;
+      innerWin.renderBoard=function(){
+        const result=originalRenderBoard.apply(this,arguments);
+        normalizeKochira();
+        return result;
+      };
+    }
+
+    normalizeKochira();
+  }
+
+  innerFrame.addEventListener('load',patchInner,{once:false});
+  patchInner();
+});
+</script>
+</body>
+</html>

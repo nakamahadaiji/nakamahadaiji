@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>オリジナル格付けチェック</title>
+<style>
+:root{--gold1:#fff7c7;--gold2:#f1cb5b;--gold3:#d29d1e;--gold4:#8b5b06;--white:#f6f3ea}
+html,body{margin:0;padding:0;height:100%;background:radial-gradient(circle at top,#2a2a2a 0%,#151515 35%,#0d0d0d 100%);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;color:var(--white)}
+.app{min-height:100%;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{width:min(100%,780px);background:linear-gradient(180deg,rgba(255,245,200,.08),rgba(255,255,255,.02)),#1c1c1c;border:4px solid var(--gold3);border-radius:22px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.35),inset 0 0 0 2px rgba(255,232,152,.25)}
+.header{position:relative;padding:28px 18px 20px;text-align:center;background:radial-gradient(circle at 20% 15%,rgba(255,255,255,.65),transparent 16%),radial-gradient(circle at 80% 10%,rgba(255,255,255,.35),transparent 16%),linear-gradient(180deg,var(--gold1),var(--gold2) 45%,var(--gold3) 80%,#bb7f0c);border-bottom:4px solid #8a5a06;color:#3f2500}
+.header:before,.header:after{content:"❦";position:absolute;top:10px;font-size:32px;color:#a76d09}.header:before{left:16px}.header:after{right:16px}.header h1{margin:0;font-family:"Yu Mincho","Hiragino Mincho ProN","BIZ UDPMincho","Times New Roman",serif;font-size:clamp(34px,6vw,56px);line-height:1.18;letter-spacing:.12em;font-weight:900;color:#2f1700;text-shadow:0 1px 0 rgba(255,255,255,.65),0 2px 0 rgba(255,241,180,.9),0 4px 10px rgba(120,70,0,.18)}
+.header p{margin:12px 0 0;font-size:13px;color:#5e3c00;font-weight:800;letter-spacing:.14em;text-transform:uppercase;opacity:.9}
+.body{padding:22px;background:linear-gradient(180deg,#1c1c1c,#111)}
+.mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.mode-btn{appearance:none;border:none;border-radius:18px;padding:22px 14px;background:linear-gradient(180deg,#2b2b2b,#141414);border:1px solid rgba(255,223,127,.24);color:#fff;cursor:pointer;transition:transform .15s ease,filter .15s ease,box-shadow .15s ease;font-weight:900;font-size:22px;min-height:130px}
+.mode-btn small{display:block;margin-top:10px;font-size:12px;font-weight:700;color:#d9c28b;line-height:1.6}.mode-btn:hover{filter:brightness(1.05)}.mode-btn:active{transform:translateY(1px)}.mode-btn.primary{background:linear-gradient(180deg,#fff1a9,#ddb149 60%,#b57a0b);color:#2f1e00}.note{margin-top:16px;padding:12px 14px;border-radius:14px;background:linear-gradient(180deg,#20160b,#100b06);border:1px solid rgba(255,223,127,.18);font-size:13px;line-height:1.8;color:#f3d892}.shell{display:none;height:100%}.shell.active{display:block}iframe{width:100%;height:100vh;border:none;display:block;background:#0d0d0d}.loading{position:fixed;inset:0;display:none;place-items:center;background:rgba(13,13,13,.84);color:#f3d892;font-weight:800;z-index:20}.loading.show{display:grid}
+@media (max-width:720px){.mode-grid{grid-template-columns:1fr}.mode-btn{min-height:110px;font-size:20px}}
+</style>
+</head>
+<body>
+<div id="launcher" class="app">
+  <div class="card">
+    <div class="header">
+      <h1>オリジナル<br>格付けチェック</h1>
+      <p>Mode Select</p>
+    </div>
+    <div class="body">
+      <div class="mode-grid">
+        <button class="mode-btn primary" data-mode="host">教員用<small>進行・設定・判定を行います</small></button>
+        <button class="mode-btn" data-mode="display">表示用<small>会場やスクリーンに表示します</small></button>
+        <button class="mode-btn" data-mode="team">チーム用<small>各チームの回答と待機に使います</small></button>
+      </div>
+      <div class="note">＜基本＞ ここで選んだ表示モードで開始します。開始後はこの画面では切り替えできません。</div>
+    </div>
+  </div>
+</div>
+<div id="shell" class="shell">
+  <iframe id="outerFrame"></iframe>
+</div>
+<div id="loading" class="loading">読み込み中</div>
+<script>
+const launcher=document.getElementById('launcher');
+const shell=document.getElementById('shell');
+const outerFrame=document.getElementById('outerFrame');
+const loading=document.getElementById('loading');
+
+function startMode(mode){
+  launcher.style.display='none';
+  shell.classList.add('active');
+  loading.classList.add('show');
+  outerFrame.src='./kakuzuke-check-premium-v28.html?mode='+encodeURIComponent(mode);
+}
+
+document.querySelectorAll('.mode-btn').forEach(btn=>btn.addEventListener('click',()=>startMode(btn.dataset.mode)));
+
+outerFrame.addEventListener('load',()=>{
+  const outerDoc=outerFrame.contentDocument;
+  const innerFrame=outerDoc && outerDoc.getElementById('appFrame');
+  if(!innerFrame){ loading.classList.remove('show'); return; }
+
+  function patchInner(){
+    const doc=innerFrame.contentDocument;
+    const win=innerFrame.contentWindow;
+    if(!doc||!win)return;
+    loading.classList.remove('show');
+
+    if(!doc.getElementById('v30-patch-style')){
+      const style=doc.createElement('style');
+      style.id='v30-patch-style';
+      style.textContent=`
+        .mode-toolbar{display:none !important;}
+        #role-note{display:none !important;}
+        #host-op-band{display:none !important;}
+        .grade-cell.active-rank .team-tag,
+        .grade-cell.active-rank .ghost-tag,
+        .grade-cell.active-rank .void-tag,
+        .answer-name .team-tag,
+        .answer-name .ghost-tag,
+        .answer-name .void-tag{max-width:none !important;overflow:visible !important;text-overflow:clip !important;white-space:nowrap !important;}
+        body.mode-display #board-title{display:none !important;}
+        body.mode-display .answer-board{display:block !important; margin-bottom:14px !important;}
+        body.mode-display .grade-board{display:grid !important;}
+        body.mode-display .admin-grid{display:none !important;}
+        body.mode-display .check-strip{justify-content:flex-start !important;}
+        body.mode-display .answer-name .team-tag,
+        body.mode-display .answer-name .ghost-tag,
+        body.mode-display .answer-name .void-tag{font-size:20px !important;padding:10px 16px !important;}
+        .apply-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(12px);background:linear-gradient(180deg,#2f88f0,#1258a9);color:#fff;padding:12px 18px;border-radius:999px;font-weight:800;font-size:14px;box-shadow:0 10px 24px rgba(0,0,0,.28);opacity:0;pointer-events:none;transition:opacity .2s ease, transform .2s ease;z-index:99999}
+        .apply-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+      `;
+      doc.head.appendChild(style);
+    }
+
+    function normalizeLabels(){
+      doc.querySelectorAll('#grade-body .grade-cell.active-rank').forEach(cell=>{
+        const tag=cell.querySelector('.team-tag, .ghost-tag, .void-tag');
+        if(tag && tag.textContent.trim()!=='---') tag.textContent='こちら';
+      });
+      doc.querySelectorAll('button').forEach(btn=>{btn.textContent=btn.textContent.replace(/！/g,'');});
+      const walker=doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, null);
+      const nodes=[]; while(walker.nextNode()) nodes.push(walker.currentNode);
+      nodes.forEach(n=>{
+        let s=n.nodeValue||'';
+        s=s.replace(/チーム用試作モード/g,'チーム用画面');
+        s=s.replace(/チーム用試作/g,'チーム用');
+        s=s.replace(/Prototype Edition/g,'STANDARD EDITION');
+        s=s.replace(/チェック開始！/g,'チェック開始');
+        n.nodeValue=s;
+      });
+    }
+
+    function ensureToast(){
+      let toast=doc.getElementById('apply-toast');
+      if(toast) return toast;
+      toast=doc.createElement('div');
+      toast.id='apply-toast';
+      toast.className='apply-toast';
+      toast.textContent='設定が反映されました';
+      doc.body.appendChild(toast);
+      return toast;
+    }
+
+    function showToast(){
+      const toast=ensureToast();
+      toast.classList.add('show');
+      clearTimeout(win.__applyToastTimer);
+      win.__applyToastTimer=setTimeout(()=>toast.classList.remove('show'),1400);
+    }
+
+    const originalApply=win.applyQuestionSettings;
+    if(!win.__v30_apply_patched && typeof originalApply==='function'){
+      win.__v30_apply_patched=true;
+      win.applyQuestionSettings=function(){
+        const result=originalApply.apply(this,arguments);
+        showToast();
+        normalizeLabels();
+        return result;
+      };
+    }
+
+    const originalRender=win.renderBoard;
+    if(!win.__v30_render_patched && typeof originalRender==='function'){
+      win.__v30_render_patched=true;
+      win.renderBoard=function(){
+        const result=originalRender.apply(this,arguments);
+        normalizeLabels();
+        return result;
+      };
+    }
+
+    normalizeLabels();
+  }
+
+  innerFrame.addEventListener('load',patchInner,{once:false});
+  patchInner();
+});
+</script>
+</body>
+</html>

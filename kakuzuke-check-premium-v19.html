@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>オリジナル格付けチェック v19</title>
+<style>
+html,body{margin:0;padding:0;height:100%;background:#0d0d0d;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif}
+iframe{width:100%;height:100%;border:none;display:block;background:#0d0d0d}
+.loading{position:fixed;inset:0;display:grid;place-items:center;color:#f3d892;background:radial-gradient(circle at top,#2a2a2a 0%,#151515 35%,#0d0d0d 100%);font-weight:800;letter-spacing:.08em;z-index:10}.hidden{display:none}
+</style>
+</head>
+<body>
+<div id="loading" class="loading">読み込み中…</div>
+<iframe id="appFrame" src="./kakuzuke-check-premium-v15.html?mode=host"></iframe>
+<script>
+const frame=document.getElementById('appFrame');
+const loading=document.getElementById('loading');
+
+frame.addEventListener('load',()=>{
+  const win=frame.contentWindow;
+  const doc=frame.contentDocument;
+  if(!win||!doc)return;
+  loading.classList.add('hidden');
+
+  const style=doc.createElement('style');
+  style.textContent=`
+    body.mode-host .topbar,
+    body.mode-host .subtle,
+    body.mode-host .secret-lock,
+    body.mode-host .reveal-warning,
+    body.mode-host .team-private-panel,
+    body.mode-host #board-title,
+    body.mode-host #role-note{
+      display:none !important;
+    }
+    body.mode-host .section,
+    body.mode-host .board-wrap{
+      padding:14px !important;
+    }
+    body.mode-host .answer-layout{
+      gap:12px !important;
+    }
+    body.mode-host .secret-stage{
+      padding:14px !important;
+      border-radius:18px !important;
+    }
+    body.mode-host .secret-team{
+      margin-top:6px !important;
+      text-align:left !important;
+    }
+    body.mode-host .team-focus{
+      font-size:22px !important;
+      margin:0 0 8px !important;
+    }
+    body.mode-host .host-dashboard{
+      display:grid;
+      gap:12px;
+    }
+    body.mode-host .host-op-band{
+      background:linear-gradient(180deg,#2a2a2a,#171717);
+      border:1px solid rgba(255,223,127,.24);
+      border-radius:18px;
+      padding:14px;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.03),0 10px 20px rgba(0,0,0,.18);
+      margin-bottom:12px;
+    }
+    body.mode-host .host-op-band-title{
+      font-size:13px;letter-spacing:.14em;font-weight:900;color:#f3d892;text-transform:uppercase;margin-bottom:10px;
+    }
+    body.mode-host .host-op-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+    body.mode-host .host-op-tile{min-height:76px;border-radius:14px;padding:12px;background:linear-gradient(180deg,#141414,#090909);border:1px solid rgba(255,223,127,.18);display:flex;flex-direction:column;justify-content:center;gap:6px}
+    body.mode-host .host-op-label{font-size:11px;letter-spacing:.12em;color:#d8c28e;font-weight:800;text-transform:uppercase}
+    body.mode-host .host-op-value{font-size:clamp(18px,2.6vw,28px);font-weight:900;color:#fff3b0;line-height:1.15;word-break:break-word}
+    body.mode-host .host-op-sub{font-size:13px;color:#f3d892;font-weight:800}
+    body.mode-host .host-op-summary{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+    body.mode-host .host-mini-pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 10px;font-weight:800;font-size:13px;border:1px solid rgba(255,255,255,.08);background:#2b2b2b;color:#fff}
+    body.mode-host .host-mini-pill.done{background:linear-gradient(180deg,#2ba45a,#1c7c41)}
+    body.mode-host .host-mini-pill.wait{background:linear-gradient(180deg,#555,#2e2e2e)}
+    body.mode-host .host-settings-wrap{display:grid;gap:12px}
+    body.mode-host .judge-inline-panel{border-radius:14px;padding:12px;background:linear-gradient(180deg,#1b1b1b,#111);border:1px solid rgba(255,223,127,.16)}
+    body.mode-host .judge-inline-panel h4{margin:0 0 10px;font-size:16px;color:#ffe08a;letter-spacing:.08em}
+    body.mode-host .judge-setting-preview{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+    body.mode-host .judge-preview-pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:8px 12px;background:#2b2b2b;border:1px solid rgba(255,255,255,.08);font-weight:800;font-size:13px;color:#fff}
+    body.mode-host .admin-grid{margin-top:12px !important;grid-template-columns:1fr !important}
+    body.mode-host .admin-grid .card.host-only:first-child{display:none !important}
+    body.mode-host .control-group h4{font-size:16px !important}
+    body.mode-host .control-group .mini-note{display:none !important}
+    body.mode-host .answer-layout > .card.host-only h3,
+    body.mode-host .control-group h4{
+      letter-spacing:.04em !important;
+    }
+    body.mode-host #result-screen .screen,
+    body.mode-host #answer-screen .screen{display:block}
+    body.mode-team #role-note,
+    body.mode-team .topbar,
+    body.mode-team .subtle,
+    body.mode-team .secret-lock,
+    body.mode-team .reveal-warning,
+    body.mode-team .answer-board,
+    body.mode-team .grade-board,
+    body.mode-team .focus-team-panel,
+    body.mode-team .mode-toolbar + #role-note,
+    body.mode-team .host-only{
+      display:none !important;
+    }
+    body.mode-team .section,
+    body.mode-team .board-wrap{padding:14px !important}
+    body.mode-team .secret-stage{
+      padding:18px 14px 20px !important;
+      border-radius:22px !important;
+    }
+    body.mode-team .secret-team{
+      margin-top:12px !important;
+      text-align:center !important;
+    }
+    body.mode-team .team-focus{
+      font-size:28px !important;
+      margin:0 0 8px !important;
+    }
+    body.mode-team .team-private-panel{
+      display:block !important;
+      margin-top:14px !important;
+      background:linear-gradient(180deg,#2b1d0e,#15100a) !important;
+      border:1px solid rgba(255,223,127,.24) !important;
+    }
+    body.mode-team .team-private-panel strong{
+      font-size:16px !important;
+    }
+    body.mode-team .team-private-panel span{
+      font-size:13px !important;
+      line-height:1.8 !important;
+    }
+    body.mode-team .team-status-wait{
+      border-radius:16px;
+      padding:16px;
+      background:linear-gradient(180deg,#1b1b1b,#111);
+      border:1px solid rgba(255,223,127,.18);
+      margin-top:14px;
+      text-align:center;
+    }
+    body.mode-team .team-status-wait strong{
+      display:block;
+      font-size:18px;
+      color:#fff1b3;
+      margin-bottom:6px;
+    }
+    body.mode-team .team-status-wait span{
+      display:block;
+      font-size:13px;
+      color:#d9c28b;
+      line-height:1.8;
+    }
+    body.mode-team .team-self-summary{
+      border-radius:16px;
+      padding:14px;
+      background:linear-gradient(180deg,#141414,#090909);
+      border:1px solid rgba(255,223,127,.16);
+      margin-top:14px;
+      line-height:1.9;
+      font-weight:800;
+    }
+    .rank-move-flash{animation:rankMoveFlash .9s ease}
+    @keyframes rankMoveFlash{0%{transform:scale(1); box-shadow:0 0 0 0 rgba(255,237,141,0)}35%{transform:scale(1.03); box-shadow:0 0 0 4px rgba(255,237,141,.58)}100%{transform:scale(1); box-shadow:0 0 0 0 rgba(255,237,141,0)}}
+    @media (max-width:860px){body.mode-host .host-op-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+    @media (max-width:560px){body.mode-host .host-op-grid{grid-template-columns:1fr;}}
+  `;
+  doc.head.appendChild(style);
+
+  function ensureHostBand(){
+    const answerScreen=doc.getElementById('answer-screen');
+    if(!answerScreen)return null;
+    let band=doc.getElementById('host-op-band');
+    if(band)return band;
+    band=doc.createElement('div');
+    band.id='host-op-band';
+    band.className='host-op-band host-only';
+    band.innerHTML=`
+      <div class="host-op-band-title">Host Operation Band</div>
+      <div class="host-op-grid">
+        <div class="host-op-tile"><div class="host-op-label">現在の問題</div><div id="host-band-question" class="host-op-value">---</div></div>
+        <div class="host-op-tile"><div class="host-op-label">対象チーム</div><div id="host-band-team" class="host-op-value">---</div></div>
+        <div class="host-op-tile"><div class="host-op-label">回答</div><div id="host-band-answer" class="host-op-value">---</div></div>
+        <div class="host-op-tile"><div class="host-op-label">判定設定</div><div id="host-band-setting" class="host-op-sub">正解=A / 絶対あかん=なし</div></div>
+      </div>
+      <div id="host-band-summary" class="host-op-summary"></div>
+      <div id="host-band-list" class="host-op-summary"></div>
+    `;
+    answerScreen.insertBefore(band, answerScreen.firstChild);
+    return band;
+  }
+
+  function ensureHostDashboard(){
+    const answerScreen=doc.getElementById('answer-screen');
+    const resultScreen=doc.getElementById('result-screen');
+    if(!answerScreen||!resultScreen)return;
+    let dash=doc.getElementById('host-dashboard');
+    if(dash)return;
+    dash=doc.createElement('div');
+    dash.id='host-dashboard';
+    dash.className='host-dashboard host-only';
+    resultScreen.parentNode.insertBefore(dash,resultScreen);
+    dash.appendChild(answerScreen);
+    dash.appendChild(resultScreen);
+  }
+
+  function moveJudgeNearSettings(){
+    const settingsCard=doc.querySelector('#answer-screen .card.host-only');
+    if(!settingsCard)return;
+    settingsCard.classList.add('host-settings-wrap');
+    let panel=doc.getElementById('judge-inline-panel');
+    if(panel)return;
+    const judgeButton=doc.querySelector('.control-group button[onclick="judgeWithSettings()"]');
+    if(!judgeButton)return;
+    panel=doc.createElement('div');
+    panel.id='judge-inline-panel';
+    panel.className='judge-inline-panel host-only';
+    panel.innerHTML=`
+      <h4>判定</h4>
+      <div id="judge-setting-preview" class="judge-setting-preview"></div>
+      <div class="btn-row" id="judge-inline-row"></div>
+    `;
+    const inlineRow=panel.querySelector('#judge-inline-row');
+    inlineRow.appendChild(judgeButton);
+    settingsCard.appendChild(panel);
+    const originalJudgeGroup=Array.from(doc.querySelectorAll('.control-group')).find(el=>{
+      const h4=el.querySelector('h4');
+      return h4 && h4.textContent.trim()==='判定';
+    });
+    if(originalJudgeGroup) originalJudgeGroup.style.display='none';
+  }
+
+  function updateJudgePreview(){
+    const wrap=doc.getElementById('judge-setting-preview');
+    if(!wrap)return;
+    const correct=doc.getElementById('correct-choice-select')?.value || 'A';
+    const crazy=doc.getElementById('crazy-choice-select')?.value || 'none';
+    wrap.innerHTML=`
+      <span class="judge-preview-pill">正解：${correct}</span>
+      <span class="judge-preview-pill">絶対あかん：${crazy==='none'?'なし':crazy}</span>
+    `;
+  }
+
+  function ensureTeamPanels(){
+    const resultScreen=doc.getElementById('result-screen');
+    if(!resultScreen)return;
+    let wait=doc.getElementById('team-status-wait');
+    if(!wait){
+      wait=doc.createElement('div');
+      wait.id='team-status-wait';
+      wait.className='team-status-wait team-mode-only';
+      wait.innerHTML='<strong>回答を受け付けました</strong><span>正解発表をお待ちください。</span>';
+      resultScreen.appendChild(wait);
+    }
+    let summary=doc.getElementById('team-self-summary');
+    if(!summary){
+      summary=doc.createElement('div');
+      summary.id='team-self-summary';
+      summary.className='team-self-summary team-mode-only';
+      summary.innerHTML='';
+      resultScreen.appendChild(summary);
+    }
+  }
+
+  function updateTeamPanels(){
+    ensureTeamPanels();
+    const current=Array.isArray(win.teams) ? win.teams[win.currentTeamIndex] : null;
+    const summary=doc.getElementById('team-self-summary');
+    if(!summary)return;
+    summary.innerHTML=`
+      <div>チーム：${current?current.name:'---'}</div>
+      <div>現在のランク：${current?win.rankNames[current.rank]:'---'}</div>
+      <div>今回の回答：${win.selectedAnswer||'未回答'}</div>
+    `;
+  }
+
+  function updateHostBand(){
+    const band=ensureHostBand();
+    if(!band || !Array.isArray(win.teams))return;
+    const q=doc.getElementById('host-band-question');
+    const t=doc.getElementById('host-band-team');
+    const a=doc.getElementById('host-band-answer');
+    const s=doc.getElementById('host-band-setting');
+    const summary=doc.getElementById('host-band-summary');
+    const list=doc.getElementById('host-band-list');
+    const currentTeam=win.teams[win.currentTeamIndex];
+    q.textContent=`第${win.currentQuestion}問`;
+    t.textContent=currentTeam ? currentTeam.name : '---';
+    a.textContent=win.selectedAnswer || '未回答';
+    const statusSetting=doc.getElementById('status-judge-setting');
+    s.textContent=statusSetting ? statusSetting.textContent : '---';
+    const answered=win.teams.filter(team=>team.answer).length;
+    const waiting=win.teams.length-answered;
+    summary.innerHTML=`<span class="host-mini-pill done">回答済み ${answered}</span><span class="host-mini-pill wait">未回答 ${waiting}</span>`;
+    list.innerHTML='';
+    win.teams.forEach((team,idx)=>{
+      const el=doc.createElement('span');
+      el.className='host-mini-pill ' + (team.answer ? 'done' : 'wait');
+      el.textContent=team.answer ? `${team.name}：${team.answer}` : `${team.name}：未回答`;
+      if(idx===win.currentTeamIndex){ el.style.outline='2px solid rgba(255,237,141,.65)'; }
+      list.appendChild(el);
+    });
+    updateJudgePreview();
+    updateTeamPanels();
+  }
+
+  function flashRankMove(){
+    const currentIndex=win.currentTeamIndex;
+    const rows=doc.querySelectorAll('#grade-body .grade-row');
+    const row=rows[currentIndex];
+    if(!row)return;
+    row.classList.remove('rank-move-flash');
+    void row.offsetWidth;
+    row.classList.add('rank-move-flash');
+  }
+
+  const originalShowScreen=win.showScreen;
+  win.showScreen=function(id){
+    const result=originalShowScreen.apply(this,arguments);
+    if(doc.body.classList.contains('mode-host') && id!=='setup-screen'){
+      doc.getElementById('answer-screen')?.classList.add('active');
+      doc.getElementById('result-screen')?.classList.add('active');
+    }
+    updateHostBand();
+    return result;
+  };
+
+  const originalRenderBoard=win.renderBoard;
+  win.renderBoard=function(){
+    const result=originalRenderBoard.apply(this,arguments);
+    ensureHostDashboard();
+    moveJudgeNearSettings();
+    updateHostBand();
+    return result;
+  };
+
+  const originalSelectAnswer=win.selectAnswer;
+  win.selectAnswer=function(choice){
+    const result=originalSelectAnswer.apply(this,arguments);
+    updateHostBand();
+    return result;
+  };
+
+  const originalResetCurrentQuestion=win.resetCurrentQuestion;
+  win.resetCurrentQuestion=function(){
+    const result=originalResetCurrentQuestion.apply(this,arguments);
+    updateHostBand();
+    return result;
+  };
+
+  const originalNextQuestion=win.nextQuestion;
+  win.nextQuestion=function(){
+    const result=originalNextQuestion.apply(this,arguments);
+    updateHostBand();
+    return result;
+  };
+
+  const originalNextTurn=win.nextTurn;
+  win.nextTurn=function(){
+    const result=originalNextTurn.apply(this,arguments);
+    setTimeout(updateHostBand,50);
+    return result;
+  };
+
+  const originalJudgeWithSettings=win.judgeWithSettings;
+  win.judgeWithSettings=function(){
+    if(!Array.isArray(win.teams) || !win.teams[win.currentTeamIndex]) return originalJudgeWithSettings.apply(this,arguments);
+    const beforeRank=win.teams[win.currentTeamIndex].rank;
+    const result=originalJudgeWithSettings.apply(this,arguments);
+    setTimeout(()=>{
+      const afterTeam=win.teams[win.currentTeamIndex];
+      if(afterTeam && afterTeam.rank !== beforeRank) flashRankMove();
+      updateHostBand();
+    },1350);
+    return result;
+  };
+
+  const correctSelect=doc.getElementById('correct-choice-select');
+  const crazySelect=doc.getElementById('crazy-choice-select');
+  if(correctSelect) correctSelect.addEventListener('change',()=>setTimeout(updateHostBand,0));
+  if(crazySelect) crazySelect.addEventListener('change',()=>setTimeout(updateHostBand,0));
+
+  setTimeout(()=>{
+    try{
+      ensureHostDashboard();
+      moveJudgeNearSettings();
+      updateHostBand();
+      if(doc.body.classList.contains('mode-host') && !doc.getElementById('setup-screen')?.classList.contains('active')){
+        doc.getElementById('answer-screen')?.classList.add('active');
+        doc.getElementById('result-screen')?.classList.add('active');
+      }
+    }catch(e){}
+  },200);
+});
+</script>
+</body>
+</html>

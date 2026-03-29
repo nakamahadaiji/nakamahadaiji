@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>オリジナル格付けチェック v25</title>
+<style>
+html,body{margin:0;padding:0;height:100%;background:#0d0d0d;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",Meiryo,sans-serif}
+iframe{width:100%;height:100%;border:none;display:block;background:#0d0d0d}.loading{position:fixed;inset:0;display:grid;place-items:center;color:#f3d892;background:radial-gradient(circle at top,#2a2a2a 0%,#151515 35%,#0d0d0d 100%);font-weight:800;letter-spacing:.08em;z-index:10}.hidden{display:none}
+</style>
+</head>
+<body>
+<div id="loading" class="loading">読み込み中…</div>
+<iframe id="appFrame" src="./kakuzuke-check-premium-v15.html?mode=host"></iframe>
+<script>
+const frame=document.getElementById('appFrame');
+const loading=document.getElementById('loading');
+
+frame.addEventListener('load',()=>{
+  const win=frame.contentWindow;
+  const doc=frame.contentDocument;
+  if(!win||!doc)return;
+  loading.classList.add('hidden');
+
+  const bridgeScript=doc.createElement('script');
+  bridgeScript.textContent=`
+    window.__kakuzukeAppliedSettingsKey = null;
+    window.__kakuzukeAppliedAt = '';
+    window.__getKakuzukeState = function(){
+      return {
+        teams,
+        currentTeamIndex,
+        currentQuestion,
+        selectedAnswer,
+        rankNames
+      };
+    };
+    window.__getKakuzukeSettingsKey = function(){
+      return JSON.stringify({
+        q: document.getElementById('question-text-input')?.value || '',
+        n: document.getElementById('question-number-input')?.value || '',
+        m: document.getElementById('choice-mode-select')?.value || '',
+        c: document.getElementById('correct-choice-select')?.value || '',
+        z: document.getElementById('crazy-choice-select')?.value || ''
+      });
+    };
+    const __originalApplyQuestionSettings = applyQuestionSettings;
+    applyQuestionSettings = function(){
+      const result = __originalApplyQuestionSettings.apply(this, arguments);
+      window.__kakuzukeAppliedSettingsKey = window.__getKakuzukeSettingsKey();
+      const d = new Date();
+      window.__kakuzukeAppliedAt = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+      return result;
+    };
+  `;
+  doc.body.appendChild(bridgeScript);
+
+  const style=doc.createElement('style');
+  style.textContent=`
+    html,body{overflow-x:auto !important;}
+    body.mode-host .topbar,
+    body.mode-host .subtle,
+    body.mode-host .secret-lock,
+    body.mode-host .reveal-warning,
+    body.mode-host .team-private-panel,
+    body.mode-host #board-title,
+    body.mode-host #role-note{display:none !important;}
+    body.mode-host .section,body.mode-host .board-wrap{padding:14px !important;overflow-x:auto !important;}
+    body.mode-host .answer-layout{gap:12px !important}
+    body.mode-host .secret-stage{padding:14px !important;border-radius:18px !important}
+    body.mode-host .secret-team{margin-top:6px !important;text-align:left !important}
+    body.mode-host .team-focus{font-size:22px !important;margin:0 0 8px !important}
+    body.mode-host .answer-board,body.mode-host .grade-board{overflow-x:auto !important;-webkit-overflow-scrolling:touch;display:block !important}
+    body.mode-host .answer-header,body.mode-host .answer-row{min-width:520px !important}
+    body.mode-host .grade-header,body.mode-host .grade-row{min-width:760px !important}
+    body.mode-host .host-dashboard{display:grid;gap:12px;min-width:0}
+    body.mode-host .host-op-band{background:linear-gradient(180deg,#2a2a2a,#171717);border:1px solid rgba(255,223,127,.24);border-radius:18px;padding:14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03),0 10px 20px rgba(0,0,0,.18);margin-bottom:12px}
+    body.mode-host .host-op-band-title{font-size:13px;letter-spacing:.14em;font-weight:900;color:#f3d892;text-transform:uppercase;margin-bottom:10px}
+    body.mode-host .host-op-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+    body.mode-host .host-op-tile{min-height:76px;border-radius:14px;padding:12px;background:linear-gradient(180deg,#141414,#090909);border:1px solid rgba(255,223,127,.18);display:flex;flex-direction:column;justify-content:center;gap:6px}
+    body.mode-host .host-op-label{font-size:11px;letter-spacing:.12em;color:#d8c28e;font-weight:800;text-transform:uppercase}
+    body.mode-host .host-op-value{font-size:clamp(18px,2.6vw,28px);font-weight:900;color:#fff3b0;line-height:1.15;word-break:break-word}
+    body.mode-host .host-op-sub{font-size:13px;color:#f3d892;font-weight:800}
+    body.mode-host .host-op-summary{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+    body.mode-host .host-mini-pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 10px;font-weight:800;font-size:13px;border:1px solid rgba(255,255,255,.08);background:#2b2b2b;color:#fff}
+    body.mode-host .host-mini-pill.done{background:linear-gradient(180deg,#2ba45a,#1c7c41)}
+    body.mode-host .host-mini-pill.wait{background:linear-gradient(180deg,#555,#2e2e2e)}
+    body.mode-host .host-mini-pill.applied{background:linear-gradient(180deg,#2f88f0,#1258a9)}
+    body.mode-host .host-mini-pill.dirty{background:linear-gradient(180deg,#c98918,#8f5f07)}
+    body.mode-host .admin-grid{margin-top:12px !important;grid-template-columns:1fr !important}
+    body.mode-host .admin-grid .card.host-only:first-child{display:none !important}
+    body.mode-host .control-group h4{font-size:16px !important}
+    body.mode-host .control-group .mini-note{display:none !important}
+    body.mode-host .control-group .btn-row{display:grid !important;grid-template-columns:1fr !important;gap:10px !important}
+    body.mode-host .control-group button{width:100% !important;min-width:0 !important}
+    body.mode-team #role-note,body.mode-team .topbar,body.mode-team .subtle,body.mode-team .secret-lock,body.mode-team .reveal-warning,body.mode-team .answer-board,body.mode-team .grade-board,body.mode-team .focus-team-panel,body.mode-team .mode-toolbar + #role-note,body.mode-team .host-only{display:none !important}
+    body.mode-team .section,body.mode-team .board-wrap{padding:14px !important}
+    body.mode-team .secret-stage{padding:18px 14px 20px !important;border-radius:22px !important}
+    body.mode-team .secret-team{margin-top:12px !important;text-align:center !important}
+    body.mode-team .team-focus{font-size:28px !important;margin:0 0 8px !important}
+    body.mode-team .team-private-panel{display:block !important;margin-top:14px !important;background:linear-gradient(180deg,#2b1d0e,#15100a) !important;border:1px solid rgba(255,223,127,.24) !important}
+    body.mode-team .team-private-panel strong{font-size:16px !important}
+    body.mode-team .team-private-panel span{font-size:13px !important;line-height:1.8 !important}
+    body.mode-team .team-status-wait{border-radius:16px;padding:16px;background:linear-gradient(180deg,#1b1b1b,#111);border:1px solid rgba(255,223,127,.18);margin-top:14px;text-align:center}
+    body.mode-team .team-status-wait strong{display:block;font-size:18px;color:#fff1b3;margin-bottom:6px}
+    body.mode-team .team-status-wait span{display:block;font-size:13px;color:#d9c28b;line-height:1.8}
+    body.mode-team .team-self-summary{border-radius:16px;padding:14px;background:linear-gradient(180deg,#141414,#090909);border:1px solid rgba(255,223,127,.16);margin-top:14px;line-height:1.9;font-weight:800}
+    .rank-move-flash{animation:rankMoveFlash .9s ease}
+    @keyframes rankMoveFlash{0%{transform:scale(1); box-shadow:0 0 0 0 rgba(255,237,141,0)}35%{transform:scale(1.03); box-shadow:0 0 0 4px rgba(255,237,141,.58)}100%{transform:scale(1); box-shadow:0 0 0 0 rgba(255,237,141,0)}}
+    @media (max-width:860px){body.mode-host .host-op-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+    @media (max-width:560px){body.mode-host .host-op-grid{grid-template-columns:1fr;}}
+  `;
+  doc.head.appendChild(style);
+
+  function getState(){
+    try{return typeof win.__getKakuzukeState==='function' ? win.__getKakuzukeState() : null;}catch(e){return null;}
+  }
+  function getSettingsKey(){
+    try{return typeof win.__getKakuzukeSettingsKey==='function' ? win.__getKakuzukeSettingsKey() : '';}catch(e){return '';}
+  }
+
+  function ensureHostBand(){
+    const answerScreen=doc.getElementById('answer-screen'); if(!answerScreen) return null;
+    let band=doc.getElementById('host-op-band'); if(band) return band;
+    band=doc.createElement('div'); band.id='host-op-band'; band.className='host-op-band host-only';
+    band.innerHTML=`<div class="host-op-band-title">HOST OPERATION BAND</div><div class="host-op-grid"><div class="host-op-tile"><div class="host-op-label">現在の問題</div><div id="host-band-question" class="host-op-value">---</div></div><div class="host-op-tile"><div class="host-op-label">対象チーム</div><div id="host-band-team" class="host-op-value">---</div></div><div class="host-op-tile"><div class="host-op-label">回答</div><div id="host-band-answer" class="host-op-value">---</div></div><div class="host-op-tile"><div class="host-op-label">判定設定</div><div id="host-band-setting" class="host-op-sub">正解=A / 絶対あかん=なし</div></div></div><div id="host-band-summary" class="host-op-summary"></div><div id="host-band-list" class="host-op-summary"></div>`;
+    answerScreen.insertBefore(band,answerScreen.firstChild); return band;
+  }
+
+  function ensureHostDashboard(){
+    const answerScreen=doc.getElementById('answer-screen'); const resultScreen=doc.getElementById('result-screen'); if(!answerScreen||!resultScreen) return;
+    let dash=doc.getElementById('host-dashboard'); if(dash) return;
+    dash=doc.createElement('div'); dash.id='host-dashboard'; dash.className='host-dashboard';
+    resultScreen.parentNode.insertBefore(dash,resultScreen); dash.appendChild(answerScreen); dash.appendChild(resultScreen);
+  }
+
+  function addJudgeButtonToProgress(){
+    const groups=Array.from(doc.querySelectorAll('.control-group'));
+    const progressGroup=groups.find(el=>el.querySelector('h4')?.textContent.trim()==='進行');
+    if(!progressGroup)return;
+    const row=progressGroup.querySelector('.btn-row');
+    if(!row||doc.getElementById('progress-judge-btn'))return;
+    const btn=doc.createElement('button');
+    btn.id='progress-judge-btn'; btn.type='button'; btn.className='btn-gold'; btn.textContent='判定';
+    btn.addEventListener('click',()=>{ if(typeof win.judgeWithSettings==='function') win.judgeWithSettings(); });
+    row.insertBefore(btn,row.firstChild);
+  }
+
+  function removeUnneededSettingButtons(){
+    doc.querySelector('button[onclick="goToBoard()"]')?.remove();
+    const originalJudgeGroup=Array.from(doc.querySelectorAll('.control-group')).find(el=>el.querySelector('h4')?.textContent.trim()==='判定');
+    if(originalJudgeGroup) originalJudgeGroup.remove();
+  }
+
+  function ensureTeamPanels(){
+    const resultScreen=doc.getElementById('result-screen'); if(!resultScreen) return;
+    let wait=doc.getElementById('team-status-wait'); if(!wait){ wait=doc.createElement('div'); wait.id='team-status-wait'; wait.className='team-status-wait team-mode-only'; wait.innerHTML='<strong>回答を受け付けました</strong><span>正解発表をお待ちください。</span>'; resultScreen.appendChild(wait); }
+    let summary=doc.getElementById('team-self-summary'); if(!summary){ summary=doc.createElement('div'); summary.id='team-self-summary'; summary.className='team-self-summary team-mode-only'; resultScreen.appendChild(summary); }
+  }
+
+  function updateTeamPanels(){
+    ensureTeamPanels(); const state=getState(); const current=state?.teams?.[state.currentTeamIndex]||null; const summary=doc.getElementById('team-self-summary'); if(!summary) return;
+    summary.innerHTML=`<div>チーム：${current?current.name:'---'}</div><div>現在のランク：${current&&state.rankNames?state.rankNames[current.rank]:'---'}</div><div>今回の回答：${state?.selectedAnswer||'未回答'}</div>`;
+  }
+
+  function normalizeRankBoardLabels(){
+    doc.querySelectorAll('#grade-body .grade-row').forEach((row)=>{
+      row.querySelectorAll('.grade-cell.active-rank').forEach(cell=>{
+        const tag=cell.querySelector('.team-tag, .ghost-tag, .void-tag');
+        if(tag && tag.textContent.trim()!=='---') tag.textContent='こちら';
+      });
+    });
+  }
+
+  function updateHostBand(){
+    const band=ensureHostBand(); const state=getState(); if(!band||!state) return;
+    const currentTeam=state.teams?.[state.currentTeamIndex]||null;
+    doc.getElementById('host-band-question').textContent=`第${state.currentQuestion}問`;
+    doc.getElementById('host-band-team').textContent=currentTeam?currentTeam.name:'---';
+    doc.getElementById('host-band-answer').textContent=state.selectedAnswer||'未回答';
+    const statusSetting=doc.getElementById('status-judge-setting');
+    doc.getElementById('host-band-setting').textContent=statusSetting?statusSetting.textContent:'---';
+    const answered=(state.teams||[]).filter(team=>team.answer).length; const waiting=(state.teams||[]).length-answered;
+    const currentSnapshot=getSettingsKey();
+    const appliedSnapshot=win.__kakuzukeAppliedSettingsKey;
+    const appliedAt=win.__kakuzukeAppliedAt||'';
+    const settingsDirty = !!currentSnapshot && currentSnapshot !== appliedSnapshot;
+    const settingPill=settingsDirty
+      ? '<span class="host-mini-pill dirty">設定未反映</span>'
+      : `<span class="host-mini-pill applied">設定反映済み${appliedAt?`：${appliedAt}`:''}</span>`;
+    doc.getElementById('host-band-summary').innerHTML=`${settingPill}<span class="host-mini-pill done">回答済み ${answered}</span><span class="host-mini-pill wait">未回答 ${waiting}</span>`;
+    const list=doc.getElementById('host-band-list'); list.innerHTML='';
+    (state.teams||[]).forEach((team,idx)=>{ const el=doc.createElement('span'); el.className='host-mini-pill '+(team.answer?'done':'wait'); el.textContent=team.answer?`${team.name}：${team.answer}`:`${team.name}：未回答`; if(idx===state.currentTeamIndex) el.style.outline='2px solid rgba(255,237,141,.65)'; list.appendChild(el); });
+    updateTeamPanels(); normalizeRankBoardLabels();
+  }
+
+  function flashRankMove(){ const state=getState(); const row=doc.querySelectorAll('#grade-body .grade-row')[state?.currentTeamIndex??-1]; if(!row) return; row.classList.remove('rank-move-flash'); void row.offsetWidth; row.classList.add('rank-move-flash'); }
+
+  const originalShowJudgeBanner=win.showJudgeBanner;
+  win.showJudgeBanner=function(type){ if(doc.body.classList.contains('mode-host')) return; return originalShowJudgeBanner.apply(this,arguments); };
+  const originalShowScreen=win.showScreen;
+  win.showScreen=function(id){ const result=originalShowScreen.apply(this,arguments); if(doc.body.classList.contains('mode-host')&&id!=='setup-screen'){ doc.getElementById('answer-screen')?.classList.add('active'); doc.getElementById('result-screen')?.classList.add('active'); } updateHostBand(); return result; };
+  const originalRenderBoard=win.renderBoard;
+  win.renderBoard=function(){ const result=originalRenderBoard.apply(this,arguments); ensureHostDashboard(); addJudgeButtonToProgress(); removeUnneededSettingButtons(); updateHostBand(); return result; };
+  const originalSelectAnswer=win.selectAnswer;
+  win.selectAnswer=function(choice){ const result=originalSelectAnswer.apply(this,arguments); updateHostBand(); return result; };
+  const originalResetCurrentQuestion=win.resetCurrentQuestion;
+  win.resetCurrentQuestion=function(){ const result=originalResetCurrentQuestion.apply(this,arguments); updateHostBand(); return result; };
+  const originalNextQuestion=win.nextQuestion;
+  win.nextQuestion=function(){ const result=originalNextQuestion.apply(this,arguments); updateHostBand(); return result; };
+  const originalNextTurn=win.nextTurn;
+  win.nextTurn=function(){ const result=originalNextTurn.apply(this,arguments); setTimeout(updateHostBand,50); return result; };
+  const originalJudgeWithSettings=win.judgeWithSettings;
+  win.judgeWithSettings=function(){ const stateBefore=getState(); const beforeRank=stateBefore?.teams?.[stateBefore.currentTeamIndex]?.rank; const result=originalJudgeWithSettings.apply(this,arguments); setTimeout(()=>{ const stateAfter=getState(); const afterRank=stateAfter?.teams?.[stateAfter.currentTeamIndex]?.rank; if(typeof beforeRank==='number'&&typeof afterRank==='number'&&afterRank!==beforeRank) flashRankMove(); updateHostBand(); },1350); return result; };
+
+  ['question-text-input','question-number-input','choice-mode-select','correct-choice-select','crazy-choice-select'].forEach(id=>{
+    const el=doc.getElementById(id);
+    if(el){ el.addEventListener('input',()=>updateHostBand()); el.addEventListener('change',()=>updateHostBand()); }
+  });
+
+  setTimeout(()=>{
+    try{
+      ensureHostDashboard();
+      addJudgeButtonToProgress();
+      removeUnneededSettingButtons();
+      win.__kakuzukeAppliedSettingsKey = getSettingsKey();
+      win.__kakuzukeAppliedAt = '';
+      updateHostBand();
+      if(doc.body.classList.contains('mode-host')&&!doc.getElementById('setup-screen')?.classList.contains('active')){
+        doc.getElementById('answer-screen')?.classList.add('active');
+        doc.getElementById('result-screen')?.classList.add('active');
+      }
+    }catch(e){}
+  },200);
+});
+</script>
+</body>
+</html>

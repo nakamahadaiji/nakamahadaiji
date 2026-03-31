@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>オリジナル格付けチェック リアルタイム版 v53</title>
+  <style>
+    html,body{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden}
+    iframe{border:0;width:100%;height:100%;display:block;background:#000}
+  </style>
+</head>
+<body>
+  <iframe id="appFrame" src="./kakuzuke-check-realtime-v52.html"></iframe>
+  <script type="module">
+    import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+    const FIREBASE_CONFIG={apiKey:'AIzaSyBXRVlcx-eZKrF6NpboKl8Z87w2sIkrOq4',authDomain:'kakuduke-fe62d.firebaseapp.com',databaseURL:'https://kakuduke-fe62d-default-rtdb.firebaseio.com',projectId:'kakuduke-fe62d',storageBucket:'kakuduke-fe62d.firebasestorage.app',messagingSenderId:'224688087057',appId:'1:224688087057:web:a0f6c8404728f761e9d1b0',measurementId:'G-05D75P50F2'};
+    const ROOM_PATH='kakuzukeRealtime/default-room';
+    const rankNames=['一流高校生','普通高校生','二流高校生','三流高校生','そっくりさん','映す価値なし'];
+
+    const frame=document.getElementById('appFrame');
+    const app=getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG);
+    const db=getDatabase(app);
+    const roomRef=ref(db, ROOM_PATH);
+
+    let frozenRanks = {};
+    let lastQuestionKey = '';
+
+    function ensureStyle(doc){
+      const styleId='v53-rank-freeze-style';
+      if(doc.getElementById(styleId)) return;
+      const style=doc.createElement('style');
+      style.id=styleId;
+      style.textContent = `.v53-rank-frozen{opacity:1 !important;}`;
+      doc.head.appendChild(style);
+    }
+
+    function snapshotRanks(state){
+      const next = {};
+      const teams = state && state.teams ? state.teams : {};
+      Object.entries(teams).forEach(([id, team]) => {
+        next[id] = Number(team && team.rank ? team.rank : 0);
+      });
+      frozenRanks = next;
+    }
+
+    function getQuestionKey(state){
+      const no = state && state.game ? state.game.currentQuestion : 1;
+      return String(no);
+    }
+
+    function maybeFreeze(state){
+      const status = state && state.game ? state.game.status : '';
+      const key = getQuestionKey(state);
+      if(status === 'question_open' && key !== lastQuestionKey){
+        snapshotRanks(state);
+        lastQuestionKey = key;
+      }
+      if(status === 'registration' && key !== lastQuestionKey){
+        snapshotRanks(state);
+        lastQuestionKey = key;
+      }
+    }
+
+    function applyTeamRankFreeze(doc, state){
+      const status = state && state.game ? state.game.status : '';
+      if(status !== 'question_open' && status !== 'judging') return;
+      const teamId = localStorage.getItem('kakuzukeRealtimeTeamId') || '';
+      if(!teamId) return;
+      const frozen = frozenRanks[teamId];
+      if(frozen === undefined) return;
+
+      const currentPill = doc.getElementById('team-current-rank-pill');
+      const answeredPill = doc.getElementById('team-answered-rank-pill');
+      if(currentPill){
+        currentPill.textContent = '現在のランク：' + rankNames[frozen];
+        currentPill.classList.add('v53-rank-frozen');
+      }
+      if(answeredPill){
+        answeredPill.textContent = '現在のランク：' + rankNames[frozen];
+        answeredPill.classList.add('v53-rank-frozen');
+      }
+    }
+
+    function applyGridRankFreeze(doc, state, gridId){
+      const status = state && state.game ? state.game.status : '';
+      if(status !== 'question_open' && status !== 'judging') return;
+      const grid = doc.getElementById(gridId);
+      if(!grid) return;
+
+      const heads = Array.from(grid.querySelectorAll('.answer-head'));
+      const rankIndex = heads.findIndex(el => (el.textContent || '').trim() === 'ランク');
+      if(rankIndex < 0) return;
+      const colCount = heads.length;
+      const cells = Array.from(grid.children).slice(colCount);
+      if(cells.length === 0) return;
+
+      const teamMap = state && state.teams ? state.teams : {};
+      for(let i=0; i<cells.length; i += colCount){
+        const row = cells.slice(i, i + colCount);
+        if(row.length < colCount) continue;
+        const teamName = (row[0].textContent || '').trim();
+        const entry = Object.entries(teamMap).find(([, team]) => String(team && team.name || '').trim() === teamName);
+        if(!entry) continue;
+        const teamId = entry[0];
+        const frozen = frozenRanks[teamId];
+        if(frozen === undefined) continue;
+        const rankCell = row[rankIndex];
+        if(rankCell){
+          rankCell.textContent = rankNames[frozen];
+        }
+      }
+    }
+
+    function applyPatch(doc, state){
+      ensureStyle(doc);
+      maybeFreeze(state);
+      applyTeamRankFreeze(doc, state);
+      applyGridRankFreeze(doc, state, 'host-answer-grid');
+      applyGridRankFreeze(doc, state, 'display-answer-grid');
+    }
+
+    frame.addEventListener('load', ()=>{
+      const doc = frame.contentDocument;
+      if(!doc) return;
+      onValue(roomRef, snapshot => {
+        const state = snapshot.val() || {};
+        applyPatch(doc, state);
+      });
+      const observer = new MutationObserver(() => {
+        onValue(roomRef, snapshot => {
+          const state = snapshot.val() || {};
+          applyPatch(doc, state);
+        }, { onlyOnce: true });
+      });
+      observer.observe(doc.body, { childList:true, subtree:true });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>オリジナル格付けチェック リアルタイム版 v51</title>
+  <style>
+    html,body{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden}
+    iframe{border:0;width:100%;height:100%;display:block;background:#000}
+  </style>
+</head>
+<body>
+  <iframe id="appFrame" src="./kakuzuke-check-realtime-v46.html"></iframe>
+  <script type="module">
+    import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getDatabase, ref, get, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+    const FIREBASE_CONFIG={apiKey:'AIzaSyBXRVlcx-eZKrF6NpboKl8Z87w2sIkrOq4',authDomain:'kakuduke-fe62d.firebaseapp.com',databaseURL:'https://kakuduke-fe62d-default-rtdb.firebaseio.com',projectId:'kakuduke-fe62d',storageBucket:'kakuduke-fe62d.firebasestorage.app',messagingSenderId:'224688087057',appId:'1:224688087057:web:a0f6c8404728f761e9d1b0',measurementId:'G-05D75P50F2'};
+    const ROOM_PATH='kakuzukeRealtime/default-room';
+    const TEAM_NAME_MAX_LENGTH=12;
+    const baseBlocked=['adult','adalt','erotic','porn','obscene','violence','violent','abuse','harass','bully','suicide','selfharm','drug','drugs','murder','kill','badword','エロ','えろ','アダルト','ポルノ','暴力','ぼうりょく','いじめ','差別','ハラスメント','自殺','じさつ','死ね','しね','ころす','殺す','麻薬','大麻','覚醒剤','薬物','ドラッグ'];
+    const extraBlocked=['ちん','チン','まん','マン','せっ','セッ','フェ','ふぇ'];
+    const BLOCKED_TERMS=baseBlocked.concat(extraBlocked);
+
+    const appFrame = document.getElementById('appFrame');
+    const app = getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG);
+    const db = getDatabase(app);
+    const roomRef = ref(db, ROOM_PATH);
+
+    function normalizeText(text){ return String(text || '').normalize('NFKC'); }
+    function escapeRegExp(str){ return str.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+    function maskBlockedTerms(name){
+      let masked = normalizeText(name);
+      BLOCKED_TERMS.forEach(term => {
+        const re = new RegExp(escapeRegExp(normalizeText(term)), 'g');
+        masked = masked.replace(re, match => '＊'.repeat(match.length));
+      });
+      return masked;
+    }
+    function sanitizeTeamName(name){ return normalizeText(name).trim().replace(/\s+/g,' ').slice(0,TEAM_NAME_MAX_LENGTH); }
+    function isKanaOnly(name){ return /^[ぁ-ゖァ-ヶー　 ]+$/.test(name); }
+    function randomTeamId(){ return 'team_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
+
+    function ensureStyle(doc){
+      const styleId = 'v51-patch-style';
+      if(doc.getElementById(styleId)) return;
+      const style = doc.createElement('style');
+      style.id = styleId;
+      style.textContent = `
+        #host-reset-current, .team-rereg, .small-actions { display: none !important; }
+        .v51-scroll-wrap { overflow-x:auto !important; -webkit-overflow-scrolling:touch; width:100%; }
+        @media (max-width:900px){
+          .answer-cell, .answer-head { white-space:nowrap !important; font-size:16px !important; padding:14px 10px !important; }
+        }
+      `;
+      doc.head.appendChild(style);
+    }
+
+    function getColumnCount(grid){
+      if(!grid) return 4;
+      const headCount = grid.querySelectorAll('.answer-head').length;
+      return headCount >= 5 ? 5 : 4;
+    }
+    function getTemplate(count){
+      return count === 5 ? '220px 120px 120px 120px 180px' : '220px 120px 120px 180px';
+    }
+    function patchOneGrid(doc, id){
+      const grid = doc.getElementById(id);
+      if(!grid) return;
+      const count = getColumnCount(grid);
+      const template = getTemplate(count);
+      grid.style.display = 'grid';
+      grid.style.gridTemplateColumns = template;
+      grid.style.gap = '10px';
+      grid.style.minWidth = count === 5 ? '760px' : '640px';
+      const parent = grid.parentElement;
+      if(parent && !parent.classList.contains('v51-scroll-wrap')){
+        const wrap = doc.createElement('div');
+        wrap.className = 'v51-scroll-wrap';
+        parent.insertBefore(wrap, grid);
+        wrap.appendChild(grid);
+      }
+    }
+
+    function removeExtraButtons(doc){
+      doc.querySelectorAll('#host-reset-current, .team-rereg, .small-actions').forEach(el => el.remove());
+    }
+
+    async function patchedRegister(doc){
+      const input = doc.getElementById('team-name-input');
+      const error = doc.getElementById('team-register-error');
+      if(!input || !error) return;
+      error.classList.add('hidden');
+      error.textContent = '';
+
+      const rawName = sanitizeTeamName(input.value);
+      if(!rawName){
+        error.classList.remove('hidden');
+        error.textContent = 'チーム名を入力してください。';
+        return;
+      }
+      if(!isKanaOnly(rawName)){
+        error.classList.remove('hidden');
+        error.textContent = 'ひらがな または カタカナのみ入力できます。';
+        return;
+      }
+      const finalName = maskBlockedTerms(rawName);
+      const savedTeamId = localStorage.getItem('kakuzukeRealtimeTeamId') || '';
+
+      try{
+        const result = await runTransaction(roomRef, state => {
+          if(!state) return state;
+          if(!state.game || state.game.status !== 'registration') return state;
+          const teams = state.teams || {};
+          const exists = Object.values(teams).some(t => String(t.name || '').trim() === finalName);
+          if(exists){
+            state.__duplicate_blocked__ = true;
+            return state;
+          }
+          const count = Object.keys(teams).length;
+          if(count >= 40){
+            state.__full_blocked__ = true;
+            return state;
+          }
+          const teamId = savedTeamId || randomTeamId();
+          teams[teamId] = { name: finalName, rank:0, answer:'', joinedAt:Date.now(), lastOutcome:'' };
+          state.teams = teams;
+          state.meta = state.meta || {};
+          state.meta.updatedAt = Date.now();
+          return state;
+        });
+
+        const state = result.snapshot.val() || {};
+        if(state.__duplicate_blocked__){
+          delete state.__duplicate_blocked__;
+          error.classList.remove('hidden');
+          error.textContent = '同じチーム名は登録できません。';
+          return;
+        }
+        if(state.__full_blocked__){
+          delete state.__full_blocked__;
+          error.classList.remove('hidden');
+          error.textContent = '参加上限に達しました。';
+          return;
+        }
+
+        const teams = state.teams || {};
+        const found = Object.entries(teams).find(([,v]) => v && v.name === finalName);
+        if(found){
+          localStorage.setItem('kakuzukeRealtimeTeamId', found[0]);
+          input.value = finalName;
+          if(typeof appFrame.contentWindow.showToast === 'function'){
+            appFrame.contentWindow.showToast('参加登録が完了しました');
+          }
+        }
+      }catch(err){
+        console.error(err);
+        error.classList.remove('hidden');
+        error.textContent = '参加登録に失敗しました。';
+      }
+    }
+
+    async function patchedShowFinal(){
+      try{
+        await runTransaction(roomRef, state => {
+          if(!state) return state;
+          state.game = state.game || {};
+          state.game.showFinal = true;
+          state.game.status = 'judged';
+          state.meta = state.meta || {};
+          state.meta.updatedAt = Date.now();
+          return state;
+        });
+      }catch(err){
+        console.error(err);
+      }
+    }
+
+    function patchButtons(doc){
+      const registerBtn = doc.getElementById('team-register-btn');
+      if(registerBtn && !registerBtn.dataset.v51patched){
+        registerBtn.dataset.v51patched = '1';
+        registerBtn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          await patchedRegister(doc);
+        }, true);
+      }
+
+      const finalBtn = doc.getElementById('host-show-final');
+      if(finalBtn && !finalBtn.dataset.v51patched){
+        finalBtn.dataset.v51patched = '1';
+        finalBtn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          await patchedShowFinal();
+          if(typeof appFrame.contentWindow.showToast === 'function'){
+            appFrame.contentWindow.showToast('最終結果を表示しました');
+          }
+        }, true);
+      }
+    }
+
+    function applyPatch(doc){
+      ensureStyle(doc);
+      removeExtraButtons(doc);
+      patchOneGrid(doc, 'host-answer-grid');
+      patchOneGrid(doc, 'display-answer-grid');
+      patchButtons(doc);
+    }
+
+    appFrame.addEventListener('load', () => {
+      const doc = appFrame.contentDocument;
+      if(!doc) return;
+      applyPatch(doc);
+      const observer = new MutationObserver(() => applyPatch(doc));
+      observer.observe(doc.body, { childList:true, subtree:true });
+    });
+  </script>
+</body>
+</html>

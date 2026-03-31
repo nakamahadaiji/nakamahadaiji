@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>オリジナル格付けチェック リアルタイム版 v52</title>
+  <style>
+    html,body{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden}
+    iframe{border:0;width:100%;height:100%;display:block;background:#000}
+  </style>
+</head>
+<body>
+  <iframe id="appFrame" src="./kakuzuke-check-realtime-v51.html"></iframe>
+  <script type="module">
+    import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+    const FIREBASE_CONFIG={apiKey:'AIzaSyBXRVlcx-eZKrF6NpboKl8Z87w2sIkrOq4',authDomain:'kakuduke-fe62d.firebaseapp.com',databaseURL:'https://kakuduke-fe62d-default-rtdb.firebaseio.com',projectId:'kakuduke-fe62d',storageBucket:'kakuduke-fe62d.firebasestorage.app',messagingSenderId:'224688087057',appId:'1:224688087057:web:a0f6c8404728f761e9d1b0',measurementId:'G-05D75P50F2'};
+    const ROOM_PATH='kakuzukeRealtime/default-room';
+    const rankNames=['一流高校生','普通高校生','二流高校生','三流高校生','そっくりさん','映す価値なし'];
+    const rankShort=['一流','普通','二流','三流','そっくりさん','映す価値なし'];
+
+    const frame=document.getElementById('appFrame');
+    const app=getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG);
+    const db=getDatabase(app);
+    const roomRef=ref(db, ROOM_PATH);
+
+    function getTeamsArray(state){
+      const teams=state && state.teams ? Object.entries(state.teams).map(([id,v])=>({id,...v})) : [];
+      teams.sort((a,b)=>((a.rank||0)-(b.rank||0))||((a.joinedAt||0)-(b.joinedAt||0)));
+      return teams;
+    }
+
+    function ensureStyle(doc){
+      const styleId='v52-team-final-style';
+      if(doc.getElementById(styleId)) return;
+      const style=doc.createElement('style');
+      style.id=styleId;
+      style.textContent=`
+        #team-result-detail{line-height:1.9 !important;}
+        .v52-final-meta{max-width:560px;margin:18px auto 0;display:grid;gap:10px;}
+        .v52-final-chip{padding:14px 16px;border-radius:16px;background:linear-gradient(180deg,#1a1a1a,#101010);border:1px solid rgba(255,223,127,.18);color:#f3e2b0;font-weight:800;text-align:center;}
+      `;
+      doc.head.appendChild(style);
+    }
+
+    function patchPerQuestionText(doc){
+      const main=doc.getElementById('team-result-main');
+      const detail=doc.getElementById('team-result-detail');
+      if(!main || !detail) return;
+      const label=(main.textContent||'').trim();
+      if(label==='不正解'){
+        detail.innerHTML='今回は不正解でした。<br>ランクが1段階下がりました。';
+      }else if(label==='正解'){
+        detail.innerHTML='見事に正解です。<br>現在のランクを維持しました。';
+      }else if(label==='絶対あかん'){
+        detail.innerHTML='最も避けたい選択でした。<br>ランクが一気に下がりました。';
+      }
+    }
+
+    function renderTeamFinal(doc, state){
+      const teamId=localStorage.getItem('kakuzukeRealtimeTeamId') || '';
+      if(!teamId) return;
+      const teams=getTeamsArray(state);
+      const myTeam=teams.find(t=>t.id===teamId);
+      if(!myTeam) return;
+
+      const resultScreen=doc.getElementById('screen-team-result');
+      const resultPanel=resultScreen ? resultScreen.querySelector('.result-panel') : null;
+      const main=doc.getElementById('team-result-main');
+      const sub=doc.getElementById('team-result-sub');
+      const detail=doc.getElementById('team-result-detail');
+      const rankMain=doc.getElementById('team-result-rank-main');
+      const rankSub=doc.getElementById('team-result-rank-sub');
+      if(!resultScreen || !resultPanel || !main || !sub || !detail || !rankMain || !rankSub) return;
+
+      resultScreen.classList.add('active');
+      ['screen-team-waiting','screen-team-question','screen-team-answered'].forEach(id=>{
+        const el=doc.getElementById(id);
+        if(el) el.classList.remove('active');
+      });
+
+      main.className='result-main result-correct';
+      main.textContent='最終結果';
+      sub.className='result-sub result-correct';
+      sub.textContent=myTeam.name;
+      detail.innerHTML='あなたの最終ランクです。';
+      rankMain.textContent=rankShort[myTeam.rank||0];
+      rankSub.textContent=rankNames[myTeam.rank||0];
+
+      let meta=resultPanel.querySelector('.v52-final-meta');
+      if(!meta){
+        meta=doc.createElement('div');
+        meta.className='v52-final-meta';
+        meta.innerHTML='\n          <div class="v52-final-chip" id="v52-final-answer"></div>\n          <div class="v52-final-chip" id="v52-final-correct"></div>\n        ';
+        resultPanel.appendChild(meta);
+      }
+      const answerEl=resultPanel.querySelector('#v52-final-answer');
+      const correctEl=resultPanel.querySelector('#v52-final-correct');
+      if(answerEl) answerEl.textContent='あなたの回答：' + (myTeam.answer || '未回答');
+      if(correctEl) correctEl.textContent='正解：' + ((state.game && state.game.question && state.game.question.correctChoice) || '---');
+    }
+
+    function applyPatch(doc, state){
+      ensureStyle(doc);
+      patchPerQuestionText(doc);
+      if(state && state.game && state.game.showFinal){
+        renderTeamFinal(doc, state);
+      }
+    }
+
+    frame.addEventListener('load', ()=>{
+      const doc=frame.contentDocument;
+      if(!doc) return;
+      onValue(roomRef, snapshot=>{
+        const state=snapshot.val() || {};
+        applyPatch(doc, state);
+      });
+      const observer=new MutationObserver(()=>applyPatch(doc, null));
+      observer.observe(doc.body, {childList:true, subtree:true});
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>オリジナル格付けチェック リアルタイム版</title>
+  <style>
+    :root {
+      --gold1: #fff7c7;
+      --gold2: #f1cb5b;
+      --gold3: #d29d1e;
+      --gold4: #8b5b06;
+      --bg: #0b0b0b;
+      --panel: #181818;
+      --text: #f6f3ea;
+      --muted: #d9c28b;
+      --line: rgba(255,223,127,.22);
+      --danger: #b23b34;
+      --ok: #2f88f0;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; min-height: 100%; background: radial-gradient(circle at top, #262626 0%, #141414 38%, var(--bg) 100%); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif; }
+    body { overflow-x: hidden; }
+    .app { width: min(100%, 1180px); margin: 0 auto; padding: 18px 14px 40px; }
+    .frame { background: linear-gradient(180deg, rgba(255,245,200,.08), rgba(255,255,255,.02)), #1a1a1a; border: 4px solid var(--gold3); border-radius: 24px; overflow: hidden; box-shadow: 0 14px 34px rgba(0,0,0,.38), inset 0 0 0 2px rgba(255,232,152,.24); }
+    .header { position: relative; padding: 28px 18px 20px; text-align: center; background: radial-gradient(circle at 20% 15%, rgba(255,255,255,.65), transparent 16%), radial-gradient(circle at 80% 10%, rgba(255,255,255,.35), transparent 16%), linear-gradient(180deg, var(--gold1), var(--gold2) 45%, var(--gold3) 80%, #bb7f0c); border-bottom: 4px solid #8a5a06; color: #3f2500; }
+    .header:before, .header:after { content: "❦"; position: absolute; top: 12px; font-size: 30px; color: #a76d09; }
+    .header:before { left: 16px; }
+    .header:after { right: 16px; }
+    .header h1 { margin: 0; font-family: "Yu Mincho", "Hiragino Mincho ProN", serif; font-size: clamp(34px, 6vw, 58px); line-height: 1.16; letter-spacing: .12em; font-weight: 900; color: #2f1700; text-shadow: 0 1px 0 rgba(255,255,255,.65), 0 2px 0 rgba(255,241,180,.9), 0 4px 10px rgba(120,70,0,.18); }
+    .header p { margin: 12px 0 0; font-size: 12px; color: #5e3c00; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; opacity: .9; }
+    .section { padding: 18px; }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .mode-grid, .action-grid, .info-grid, .question-grid { display: grid; gap: 14px; }
+    .mode-grid { grid-template-columns: repeat(3, 1fr); }
+    .action-grid { grid-template-columns: repeat(2, 1fr); }
+    .info-grid { grid-template-columns: repeat(4, 1fr); }
+    .question-grid { grid-template-columns: 1.2fr .8fr; }
+    .card { background: linear-gradient(180deg, #222, #151515); border: 1px solid var(--line); border-radius: 18px; padding: 14px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.03), 0 8px 18px rgba(0,0,0,.18); }
+    .card h2, .card h3 { margin: 0 0 10px; letter-spacing: .04em; }
+    .card h2 { font-size: 24px; }
+    .card h3 { font-size: 18px; color: #fff1b3; }
+    .note { padding: 12px 14px; border-radius: 14px; background: linear-gradient(180deg, #1f160a, #100b06); border: 1px solid rgba(255,223,127,.18); font-size: 13px; line-height: 1.8; color: var(--muted); }
+    .mode-btn, .btn { appearance: none; border: none; border-radius: 18px; padding: 18px 16px; cursor: pointer; font-weight: 900; transition: transform .15s ease, filter .15s ease; }
+    .mode-btn:hover, .btn:hover { filter: brightness(1.05); }
+    .mode-btn:active, .btn:active { transform: translateY(1px); }
+    .mode-btn { background: linear-gradient(180deg, #272727, #131313); border: 1px solid var(--line); color: #fff; min-height: 128px; font-size: 22px; }
+    .mode-btn small { display: block; margin-top: 10px; font-size: 12px; font-weight: 700; color: var(--muted); line-height: 1.65; }
+    .mode-btn.primary, .btn.gold { background: linear-gradient(180deg, #fff0a6, #ddb149 60%, #b57a0b); color: #2f1e00; }
+    .btn.blue { background: linear-gradient(180deg, #4e96f2, #1d5aa7); color: #fff; }
+    .btn.dark { background: linear-gradient(180deg, #5f5f5f, #2d2d2d); color: #fff; }
+    .btn.red { background: linear-gradient(180deg, #c54f47, #8b2921); color: #fff; }
+    .stack { display: grid; gap: 10px; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; }
+    label { display: block; font-size: 13px; color: var(--muted); font-weight: 800; margin-bottom: 6px; }
+    input, select { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(255,223,127,.24); background: #111; color: #fff; font-size: 16px; }
+    .pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 8px 12px; font-weight: 800; font-size: 13px; background: #2b2b2b; border: 1px solid rgba(255,255,255,.08); }
+    .pill.ok { background: linear-gradient(180deg, #2f88f0, #1258a9); }
+    .pill.done { background: linear-gradient(180deg, #2ba45a, #1c7c41); }
+    .grid-table { overflow-x: auto; }
+    table { width: 100%; border-collapse: separate; border-spacing: 8px; min-width: 760px; }
+    th, td { padding: 12px 10px; text-align: center; border-radius: 14px; border: 1px solid var(--line); background: linear-gradient(180deg, #181818, #101010); }
+    th { background: linear-gradient(180deg, #262626, #141414); }
+    .rank-0 { background: linear-gradient(180deg, #fff2b2, #daa925); color: #2f1d00; }
+    .rank-1 { background: linear-gradient(180deg, #fcfcfc, #d8d8d8); color: #222; }
+    .rank-2 { background: linear-gradient(180deg, #2f88f0, #1258a9); }
+    .rank-3 { background: linear-gradient(180deg, #f9f9f9, #d8d8d8); color: #222; }
+    .rank-4 { background: linear-gradient(180deg, #4a3211, #2c1d09); color: #f0dbb2; }
+    .rank-5 { background: linear-gradient(180deg, #141414, #000); color: #ff5353; }
+    .hero { text-align: center; padding: 10px 0 4px; }
+    .hero-title { font-size: clamp(26px, 5vw, 42px); font-weight: 900; color: #fff1b3; margin: 0; }
+    .hero-sub { margin-top: 8px; color: var(--muted); font-size: 14px; line-height: 1.8; }
+    .door-wrap { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; margin-top: 18px; }
+    .door { width: min(28vw, 160px); height: min(42vw, 220px); min-width: 108px; min-height: 154px; border-radius: 18px; border: 5px solid #d7b257; position: relative; overflow: hidden; box-shadow: inset 0 0 0 3px rgba(255,255,255,.22), 0 14px 24px rgba(0,0,0,.34); font-size: 54px; font-weight: 900; letter-spacing: .04em; color: #ffe08a; text-shadow: 0 4px 0 rgba(0,0,0,.18); }
+    .door span { position: absolute; inset: 0; display: grid; place-items: center; z-index: 2; }
+    .door:before, .door:after { content: ""; position: absolute; inset: 12px; border: 3px solid rgba(255,228,144,.75); border-radius: 10px; z-index: 1; }
+    .door.red { background: linear-gradient(180deg, #ef5147, #b81f1a); }
+    .door.blue { background: linear-gradient(180deg, #3d8fed, #195bb2); }
+    .door.amber { background: linear-gradient(180deg, #f0b63a, #c47e08); color: #2a1700; }
+    .door.selected { transform: translateY(-3px) scale(1.02); box-shadow: inset 0 0 0 3px rgba(255,255,255,.22), 0 0 0 4px rgba(255,237,141,.75), 0 18px 30px rgba(0,0,0,.38); }
+    .waiting-box { text-align: center; padding: 18px; border-radius: 16px; background: linear-gradient(180deg, #1b1b1b, #111); border: 1px solid var(--line); }
+    .waiting-box strong { display: block; font-size: 18px; color: #fff1b3; margin-bottom: 8px; }
+    .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(12px); background: linear-gradient(180deg, #2f88f0, #1258a9); color: #fff; padding: 12px 18px; border-radius: 999px; font-weight: 800; font-size: 14px; box-shadow: 0 10px 24px rgba(0,0,0,.28); opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; z-index: 99999; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .error { color: #ffb7b2; font-size: 13px; line-height: 1.7; }
+    .hidden { display: none !important; }
+    @media (max-width: 900px) {
+      .mode-grid, .info-grid, .question-grid, .action-grid { grid-template-columns: 1fr; }
+      .app { padding: 14px 12px 32px; }
+    }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database-compat.js"></script>
+</head>
+<body>
+  <div class="app">
+    <div class="frame">
+      <div class="header">
+        <h1>オリジナル<br>格付けチェック</h1>
+        <p>Realtime Edition</p>
+      </div>
+
+      <div id="screen-launcher" class="screen active section">
+        <div class="mode-grid">
+          <button class="mode-btn primary" data-mode="host">教員用<small>進行・設定・開始を行います</small></button>
+          <button class="mode-btn" data-mode="display">表示用<small>会場やスクリーンに表示します</small></button>
+          <button class="mode-btn" data-mode="team">チーム用<small>各チームが参加登録と回答を行います</small></button>
+        </div>
+        <div class="note" style="margin-top:16px;">＜基本＞ ここで選んだ表示モードで開始します。開始後はこの画面では切り替えできません。</div>
+      </div>
+
+      <div id="screen-host" class="screen section">
+        <div class="info-grid">
+          <div class="card"><div class="muted">状態</div><h2 id="host-status-text">受付中</h2></div>
+          <div class="card"><div class="muted">現在の問題</div><h2 id="host-question-no">第1問</h2></div>
+          <div class="card"><div class="muted">参加チーム</div><h2 id="host-team-count">0 / 8</h2></div>
+          <div class="card"><div class="muted">回答済み</div><h2 id="host-answer-count">0</h2></div>
+        </div>
+
+        <div class="question-grid" style="margin-top:14px;">
+          <div class="card stack">
+            <h3>問題設定</h3>
+            <div>
+              <label>問題文</label>
+              <input id="host-question-text" type="text" placeholder="例：高級品はどっち？" />
+            </div>
+            <div class="action-grid">
+              <div>
+                <label>問題番号</label>
+                <input id="host-question-number" type="number" min="1" value="1" />
+              </div>
+              <div>
+                <label>選択肢</label>
+                <select id="host-choice-mode">
+                  <option value="2">2択</option>
+                  <option value="3">3択</option>
+                </select>
+              </div>
+            </div>
+            <div class="action-grid">
+              <div>
+                <label>正解</label>
+                <select id="host-correct-choice">
+                  <option value="A">A</option>
+                  <option value="B">B</option>
+                  <option value="C">C</option>
+                </select>
+              </div>
+              <div>
+                <label>絶対あかん</label>
+                <select id="host-crazy-choice">
+                  <option value="none">なし</option>
+                  <option value="A">A</option>
+                  <option value="B">B</option>
+                  <option value="C">C</option>
+                </select>
+              </div>
+            </div>
+            <div class="note">＜基本＞ 問題設定は1問ごとに全チーム共通です。開始後は次の問題に進むまで変更しない想定です。</div>
+          </div>
+
+          <div class="card stack">
+            <h3>進行</h3>
+            <button id="host-open-registration" class="btn dark" type="button">受付を再開</button>
+            <button id="host-start-game" class="btn gold" type="button">問題を開始</button>
+            <button id="host-judge-all" class="btn blue" type="button">一括判定</button>
+            <button id="host-next-question" class="btn dark" type="button">次の問題へ</button>
+            <button id="host-reset-room" class="btn red" type="button">全体リセット</button>
+            <div class="note">＜基本＞ 先に各チームが参加登録し、教員が問題開始を押すと全員が同じ問題へ進みます。</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:14px;">
+          <h3>参加チーム一覧</h3>
+          <div id="host-team-pills" class="row"></div>
+        </div>
+
+        <div class="card" style="margin-top:14px;">
+          <h3>回答状況</h3>
+          <div class="grid-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>チーム名</th>
+                  <th>A</th>
+                  <th>B</th>
+                  <th id="host-th-c">C</th>
+                  <th>現在のランク</th>
+                </tr>
+              </thead>
+              <tbody id="host-answer-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="screen-display" class="screen section">
+        <div class="hero">
+          <h2 class="hero-title" id="display-title">受付中</h2>
+          <div class="hero-sub" id="display-sub">参加チームの登録を待っています。</div>
+        </div>
+        <div class="card" style="margin-top:14px;">
+          <h3>回答状況</h3>
+          <div class="grid-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>チーム名</th>
+                  <th>A</th>
+                  <th>B</th>
+                  <th id="display-th-c">C</th>
+                  <th>ランク</th>
+                </tr>
+              </thead>
+              <tbody id="display-answer-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="screen-team-register" class="screen section">
+        <div class="hero">
+          <h2 class="hero-title">チーム参加登録</h2>
+          <div class="hero-sub">チーム名を入力して参加してください。</div>
+        </div>
+        <div class="card" style="max-width:560px;margin:14px auto 0;">
+          <div class="stack">
+            <div>
+              <label>チーム名</label>
+              <input id="team-name-input" type="text" placeholder="例：チームA" maxlength="30" />
+            </div>
+            <button id="team-register-btn" class="btn gold" type="button">参加する</button>
+            <div class="note">＜基本＞ 参加登録後は待機画面になります。教員が問題を開始すると自動で問題画面に切り替わります。</div>
+            <div id="team-register-error" class="error hidden"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="screen-team-waiting" class="screen section">
+        <div class="waiting-box">
+          <strong id="team-waiting-title">参加登録が完了しました</strong>
+          <span id="team-waiting-sub">教員が問題を開始するまでお待ちください。</span>
+        </div>
+        <div class="card" style="max-width:560px;margin:14px auto 0;">
+          <div class="stack">
+            <div class="pill ok" id="team-current-name-pill">チーム名：---</div>
+            <div class="pill" id="team-current-rank-pill">現在のランク：一流高校生</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="screen-team-question" class="screen section">
+        <div class="hero">
+          <h2 class="hero-title" id="team-question-title">第1問</h2>
+          <div class="hero-sub" id="team-question-text">高級品はどっち？</div>
+        </div>
+        <div class="card" style="max-width:760px;margin:14px auto 0;">
+          <div class="door-wrap">
+            <button id="team-door-a" class="door red" type="button"><span>A</span></button>
+            <button id="team-door-b" class="door blue" type="button"><span>B</span></button>
+            <button id="team-door-c" class="door amber" type="button"><span>C</span></button>
+          </div>
+          <div class="note" style="margin-top:16px;">＜基本＞ 一度選んだら変更できません。自分の扉を選んで待機します。</div>
+        </div>
+      </div>
+
+      <div id="screen-team-answered" class="screen section">
+        <div class="waiting-box">
+          <strong>回答を受け付けました</strong>
+          <span>正解発表をお待ちください。</span>
+        </div>
+        <div class="card" style="max-width:560px;margin:14px auto 0;">
+          <div class="stack">
+            <div class="pill ok" id="team-answered-name-pill">チーム名：---</div>
+            <div class="pill" id="team-answered-answer-pill">今回の回答：---</div>
+            <div class="pill" id="team-answered-rank-pill">現在のランク：一流高校生</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="firebase-error" class="screen section">
+        <div class="card">
+          <h3>Firebase設定エラー</h3>
+          <div class="error">Firebase 初期化に失敗しました。Realtime Database の作成とルール設定も確認してください。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyBXRVlcx-eZKrF6NpboKl8Z87w2sIkrOq4",
+      authDomain: "kakuduke-fe62d.firebaseapp.com",
+      databaseURL: "https://kakuduke-fe62d-default-rtdb.firebaseio.com",
+      projectId: "kakuduke-fe62d",
+      storageBucket: "kakuduke-fe62d.firebasestorage.app",
+      messagingSenderId: "224688087057",
+      appId: "1:224688087057:web:a0f6c8404728f761e9d1b0",
+      measurementId: "G-05D75P50F2"
+    };
+
+    const ROOM_ID = 'default-room';
+    const MAX_TEAMS = 8;
+    const rankNames = ['一流高校生', '普通高校生', '二流高校生', '三流高校生', 'そっくりさん', '映す価値なし'];
+    const statePath = `kakuzukeRealtime/${ROOM_ID}`;
+
+    let db = null;
+    let roomRef = null;
+    let localMode = null;
+    let localTeamId = localStorage.getItem('kakuzukeRealtimeTeamId') || '';
+
+    const screens = {
+      launcher: document.getElementById('screen-launcher'),
+      host: document.getElementById('screen-host'),
+      display: document.getElementById('screen-display'),
+      teamRegister: document.getElementById('screen-team-register'),
+      teamWaiting: document.getElementById('screen-team-waiting'),
+      teamQuestion: document.getElementById('screen-team-question'),
+      teamAnswered: document.getElementById('screen-team-answered'),
+      firebaseError: document.getElementById('firebase-error')
+    };
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => toast.classList.remove('show'), 1500);
+    }
+
+    function showOnly(screenKey) {
+      Object.values(screens).forEach(el => el.classList.remove('active'));
+      screens[screenKey].classList.add('active');
+    }
+
+    function makeDefaultState() {
+      return {
+        meta: {
+          roomId: ROOM_ID,
+          createdAt: firebase.database.ServerValue.TIMESTAMP,
+          updatedAt: firebase.database.ServerValue.TIMESTAMP
+        },
+        game: {
+          status: 'registration',
+          currentQuestion: 1,
+          question: {
+            number: 1,
+            text: '高級品はどっち？',
+            choiceMode: '2',
+            correctChoice: 'A',
+            crazyChoice: 'none'
+          }
+        },
+        teams: {}
+      };
+    }
+
+    function sanitizeTeamName(name) {
+      return String(name || '').trim().replace(/\s+/g, ' ').slice(0, 30);
+    }
+
+    function getTeamsArray(state) {
+      const teams = state && state.teams ? Object.entries(state.teams).map(([id, v]) => ({ id, ...v })) : [];
+      teams.sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0));
+      return teams;
+    }
+
+    function canJoin(state) {
+      return getTeamsArray(state).length < MAX_TEAMS && state?.game?.status === 'registration';
+    }
+
+    function initializeFirebase() {
+      try {
+        if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+        db = firebase.database();
+        roomRef = db.ref(statePath);
+        return true;
+      } catch (error) {
+        console.error(error);
+        return false;
+      }
+    }
+
+    function ensureRoomExists() {
+      roomRef.transaction(current => current || makeDefaultState());
+    }
+
+    function syncQuestionInputs(state) {
+      const q = state.game.question;
+      document.getElementById('host-question-text').value = q.text || '';
+      document.getElementById('host-question-number').value = q.number || 1;
+      document.getElementById('host-choice-mode').value = q.choiceMode || '2';
+      document.getElementById('host-correct-choice').value = q.correctChoice || 'A';
+      document.getElementById('host-crazy-choice').value = q.crazyChoice || 'none';
+      document.getElementById('host-th-c').style.display = q.choiceMode === '3' ? '' : 'none';
+      document.getElementById('display-th-c').style.display = q.choiceMode === '3' ? '' : 'none';
+    }
+
+    function renderHost(state) {
+      const teams = getTeamsArray(state);
+      document.getElementById('host-status-text').textContent = state.game.status === 'registration' ? '受付中' : state.game.status === 'question_open' ? '回答受付中' : '判定後';
+      document.getElementById('host-question-no').textContent = `第${state.game.currentQuestion}問`;
+      document.getElementById('host-team-count').textContent = `${teams.length} / ${MAX_TEAMS}`;
+      document.getElementById('host-answer-count').textContent = String(teams.filter(t => t.answer).length);
+      syncQuestionInputs(state);
+
+      const teamPills = document.getElementById('host-team-pills');
+      teamPills.innerHTML = '';
+      if (teams.length === 0) {
+        const span = document.createElement('span');
+        span.className = 'pill';
+        span.textContent = 'まだ参加チームはありません';
+        teamPills.appendChild(span);
+      } else {
+        teams.forEach(team => {
+          const span = document.createElement('span');
+          span.className = 'pill ' + (team.answer ? 'done' : '');
+          span.textContent = team.name;
+          teamPills.appendChild(span);
+        });
+      }
+
+      const body = document.getElementById('host-answer-body');
+      body.innerHTML = '';
+      teams.forEach(team => {
+        const tr = document.createElement('tr');
+        const answer = team.answer || '';
+        tr.innerHTML = `
+          <td>${escapeHtml(team.name)}</td>
+          <td>${answer === 'A' ? 'こちら' : ''}</td>
+          <td>${answer === 'B' ? 'こちら' : ''}</td>
+          <td style="display:${state.game.question.choiceMode === '3' ? '' : 'none'};">${answer === 'C' ? 'こちら' : ''}</td>
+          <td class="rank-${team.rank || 0}">${rankNames[team.rank || 0]}</td>
+        `;
+        body.appendChild(tr);
+      });
+    }
+
+    function renderDisplay(state) {
+      const teams = getTeamsArray(state);
+      document.getElementById('display-title').textContent = state.game.status === 'registration' ? '受付中' : `第${state.game.currentQuestion}問`;
+      document.getElementById('display-sub').textContent = state.game.status === 'registration' ? '参加チームの登録を待っています。' : state.game.question.text;
+      const body = document.getElementById('display-answer-body');
+      body.innerHTML = '';
+      teams.forEach(team => {
+        const tr = document.createElement('tr');
+        const answer = team.answer || '';
+        tr.innerHTML = `
+          <td>${escapeHtml(team.name)}</td>
+          <td>${answer === 'A' ? 'こちら' : ''}</td>
+          <td>${answer === 'B' ? 'こちら' : ''}</td>
+          <td style="display:${state.game.question.choiceMode === '3' ? '' : 'none'};">${answer === 'C' ? 'こちら' : ''}</td>
+          <td class="rank-${team.rank || 0}">${rankNames[team.rank || 0]}</td>
+        `;
+        body.appendChild(tr);
+      });
+    }
+
+    function renderTeam(state) {
+      const teams = getTeamsArray(state);
+      const myTeam = teams.find(t => t.id === localTeamId) || null;
+      if (!myTeam) {
+        showOnly('teamRegister');
+        const error = document.getElementById('team-register-error');
+        if (!canJoin(state)) {
+          error.classList.remove('hidden');
+          error.textContent = state.game.status !== 'registration' ? '現在は参加受付を終了しています。' : '参加上限に達しました。';
+        } else {
+          error.classList.add('hidden');
+          error.textContent = '';
+        }
+        return;
+      }
+      document.getElementById('team-current-name-pill').textContent = `チーム名：${myTeam.name}`;
+      document.getElementById('team-current-rank-pill').textContent = `現在のランク：${rankNames[myTeam.rank || 0]}`;
+      document.getElementById('team-answered-name-pill').textContent = `チーム名：${myTeam.name}`;
+      document.getElementById('team-answered-answer-pill').textContent = `今回の回答：${myTeam.answer || '---'}`;
+      document.getElementById('team-answered-rank-pill').textContent = `現在のランク：${rankNames[myTeam.rank || 0]}`;
+      document.getElementById('team-question-title').textContent = `第${state.game.currentQuestion}問`;
+      document.getElementById('team-question-text').textContent = state.game.question.text;
+      document.getElementById('team-door-c').style.display = state.game.question.choiceMode === '3' ? '' : 'none';
+      ['A','B','C'].forEach(choice => {
+        const el = document.getElementById('team-door-' + choice.toLowerCase());
+        if (el) el.classList.toggle('selected', myTeam.answer === choice);
+      });
+
+      if (state.game.status === 'registration') {
+        document.getElementById('team-waiting-title').textContent = '参加登録が完了しました';
+        document.getElementById('team-waiting-sub').textContent = '教員が問題を開始するまでお待ちください。';
+        showOnly('teamWaiting');
+      } else if (state.game.status === 'question_open') {
+        showOnly(myTeam.answer ? 'teamAnswered' : 'teamQuestion');
+      } else {
+        document.getElementById('team-waiting-title').textContent = '判定が反映されました';
+        document.getElementById('team-waiting-sub').textContent = `現在のランク：${rankNames[myTeam.rank || 0]}`;
+        showOnly('teamWaiting');
+      }
+    }
+
+    function renderAll(state) {
+      if (localMode === 'host') renderHost(state);
+      if (localMode === 'display') renderDisplay(state);
+      if (localMode === 'team') renderTeam(state);
+    }
+
+    function escapeHtml(str) {
+      return String(str).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+    }
+
+    function updateRoomMeta(state) {
+      state.meta = state.meta || {};
+      state.meta.updatedAt = Date.now();
+      return state;
+    }
+
+    function registerTeam() {
+      const input = document.getElementById('team-name-input');
+      const name = sanitizeTeamName(input.value);
+      const error = document.getElementById('team-register-error');
+      error.classList.add('hidden');
+      error.textContent = '';
+      if (!name) {
+        error.classList.remove('hidden');
+        error.textContent = 'チーム名を入力してください。';
+        return;
+      }
+      roomRef.transaction(state => {
+        if (!state) state = makeDefaultState();
+        if (state.game.status !== 'registration') return state;
+        const teams = state.teams || {};
+        if (Object.keys(teams).length >= MAX_TEAMS) return state;
+        const duplicate = Object.values(teams).some(t => String(t.name || '').trim() === name);
+        if (duplicate) return state;
+        const teamId = localTeamId || ('team_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7));
+        teams[teamId] = { name, rank: 0, answer: '', joinedAt: Date.now() };
+        state.teams = teams;
+        return updateRoomMeta(state);
+      }, (txError, committed, snapshot) => {
+        if (txError) { showToast('参加登録に失敗しました'); return; }
+        const state = snapshot && snapshot.val ? snapshot.val() : null;
+        const exists = state && state.teams && Object.entries(state.teams).find(([, v]) => v.name === name);
+        if (committed && exists) {
+          localTeamId = exists[0];
+          localStorage.setItem('kakuzukeRealtimeTeamId', localTeamId);
+          showToast('参加登録が完了しました');
+        } else if (state && state.game && state.game.status !== 'registration') {
+          error.classList.remove('hidden');
+          error.textContent = '現在は参加受付を終了しています。';
+        } else {
+          error.classList.remove('hidden');
+          error.textContent = '同じチーム名は登録できません。';
+        }
+      });
+    }
+
+    function hostStartGame() {
+      roomRef.transaction(state => {
+        if (!state) return state;
+        state.game.status = 'question_open';
+        Object.values(state.teams || {}).forEach(team => { team.answer = ''; });
+        return updateRoomMeta(state);
+      }, () => showToast('問題を開始しました'));
+    }
+
+    function hostJudgeAll() {
+      roomRef.transaction(state => {
+        if (!state) return state;
+        const q = state.game.question;
+        Object.values(state.teams || {}).forEach(team => {
+          const answer = team.answer || '';
+          if (!answer) return;
+          if (answer === q.correctChoice) return;
+          if (q.crazyChoice !== 'none' && answer === q.crazyChoice) team.rank = Math.min(5, (team.rank || 0) + 2);
+          else team.rank = Math.min(5, (team.rank || 0) + 1);
+        });
+        state.game.status = 'judged';
+        return updateRoomMeta(state);
+      }, () => showToast('一括判定を反映しました'));
+    }
+
+    function hostNextQuestion() {
+      roomRef.transaction(state => {
+        if (!state) return state;
+        state.game.currentQuestion += 1;
+        state.game.question.number = state.game.currentQuestion;
+        state.game.status = 'registration';
+        Object.values(state.teams || {}).forEach(team => { team.answer = ''; });
+        return updateRoomMeta(state);
+      }, () => showToast('次の問題へ進みました'));
+    }
+
+    function hostOpenRegistration() {
+      roomRef.transaction(state => {
+        if (!state) return state;
+        state.game.status = 'registration';
+        return updateRoomMeta(state);
+      }, () => showToast('受付を再開しました'));
+    }
+
+    function hostResetRoom() {
+      const ok = confirm('全体をリセットしますか？ 参加チームと進行状況が初期化されます。');
+      if (!ok) return;
+      roomRef.set(makeDefaultState(), () => {
+        localStorage.removeItem('kakuzukeRealtimeTeamId');
+        localTeamId = '';
+        showToast('全体をリセットしました');
+      });
+    }
+
+    function hostSaveQuestionSettings() {
+      const choiceMode = document.getElementById('host-choice-mode').value;
+      const correctChoice = document.getElementById('host-correct-choice').value;
+      const crazyChoice = document.getElementById('host-crazy-choice').value;
+      if (choiceMode !== '3' && (correctChoice === 'C' || crazyChoice === 'C')) { showToast('2択では C を設定できません'); return; }
+      if (crazyChoice !== 'none' && crazyChoice === correctChoice) { showToast('正解と絶対あかんは同じにできません'); return; }
+      roomRef.transaction(state => {
+        if (!state) return state;
+        state.game.question = {
+          number: Math.max(1, Number(document.getElementById('host-question-number').value || 1)),
+          text: document.getElementById('host-question-text').value.trim() || '高級品はどっち？',
+          choiceMode,
+          correctChoice,
+          crazyChoice
+        };
+        state.game.currentQuestion = state.game.question.number;
+        return updateRoomMeta(state);
+      }, () => showToast('内容を更新しました'));
+    }
+
+    function submitTeamAnswer(choice) {
+      if (!localTeamId) return;
+      roomRef.child('teams/' + localTeamId).transaction(team => {
+        if (!team) return team;
+        if (team.answer) return team;
+        team.answer = choice;
+        return team;
+      }, () => showToast('回答を受け付けました'));
+    }
+
+    function attachEvents() {
+      document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          localMode = btn.dataset.mode;
+          if (localMode === 'host') showOnly('host');
+          if (localMode === 'display') showOnly('display');
+          if (localMode === 'team') showOnly('teamRegister');
+        });
+      });
+      document.getElementById('team-register-btn').addEventListener('click', registerTeam);
+      document.getElementById('team-door-a').addEventListener('click', () => submitTeamAnswer('A'));
+      document.getElementById('team-door-b').addEventListener('click', () => submitTeamAnswer('B'));
+      document.getElementById('team-door-c').addEventListener('click', () => submitTeamAnswer('C'));
+      document.getElementById('host-open-registration').addEventListener('click', hostOpenRegistration);
+      document.getElementById('host-start-game').addEventListener('click', hostStartGame);
+      document.getElementById('host-judge-all').addEventListener('click', hostJudgeAll);
+      document.getElementById('host-next-question').addEventListener('click', hostNextQuestion);
+      document.getElementById('host-reset-room').addEventListener('click', hostResetRoom);
+      document.getElementById('host-question-text').addEventListener('change', hostSaveQuestionSettings);
+      document.getElementById('host-question-number').addEventListener('change', hostSaveQuestionSettings);
+      document.getElementById('host-choice-mode').addEventListener('change', hostSaveQuestionSettings);
+      document.getElementById('host-correct-choice').addEventListener('change', hostSaveQuestionSettings);
+      document.getElementById('host-crazy-choice').addEventListener('change', hostSaveQuestionSettings);
+    }
+
+    function boot() {
+      attachEvents();
+      showOnly('launcher');
+      if (!initializeFirebase()) {
+        showToast('Firebase の初期化に失敗しました');
+        return;
+      }
+      ensureRoomExists();
+      roomRef.on('value', snapshot => {
+        const state = snapshot.val() || makeDefaultState();
+        if (localMode) renderAll(state);
+      }, error => {
+        console.error(error);
+        showOnly('firebaseError');
+      });
+    }
+
+    boot();
+  </script>
+</body>
+</html>

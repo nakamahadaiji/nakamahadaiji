@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>オリジナル格付けチェック リアルタイム版 v47</title>
+</head>
+<body>
+<script>
+(async()=>{
+  const html=await fetch('./kakuzuke-check-realtime-v46.html').then(r=>r.text());
+  const patch=`<style>
+  .stage-banner{margin-bottom:14px;padding:18px 20px;border-radius:24px;border:1px solid rgba(255,223,127,.24);background:radial-gradient(circle at 50% 0%,rgba(255,247,202,.18),transparent 40%),linear-gradient(180deg,#2a2418,#121212 60%,#1a1712);box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 18px 30px rgba(0,0,0,.24)}
+  .stage-banner-main{text-align:center;font-size:clamp(28px,5vw,46px);font-weight:900;color:#fff0b4;letter-spacing:.08em}
+  .stage-banner-sub{text-align:center;margin-top:8px;color:#e7d49f;font-size:14px}
+  .strong-count{font-size:32px;font-weight:900;color:#fff0b4}.danger-count{font-size:32px;font-weight:900;color:#ffad98}
+  .fold{margin-top:14px;border-radius:22px;border:1px solid rgba(255,223,127,.20);background:linear-gradient(180deg,#242424,#151515);overflow:hidden}.fold summary{list-style:none;cursor:pointer;padding:16px 18px;font-size:18px;font-weight:900;color:#fff0b4}.fold summary::-webkit-details-marker{display:none}.fold-body{padding:0 16px 16px}
+  .overlay{position:fixed;inset:0;background:radial-gradient(circle at center,rgba(70,55,22,.22),rgba(0,0,0,.92));display:none;align-items:center;justify-content:center;z-index:99998}.overlay.show{display:flex}.overlay-card{width:min(88vw,760px);padding:34px 28px;border-radius:28px;border:1px solid rgba(255,223,127,.30);background:radial-gradient(circle at 50% 0%,rgba(255,240,180,.30),transparent 34%),linear-gradient(180deg,#2a2214,#0f0f0f 52%,#1b1710);box-shadow:0 30px 50px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.05);text-align:center}.overlay-eyebrow{font-size:14px;letter-spacing:.42em;color:#edd48b;font-weight:900}.overlay-main{margin-top:16px;font-size:clamp(46px,8vw,82px);font-weight:900;color:#fff2bc}.overlay-sub{margin-top:12px;font-size:18px;color:#e7d49f}
+  .small-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}.btn.slim{padding:12px 14px;border-radius:16px;font-size:14px}.info-grid.v47{grid-template-columns:repeat(5,1fr)}
+  @media (max-width:900px){.info-grid.v47{grid-template-columns:1fr}}
+  </style><div id="judging-overlay" class="overlay"><div class="overlay-card"><div class="overlay-eyebrow">JUDGEMENT</div><div class="overlay-main">判定中</div><div class="overlay-sub">しばらくお待ちください</div></div></div><script type="module">
+  import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { getDatabase, ref, onValue, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+  const CFG={apiKey:'AIzaSyBXRVlcx-eZKrF6NpboKl8Z87w2sIkrOq4',authDomain:'kakuduke-fe62d.firebaseapp.com',databaseURL:'https://kakuduke-fe62d-default-rtdb.firebaseio.com',projectId:'kakuduke-fe62d',storageBucket:'kakuduke-fe62d.firebasestorage.app',messagingSenderId:'224688087057',appId:'1:224688087057:web:a0f6c8404728f761e9d1b0',measurementId:'G-05D75P50F2'};
+  const ROOM='kakuzukeRealtime/default-room', DELAY=1600, rankNames=['一流高校生','普通高校生','二流高校生','三流高校生','そっくりさん','映す価値なし'];
+  const app=getApps().length?getApps()[0]:initializeApp(CFG); const db=getDatabase(app); const roomRef=ref(db,ROOM);
+  const qs=s=>document.querySelector(s); const qsa=s=>Array.from(document.querySelectorAll(s));
+  function mk(tag,cls,html){const e=document.createElement(tag); if(cls)e.className=cls; if(html!==undefined)e.innerHTML=html; return e;}
+  function stageText(status,showFinal){if(showFinal)return ['最終結果表示中','最終結果を表示しています']; if(status==='registration')return ['受付中','参加受付を行っています']; if(status==='question_open')return ['回答受付中','各チームの回答を待っています']; if(status==='judging')return ['判定中','結果を反映しています']; return ['判定後','結果を確認できます'];}
+  function teamsArr(state){const t=state&&state.teams?Object.entries(state.teams).map(([id,v])=>({id,...v})):[]; t.sort((a,b)=>((a.rank||0)-(b.rank||0))||((a.joinedAt||0)-(b.joinedAt||0))); return t;}
+  function injectHost(){const host=qs('#screen-host'); if(!host||qs('#host-stage-main')) return; const info=host.querySelector('.info-grid'); info.classList.add('v47'); const banner=mk('div','stage-banner','<div id="host-stage-main" class="stage-banner-main">受付中</div><div id="host-stage-sub" class="stage-banner-sub">参加受付を行っています</div>'); host.insertBefore(banner,info); const answered=info.children[3]; const unanswered=mk('div','card','<div class="mini-status">未回答</div><div id="host-unanswered-count" class="danger-count">0</div>'); const choice=mk('div','card','<div class="mini-status">選択肢</div><h2 id="host-choice-label">2択</h2>'); info.insertBefore(unanswered,answered.nextSibling); info.appendChild(choice); const progressCard=host.querySelector('.question-grid .card.stack:last-child'); const resetBtn=mk('button','btn dark','この問題をリセット'); resetBtn.type='button'; resetBtn.id='host-reset-current'; progressCard.insertBefore(resetBtn, progressCard.querySelector('#host-reset-room')); const cards=qsa('#screen-host > .card'); const labels=['参加チーム','回答状況','接続テスト']; cards.forEach((card,i)=>{const d=mk('details','fold'); if(i<2)d.open=true; const s=mk('summary','',labels[i]); const b=mk('div','fold-body'); card.parentNode.insertBefore(d,card); d.appendChild(s); d.appendChild(b); b.appendChild(card); card.style.marginTop='0';}); }
+  function injectTeamReset(id){const base=qs(id); if(!base||base.querySelector('.team-rereg')) return; const c=base.querySelector('.stack')||base.querySelector('.result-panel'); const wrap=mk('div','small-actions'); wrap.innerHTML='<button type="button" class="btn dark slim team-rereg">登録をやり直す</button>'; c.appendChild(wrap); wrap.querySelector('button').addEventListener('click',()=>{localStorage.removeItem('kakuzukeRealtimeTeamId'); location.reload();}); }
+  function applyOutcome(state){const q=state.game.question; Object.values(state.teams||{}).forEach(team=>{const a=team.answer||''; const before=team.rank||0; team.lastOutcome=''; if(!a) return; if(a===q.correctChoice){team.lastOutcome='correct'; return;} if(q.crazyChoice!=='none'&&a===q.crazyChoice){team.rank=Math.min(5,before+2); team.lastOutcome='crazy';} else {team.rank=Math.min(5,before+1); team.lastOutcome='wrong';}});}
+  function patchButtons(){const judge=qs('#host-judge-all'); if(judge&&!judge.dataset.v47){judge.dataset.v47='1'; judge.addEventListener('click',async e=>{e.preventDefault(); e.stopImmediatePropagation(); try{await runTransaction(roomRef,s=>{if(!s) return s; s.game.status='judging'; s.game.showFinal=false; s.meta=s.meta||{}; s.meta.updatedAt=Date.now(); return s;}); setTimeout(async()=>{await runTransaction(roomRef,s=>{if(!s) return s; applyOutcome(s); s.game.status='judged'; s.game.showFinal=false; s.meta=s.meta||{}; s.meta.updatedAt=Date.now(); return s;});},DELAY);}catch(err){console.error(err);}},true);} const resetCur=qs('#host-reset-current'); if(resetCur&&!resetCur.dataset.v47){resetCur.dataset.v47='1'; resetCur.addEventListener('click',async e=>{e.preventDefault(); e.stopImmediatePropagation(); await runTransaction(roomRef,s=>{if(!s) return s; s.game.status='registration'; s.game.showFinal=false; Object.values(s.teams||{}).forEach(t=>{t.answer=''; t.lastOutcome='';}); s.meta=s.meta||{}; s.meta.updatedAt=Date.now(); return s;});},true);} }
+  function updateExtras(state){injectHost(); injectTeamReset('#screen-team-waiting'); injectTeamReset('#screen-team-answered'); injectTeamReset('#screen-team-result'); patchButtons(); const overlay=qs('#judging-overlay'); if(overlay) overlay.classList.toggle('show', state.game.status==='judging'); const t=teamsArr(state), answered=t.filter(x=>x.answer).length, unanswered=Math.max(0,t.length-answered), st=stageText(state.game.status,state.game.showFinal); if(qs('#host-stage-main')){qs('#host-stage-main').textContent=st[0]; qs('#host-stage-sub').textContent=st[1];} if(qs('#host-unanswered-count')) qs('#host-unanswered-count').textContent=String(unanswered); if(qs('#host-choice-label')) qs('#host-choice-label').textContent=(state.game.question.choiceMode||'2')+'択'; }
+  onValue(roomRef,snap=>{const state=snap.val()||{}; updateExtras(state);});
+  window.addEventListener('load',()=>{injectHost(); injectTeamReset('#screen-team-waiting'); injectTeamReset('#screen-team-answered'); injectTeamReset('#screen-team-result'); patchButtons();});
+  <\/script>`;
+  const out=html.replace('</body>',patch+'</body>');
+  document.open(); document.write(out); document.close();
+})();
+</script>
+</body>
+</html>

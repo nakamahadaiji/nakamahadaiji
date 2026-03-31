@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>オリジナル格付けチェック リアルタイム版 v48</title>
+</head>
+<body>
+<script>
+(async()=>{
+  const html=await fetch('./kakuzuke-check-realtime-v47.html').then(r=>r.text());
+  const patch=`<style>
+  #host-reset-current,.team-rereg,.small-actions{display:none !important;}
+  @media (max-width:900px){
+    .answer-grid.cols-5{display:grid !important;grid-template-columns:220px 120px 120px 120px 180px !important;gap:10px;min-width:760px;}
+    #host-answer-grid,#display-answer-grid{display:grid !important;grid-template-columns:220px 120px 120px 120px 180px !important;min-width:760px;gap:10px;}
+    .fold-body{overflow-x:auto;}
+    #display-live-board{overflow-x:auto;}
+    .answer-cell,.answer-head{font-size:16px;padding:14px 10px;white-space:nowrap;}
+  }
+  </style><script>
+  window.addEventListener('load',()=>{
+    const removeEls=()=>{
+      document.querySelectorAll('#host-reset-current,.team-rereg,.small-actions').forEach(el=>el.remove());
+      const hostGrid=document.getElementById('host-answer-grid');
+      const displayGrid=document.getElementById('display-answer-grid');
+      if(hostGrid && hostGrid.parentElement && !hostGrid.parentElement.classList.contains('v48-scroll')){
+        const wrap=document.createElement('div');
+        wrap.className='v48-scroll';
+        wrap.style.overflowX='auto';
+        hostGrid.parentElement.insertBefore(wrap,hostGrid);
+        wrap.appendChild(hostGrid);
+      }
+      if(displayGrid && displayGrid.parentElement && !displayGrid.parentElement.classList.contains('v48-scroll')){
+        const wrap=document.createElement('div');
+        wrap.className='v48-scroll';
+        wrap.style.overflowX='auto';
+        displayGrid.parentElement.insertBefore(wrap,displayGrid);
+        wrap.appendChild(displayGrid);
+      }
+    };
+    removeEls();
+    const obs=new MutationObserver(removeEls);
+    obs.observe(document.body,{childList:true,subtree:true});
+  });
+  <\/script>`;
+  const out=html.replace('</body>',patch+'</body>');
+  document.open(); document.write(out); document.close();
+})();
+</script>
+</body>
+</html>

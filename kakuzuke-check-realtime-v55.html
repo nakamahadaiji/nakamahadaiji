@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>オリジナル格付けチェック リアルタイム版 v55</title>
+  <style>
+    html,body{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden}
+    iframe{border:0;width:100%;height:100%;display:block;background:#000}
+  </style>
+</head>
+<body>
+  <iframe id="appFrame" src="./kakuzuke-check-realtime-v54.html"></iframe>
+  <script>
+    const frame = document.getElementById('appFrame');
+
+    function applyPatch(doc){
+      const styleId = 'v55-register-message-style';
+      if(!doc.getElementById(styleId)){
+        const style = doc.createElement('style');
+        style.id = styleId;
+        style.textContent = `
+          .v55-registered-note {
+            margin: 14px auto 0;
+            max-width: 560px;
+            padding: 14px 16px;
+            border-radius: 16px;
+            background: linear-gradient(180deg,#1c1c1c,#101010);
+            border: 1px solid rgba(255,223,127,.18);
+            color: #fff0b4;
+            text-align: center;
+            font-weight: 900;
+            letter-spacing: .04em;
+          }
+        `;
+        doc.head.appendChild(style);
+      }
+
+      const waiting = doc.getElementById('screen-team-waiting');
+      if(!waiting) return;
+
+      let note = waiting.querySelector('.v55-registered-note');
+      if(!note){
+        note = doc.createElement('div');
+        note.className = 'v55-registered-note';
+        note.textContent = '登録されました';
+        const waitingBox = waiting.querySelector('.waiting-box');
+        if(waitingBox){
+          waitingBox.insertAdjacentElement('afterend', note);
+        }else{
+          waiting.appendChild(note);
+        }
+      }
+    }
+
+    frame.addEventListener('load', () => {
+      const doc = frame.contentDocument;
+      if(!doc) return;
+      applyPatch(doc);
+      const observer = new MutationObserver(() => applyPatch(doc));
+      observer.observe(doc.body, { childList:true, subtree:true });
+    });
+  </script>
+</body>
+</html>

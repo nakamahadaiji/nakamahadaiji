@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>オリジナル格付けチェック リアルタイム版 v56</title>
+  <style>html,body{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden}iframe{border:0;width:100%;height:100%;display:block;background:#000}</style>
+</head>
+<body>
+  <iframe id="appFrame" src="./kakuzuke-check-realtime-v55.html"></iframe>
+  <script>
+    const frame = document.getElementById('appFrame');
+    let once = false;
+
+    function patch(doc){
+      const btn = doc.getElementById('team-register-btn');
+      const registerScreen = doc.getElementById('screen-team-register');
+      if(!btn || !registerScreen || btn.dataset.v56done) return;
+      btn.dataset.v56done = '1';
+      btn.addEventListener('click', () => {
+        const before = localStorage.getItem('kakuzukeRealtimeTeamId') || '';
+        let count = 0;
+        const timer = setInterval(() => {
+          count += 1;
+          const after = localStorage.getItem('kakuzukeRealtimeTeamId') || '';
+          const stillOnRegister = registerScreen.classList.contains('active');
+          if(after && after !== before && stillOnRegister){
+            clearInterval(timer);
+            if(!once){
+              once = true;
+              frame.src = './kakuzuke-check-realtime-v55.html';
+            }
+          }
+          if(count > 20) clearInterval(timer);
+        }, 300);
+      }, true);
+    }
+
+    frame.addEventListener('load', () => {
+      const doc = frame.contentDocument;
+      if(!doc) return;
+      patch(doc);
+      const observer = new MutationObserver(() => patch(doc));
+      observer.observe(doc.body, { childList:true, subtree:true });
+    });
+  </script>
+</body>
+</html>

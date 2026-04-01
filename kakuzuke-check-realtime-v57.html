@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>オリジナル格付けチェック リアルタイム版 v57</title>
+  <style>
+    html,body{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden}
+    iframe{border:0;width:100%;height:100%;display:block;background:#000}
+  </style>
+</head>
+<body>
+  <iframe id="appFrame" src="./kakuzuke-check-realtime-v56.html"></iframe>
+  <script>
+    const frame = document.getElementById('appFrame');
+
+    function applyPatch(doc){
+      const styleId = 'v57-premium-rank-style';
+      if(!doc.getElementById(styleId)){
+        const style = doc.createElement('style');
+        style.id = styleId;
+        style.textContent = `
+          .v57-rank-stage {
+            margin-top: 16px;
+            padding: 20px 18px 22px;
+            border-radius: 24px;
+            border: 1px solid rgba(255,223,127,.24);
+            background:
+              radial-gradient(circle at 50% 0%, rgba(255,244,196,.34), transparent 38%),
+              linear-gradient(180deg, #2b2317 0%, #111111 55%, #1a1712 100%);
+            box-shadow:
+              inset 0 0 0 1px rgba(255,255,255,.04),
+              0 18px 30px rgba(0,0,0,.28);
+            text-align: center;
+          }
+          .v57-rank-eyebrow {
+            font-size: 12px;
+            letter-spacing: .26em;
+            color: #e7d49f;
+            font-weight: 900;
+          }
+          .v57-rank-main {
+            margin-top: 10px;
+            font-size: clamp(42px, 9vw, 68px);
+            line-height: 1.02;
+            font-weight: 900;
+            color: #fff6cf;
+            text-shadow:
+              0 2px 0 rgba(255,255,255,.20),
+              0 8px 18px rgba(0,0,0,.34);
+            font-family: "Yu Mincho","Hiragino Mincho ProN",serif;
+          }
+          .v57-rank-sub {
+            margin-top: 8px;
+            font-size: 22px;
+            font-weight: 900;
+            color: #f2dfac;
+            letter-spacing: .04em;
+          }
+          .v57-rank-line {
+            margin: 14px auto 0;
+            width: 72%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255,223,127,.68), transparent);
+          }
+          #team-current-rank-pill {
+            display: none !important;
+          }
+        `;
+        doc.head.appendChild(style);
+      }
+
+      const waiting = doc.getElementById('screen-team-waiting');
+      if(!waiting) return;
+      const stack = waiting.querySelector('.stack');
+      if(!stack) return;
+
+      const currentRankPill = doc.getElementById('team-current-rank-pill');
+      if(!currentRankPill) return;
+      const fullRank = (currentRankPill.textContent || '').replace('現在のランク：','').trim();
+      if(!fullRank) return;
+
+      let shortRank = '一流';
+      if(fullRank.includes('普通')) shortRank = '普通';
+      else if(fullRank.includes('二流')) shortRank = '二流';
+      else if(fullRank.includes('三流')) shortRank = '三流';
+      else if(fullRank.includes('そっくり')) shortRank = 'そっくり';
+      else if(fullRank.includes('映す価値なし')) shortRank = '映す価値なし';
+
+      let stage = waiting.querySelector('.v57-rank-stage');
+      if(!stage){
+        stage = doc.createElement('div');
+        stage.className = 'v57-rank-stage';
+        stage.innerHTML = '\n          <div class="v57-rank-eyebrow">YOUR CURRENT RANK</div>\n          <div class="v57-rank-main"></div>\n          <div class="v57-rank-line"></div>\n          <div class="v57-rank-sub"></div>\n        ';
+        stack.appendChild(stage);
+      }
+
+      const main = stage.querySelector('.v57-rank-main');
+      const sub = stage.querySelector('.v57-rank-sub');
+      if(main) main.textContent = shortRank;
+      if(sub) sub.textContent = fullRank;
+    }
+
+    frame.addEventListener('load', () => {
+      const doc = frame.contentDocument;
+      if(!doc) return;
+      applyPatch(doc);
+      const observer = new MutationObserver(() => applyPatch(doc));
+      observer.observe(doc.body, { childList:true, subtree:true, characterData:true });
+    });
+  </script>
+</body>
+</html>

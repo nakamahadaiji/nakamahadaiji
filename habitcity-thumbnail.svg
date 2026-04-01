@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b1020"/>
+      <stop offset="100%" stop-color="#06080d"/>
+    </linearGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d9eef8"/>
+      <stop offset="100%" stop-color="#c5e1ee"/>
+    </linearGradient>
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8a6c49"/>
+      <stop offset="100%" stop-color="#6e573c"/>
+    </linearGradient>
+    <linearGradient id="concrete" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#bfc6cb"/>
+      <stop offset="100%" stop-color="#9ba3aa"/>
+    </linearGradient>
+    <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d3b27d"/>
+      <stop offset="100%" stop-color="#ba945f"/>
+    </linearGradient>
+    <linearGradient id="roof" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7d6953"/>
+      <stop offset="100%" stop-color="#594938"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="180" cy="100" r="120" fill="#1b2e58" opacity="0.35"/>
+  <circle cx="1050" cy="530" r="220" fill="#0a84ff" opacity="0.10"/>
+  <text x="86" y="130" fill="#ffffff" font-size="78" font-family="Arial, sans-serif" font-weight="800">HabitCity</text>
+  <text x="88" y="198" fill="#9aa6bf" font-size="30" font-family="Arial, sans-serif">習慣を続けると、町が育つ。</text>
+  <g transform="translate(705 115)">
+    <rect x="0" y="0" width="380" height="400" rx="34" fill="#11151d" stroke="rgba(255,255,255,.08)"/>
+    <g transform="translate(40 42)">
+      <rect x="0" y="0" width="300" height="62" rx="20" fill="#171c25"/>
+      <circle cx="38" cy="31" r="10" fill="#0a84ff"/>
+      <text x="64" y="39" fill="#ffffff" font-size="24" font-family="Arial, sans-serif" font-weight="700">筋トレ20分</text>
+      <circle cx="264" cy="31" r="20" fill="#0a84ff"/>
+      <text x="254" y="40" fill="#ffffff" font-size="24" font-family="Arial, sans-serif" font-weight="700">✓</text>
+
+      <rect x="0" y="82" width="300" height="62" rx="20" fill="#171c25"/>
+      <circle cx="38" cy="113" r="10" fill="#32d74b"/>
+      <text x="64" y="121" fill="#ffffff" font-size="24" font-family="Arial, sans-serif" font-weight="700">読書30分</text>
+      <circle cx="264" cy="113" r="20" fill="#32d74b"/>
+      <text x="254" y="122" fill="#ffffff" font-size="24" font-family="Arial, sans-serif" font-weight="700">✓</text>
+
+      <rect x="0" y="164" width="300" height="62" rx="20" fill="#171c25"/>
+      <circle cx="38" cy="195" r="10" fill="#ff9f0a"/>
+      <text x="64" y="203" fill="#ffffff" font-size="24" font-family="Arial, sans-serif" font-weight="700">英語学習</text>
+      <circle cx="264" cy="195" r="20" fill="none" stroke="#ff9f0a" stroke-width="6"/>
+    </g>
+  </g>
+  <g transform="translate(70 230)">
+    <rect x="0" y="0" width="540" height="320" rx="36" fill="#131926"/>
+    <rect x="40" y="34" width="460" height="190" rx="30" fill="url(#sky)"/>
+    <g transform="translate(102 18)">
+      <polygon points="56,167 162,114 266,167 158,219" fill="url(#ground)"/>
+      <polygon points="97,141 161,110 225,141 161,170" fill="url(#concrete)"/>
+      <polygon points="97,141 97,162 161,194 161,170" fill="#adb5ba"/>
+      <polygon points="225,141 225,162 161,194 161,170" fill="#8f979e"/>
+      <rect x="116" y="90" width="8" height="55" fill="url(#wood)"/>
+      <rect x="150" y="74" width="8" height="70" fill="url(#wood)"/>
+      <rect x="184" y="92" width="8" height="52" fill="url(#wood)"/>
+      <rect x="132" y="120" width="60" height="8" fill="url(#wood)"/>
+      <polygon points="114,106 160,83 206,107 160,129" fill="#ddb883"/>
+      <polygon points="114,106 114,150 160,175 160,129" fill="#c9a06b"/>
+      <polygon points="206,107 206,150 160,175 160,129" fill="#b28656"/>
+      <rect x="148" y="122" width="16" height="35" fill="#76563a"/>
+      <polygon points="125,92 160,74 196,92 160,110" fill="#e5c38f"/>
+      <rect x="128" y="92" width="8" height="26" fill="url(#wood)"/>
+      <rect x="184" y="92" width="8" height="26" fill="url(#wood)"/>
+      <rect x="156" y="80" width="8" height="40" fill="url(#wood)"/>
+      <polygon points="112,101 160,58 208,100 160,121" fill="url(#roof)"/>
+      <polygon points="112,101 105,115 160,139 160,121" fill="#675544"/>
+      <polygon points="208,100 215,114 160,139 160,121" fill="#4e4033"/>
+      <rect x="176" y="72" width="10" height="28" fill="#b9b1a6"/>
+      <rect x="174" y="65" width="14" height="10" fill="#8a7f71"/>
+      <circle cx="95" cy="169" r="4" fill="#4caf50"/>
+      <circle cx="226" cy="171" r="4" fill="#4caf50"/>
+    </g>
+    <text x="42" y="270" fill="#ffffff" font-size="54" font-family="Arial, sans-serif" font-weight="800">Day 4 / 5</text>
+    <text x="42" y="304" fill="#9aa6bf" font-size="24" font-family="Arial, sans-serif">全達成で建物が進む</text>
+  </g>
+</svg>

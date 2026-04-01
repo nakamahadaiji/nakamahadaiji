@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>HabitCity Prototype</title>
+  <style>
+    :root {
+      --bg: #05070c;
+      --panel: #11151d;
+      --panel-2: #171c25;
+      --line: rgba(255,255,255,0.08);
+      --text: #f7f8fb;
+      --sub: #98a1b3;
+      --blue: #0a84ff;
+      --shadow: 0 20px 40px rgba(0,0,0,.35);
+      --success: #32d74b;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at top, #101727 0%, var(--bg) 48%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .phone {
+      width: 390px;
+      max-width: 100%;
+      min-height: 820px;
+      background: linear-gradient(180deg, #0a0d14 0%, #06080d 100%);
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: 32px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .header {
+      padding: 24px 20px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .title {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -.02em;
+    }
+
+    .sub {
+      color: var(--sub);
+      font-size: 13px;
+    }
+
+    .screen { display: none; min-height: 820px; }
+    .screen.active { display: block; }
+
+    .content { padding: 0 20px 28px; }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .tile {
+      background: linear-gradient(180deg, #101621, #0a0f17);
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: 18px;
+      height: 102px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .hero-main {
+      grid-column: span 3;
+      height: 214px;
+      border-radius: 26px;
+      background: linear-gradient(180deg, rgba(19,28,41,.9), rgba(8,10,16,.9));
+      position: relative;
+      padding: 18px;
+    }
+
+    .logo {
+      position: absolute;
+      left: 20px;
+      bottom: 86px;
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing: -.04em;
+    }
+
+    .hero-copy {
+      position: absolute;
+      left: 20px;
+      right: 20px;
+      bottom: 24px;
+    }
+
+    .hero-copy h2, .slide-text h2 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      line-height: 1.25;
+      letter-spacing: -.03em;
+    }
+
+    .hero-copy p, .slide-text p {
+      margin: 0;
+      color: var(--sub);
+      line-height: 1.6;
+    }
+
+    .primary-btn, .ghost-btn, .fab {
+      border: 0;
+      cursor: pointer;
+      transition: transform .15s ease, opacity .15s ease;
+    }
+    .primary-btn:active, .ghost-btn:active, .fab:active { transform: scale(.98); }
+
+    .primary-btn {
+      width: 100%;
+      border-radius: 18px;
+      background: var(--blue);
+      color: white;
+      font-weight: 800;
+      font-size: 20px;
+      padding: 18px 20px;
+      box-shadow: 0 12px 30px rgba(10,132,255,.28);
+    }
+
+    .ghost-btn {
+      background: rgba(255,255,255,.08);
+      color: white;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .fab {
+      position: absolute;
+      right: 20px;
+      bottom: 28px;
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      background: var(--blue);
+      color: white;
+      font-size: 34px;
+      box-shadow: 0 12px 24px rgba(10,132,255,.25);
+    }
+
+    .habit-list { display: grid; gap: 12px; margin-top: 14px; }
+    .habit-card {
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,.04);
+      border-radius: 22px;
+      padding: 18px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .habit-left { display: flex; gap: 14px; align-items: center; min-width: 0; }
+    .habit-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      flex: 0 0 auto;
+      box-shadow: 0 0 0 4px rgba(255,255,255,.05);
+    }
+
+    .habit-name {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .habit-purpose {
+      color: var(--sub);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .check {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 3px solid currentColor;
+      background: transparent;
+      color: #646e82;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .check.done {
+      background: currentColor;
+      color: white;
+    }
+
+    .progress-card {
+      margin-top: 20px;
+      background: linear-gradient(180deg, #141b26 0%, #0c1119 100%);
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: 28px;
+      padding: 18px;
+    }
+
+    .progress-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .progress-title {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .badge {
+      background: rgba(10,132,255,.12);
+      border: 1px solid rgba(10,132,255,.28);
+      color: #8fc2ff;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .illustration {
+      height: 250px;
+      border-radius: 24px;
+      background: linear-gradient(180deg, #dbeff8, #cfe4ef);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .day-tag {
+      position: absolute;
+      left: 18px;
+      bottom: 18px;
+      color: white;
+      font-weight: 900;
+      font-size: 30px;
+      text-shadow: 0 2px 12px rgba(0,0,0,.25);
+      letter-spacing: -.04em;
+    }
+
+    .progress-bars {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 7px;
+      margin-bottom: 16px;
+    }
+
+    .bar {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      overflow: hidden;
+    }
+
+    .bar.fill { background: rgba(10,132,255,.92); }
+
+    .city-grid {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .mini-city {
+      background: var(--panel-2);
+      border-radius: 18px;
+      height: 92px;
+      border: 1px solid rgba(255,255,255,.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mini-city span {
+      position: absolute;
+      left: 10px;
+      bottom: 8px;
+      font-size: 10px;
+      font-weight: 800;
+      color: rgba(255,255,255,.86);
+    }
+
+    .section-title {
+      margin-top: 24px;
+      font-size: 15px;
+      font-weight: 800;
+      color: #c5cada;
+      letter-spacing: .02em;
+    }
+
+    .modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(2,4,8,.72);
+      backdrop-filter: blur(10px);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal.active { display: flex; }
+
+    .sheet {
+      width: 100%;
+      background: #0d1017;
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 30px;
+      padding: 22px 18px 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .sheet-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .sheet-title {
+      font-weight: 900;
+      font-size: 24px;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+    .label {
+      display: block;
+      font-size: 14px;
+      color: #c5cada;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    input, textarea {
+      width: 100%;
+      background: #171c25;
+      color: white;
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: 18px;
+      padding: 14px 16px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 96px;
+      resize: none;
+      font-family: inherit;
+    }
+
+    .colors { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+    .color-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      cursor: pointer;
+    }
+    .color-btn.active { border-color: white; }
+
+    .empty {
+      margin-top: 20px;
+      background: var(--panel);
+      padding: 24px 18px;
+      border-radius: 24px;
+      text-align: center;
+      color: var(--sub);
+      line-height: 1.7;
+    }
+
+    .slides {
+      display: flex;
+      width: 300%;
+      transition: transform .35s ease;
+    }
+
+    .slide {
+      width: 33.3333%;
+      padding: 0 20px 28px;
+    }
+
+    .slide-text {
+      margin-top: 22px;
+      text-align: center;
+      padding: 0 6px;
+    }
+
+    .dots { display: flex; justify-content: center; gap: 10px; margin: 14px 0 18px; }
+    .dots span {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.16);
+    }
+    .dots span.active { width: 28px; background: var(--blue); }
+
+    .top-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 22px 20px 0;
+    }
+
+    svg { max-width: 100%; height: auto; }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <section class="screen active" id="onboardingScreen">
+      <div class="top-actions">
+        <button class="ghost-btn" id="skipBtn">Skip</button>
+        <div class="sub">HabitCity</div>
+      </div>
+      <div class="slides" id="slides">
+        <div class="slide">
+          <div class="hero-grid">
+            <div class="tile" id="miniTile1"></div>
+            <div class="tile" id="miniTile2"></div>
+            <div class="tile" id="miniTile3"></div>
+            <div class="hero-main">
+              <div id="heroHouse"></div>
+              <div class="logo">HabitCity</div>
+              <div class="hero-copy">
+                <h2>習慣を継続して<br>建物を作ろう</h2>
+                <p>毎日1つずつ進歩を重ねると、あなたの町が少しずつ広がります。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="slide">
+          <div class="content">
+            <div class="progress-card" style="margin-top: 18px;">
+              <div class="habit-list" id="demoHabitList"></div>
+            </div>
+            <div class="slide-text">
+              <h2>習慣を登録して<br>楽しく継続</h2>
+              <p>まずは無理なく続けられる数の習慣を登録するのがおすすめです。</p>
+            </div>
+          </div>
+        </div>
+        <div class="slide">
+          <div class="content">
+            <div class="progress-card" style="margin-top: 18px;">
+              <div class="illustration" id="onboardingBuild"></div>
+              <div class="slide-text" style="margin-top: 0;">
+                <h2>全タスク達成で<br>建物が進む</h2>
+                <p>その日の目標をすべて終えると、建物が少しずつ完成に近づきます。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="dots" id="slideDots">
+        <span class="active"></span>
+        <span></span>
+        <span></span>
+      </div>
+      <div class="content">
+        <button class="primary-btn" id="nextSlideBtn">次へ</button>
+      </div>
+    </section>
+
+    <section class="screen" id="appScreen">
+      <div class="header">
+        <div>
+          <div class="title">今日の習慣</div>
+          <div class="sub" id="todayLabel"></div>
+        </div>
+        <button class="ghost-btn" id="resetTodayBtn">今日をリセット</button>
+      </div>
+
+      <div class="content">
+        <div class="habit-list" id="habitList"></div>
+        <div class="empty" id="emptyState" style="display:none;">
+          習慣がまだありません。<br>
+          右下の＋から最初の習慣を追加してください。
+        </div>
+
+        <div class="progress-card">
+          <div class="progress-head">
+            <div>
+              <div class="progress-title" id="buildingName">木の家</div>
+              <div class="sub">その日の習慣をすべて達成すると 1 段階進みます</div>
+            </div>
+            <div class="badge" id="completionBadge">進捗 0 / 5</div>
+          </div>
+
+          <div class="illustration" id="buildingView"></div>
+          <div class="progress-bars" id="progressBars"></div>
+          <div class="sub" id="statusMessage">まずは今日の習慣を登録しましょう。</div>
+        </div>
+
+        <div class="section-title">完成した建物</div>
+        <div class="city-grid" id="cityGrid"></div>
+      </div>
+
+      <button class="fab" id="addHabitBtn">＋</button>
+    </section>
+
+    <div class="modal" id="habitModal">
+      <div class="sheet">
+        <div class="sheet-head">
+          <button class="ghost-btn" id="closeModalBtn">キャンセル</button>
+          <div class="sheet-title">新しい習慣</div>
+          <button class="ghost-btn" id="saveHabitBtn">保存</button>
+        </div>
+
+        <div class="field">
+          <label class="label" for="habitTitle">タイトル</label>
+          <input id="habitTitle" placeholder="例: 筋トレ20分" maxlength="40" />
+        </div>
+
+        <div class="field">
+          <label class="label" for="habitPurpose">目標</label>
+          <textarea id="habitPurpose" placeholder="なぜやるか / どうなりたいか"></textarea>
+        </div>
+
+        <div class="field">
+          <div class="label">カードカラー</div>
+          <div class="colors" id="colorPicker"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'habit-city-prototype-v1';
+    const BUILDINGS = ['木の家', '町家', '神社', '灯台', 'お城'];
+    const COLORS = ['#0A84FF', '#32D74B', '#FF9F0A', '#FF453A', '#BF5AF2', '#8E8E93'];
+
+    const defaultState = {
+      seenOnboarding: false,
+      selectedColor: COLORS[0],
+      habits: [],
+      completions: {},
+      rewardedDates: {},
+      currentBuilding: { name: BUILDINGS[0], step: 0 },
+      completedBuildings: []
+    };
+
+    let state = loadState();
+    let slideIndex = 0;
+
+    const onboardingScreen = document.getElementById('onboardingScreen');
+    const appScreen = document.getElementById('appScreen');
+    const slides = document.getElementById('slides');
+    const slideDots = [...document.querySelectorAll('#slideDots span')];
+    const nextSlideBtn = document.getElementById('nextSlideBtn');
+    const skipBtn = document.getElementById('skipBtn');
+    const todayLabel = document.getElementById('todayLabel');
+    const habitList = document.getElementById('habitList');
+    const emptyState = document.getElementById('emptyState');
+    const buildingName = document.getElementById('buildingName');
+    const completionBadge = document.getElementById('completionBadge');
+    const buildingView = document.getElementById('buildingView');
+    const progressBars = document.getElementById('progressBars');
+    const statusMessage = document.getElementById('statusMessage');
+    const cityGrid = document.getElementById('cityGrid');
+    const addHabitBtn = document.getElementById('addHabitBtn');
+    const habitModal = document.getElementById('habitModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const saveHabitBtn = document.getElementById('saveHabitBtn');
+    const habitTitle = document.getElementById('habitTitle');
+    const habitPurpose = document.getElementById('habitPurpose');
+    const colorPicker = document.getElementById('colorPicker');
+    const resetTodayBtn = document.getElementById('resetTodayBtn');
+
+    init();
+
+    function init() {
+      renderColorPicker();
+      renderDemo();
+      render();
+      bindEvents();
+    }
+
+    function bindEvents() {
+      nextSlideBtn.addEventListener('click', () => {
+        if (slideIndex < 2) {
+          slideIndex += 1;
+          updateSlides();
+        } else {
+          startApp();
+        }
+      });
+
+      skipBtn.addEventListener('click', startApp);
+      addHabitBtn.addEventListener('click', openModal);
+      closeModalBtn.addEventListener('click', closeModal);
+      saveHabitBtn.addEventListener('click', saveHabit);
+      resetTodayBtn.addEventListener('click', resetToday);
+      habitModal.addEventListener('click', (e) => {
+        if (e.target === habitModal) closeModal();
+      });
+    }
+
+    function render() {
+      const today = formatDate(new Date());
+      todayLabel.textContent = today;
+      const todayKey = getTodayKey();
+      const daily = state.completions[todayKey] || {};
+
+      onboardingScreen.classList.toggle('active', !state.seenOnboarding);
+      appScreen.classList.toggle('active', state.seenOnboarding);
+
+      habitList.innerHTML = '';
+      emptyState.style.display = state.habits.length ? 'none' : 'block';
+
+      state.habits.forEach(habit => {
+        const done = !!daily[habit.id];
+        const card = document.createElement('div');
+        card.className = 'habit-card';
+        card.innerHTML = `
+          <div class="habit-left">
+            <div class="habit-dot" style="background:${habit.color}"></div>
+            <div>
+              <div class="habit-name">${escapeHtml(habit.title)}</div>
+              <div class="habit-purpose">${escapeHtml(habit.purpose || '目標を設定して継続しやすくしましょう')}</div>
+            </div>
+          </div>
+          <button class="check ${done ? 'done' : ''}" style="color:${habit.color}">${done ? '✓' : ''}</button>
+        `;
+        card.querySelector('.check').addEventListener('click', () => toggleHabit(habit.id));
+        habitList.appendChild(card);
+      });
+
+      const step = state.currentBuilding.step;
+      buildingName.textContent = state.currentBuilding.name;
+      completionBadge.textContent = `進捗 ${step} / 5`;
+      buildingView.innerHTML = renderBuildingSVG(step, state.currentBuilding.name);
+      progressBars.innerHTML = '';
+      for (let i = 1; i <= 5; i++) {
+        const bar = document.createElement('div');
+        bar.className = `bar ${step >= i ? 'fill' : ''}`;
+        progressBars.appendChild(bar);
+      }
+
+      const completed = Object.values(daily).filter(Boolean).length;
+      if (!state.habits.length) {
+        statusMessage.textContent = 'まずは右下の＋から習慣を追加してください。';
+      } else if (completed === state.habits.length) {
+        statusMessage.textContent = '今日は全タスク達成です。建物が進みました。';
+      } else {
+        statusMessage.textContent = `今日の達成 ${completed} / ${state.habits.length}。全部終えると建物が1段階進みます。`;
+      }
+
+      cityGrid.innerHTML = '';
+      if (!state.completedBuildings.length) {
+        cityGrid.innerHTML = '<div class="mini-city" style="grid-column: span 3; height: 86px;"><span>まだ建物はありません</span></div>';
+      } else {
+        state.completedBuildings.forEach((name, index) => {
+          const item = document.createElement('div');
+          item.className = 'mini-city';
+          item.innerHTML = `${renderBuildingSVG(5, name, true)}<span>${index + 1}. ${escapeHtml(name)}</span>`;
+          cityGrid.appendChild(item);
+        });
+      }
+
+      saveState();
+    }
+
+    function renderDemo() {
+      document.getElementById('heroHouse').innerHTML = renderBuildingSVG(5, '木の家');
+      document.getElementById('miniTile1').innerHTML = renderBuildingSVG(5, '町家', true);
+      document.getElementById('miniTile2').innerHTML = renderBuildingSVG(5, '神社', true);
+      document.getElementById('miniTile3').innerHTML = renderBuildingSVG(5, 'お城', true);
+      document.getElementById('onboardingBuild').innerHTML = renderBuildingSVG(3, '木の家');
+
+      const demoHabits = [
+        { title: '筋トレ', color: '#FF453A', done: true },
+        { title: '2L 水飲む', color: '#0A84FF', done: true },
+        { title: '読書 30 分', color: '#32D74B', done: true },
+        { title: '英語学習 2 時間', color: '#FF9F0A', done: false },
+        { title: '瞑想 10 分', color: '#BF5AF2', done: false }
+      ];
+
+      const demoHabitList = document.getElementById('demoHabitList');
+      demoHabitList.innerHTML = '';
+      demoHabits.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'habit-card';
+        row.innerHTML = `
+          <div class="habit-left">
+            <div class="habit-dot" style="background:${item.color}"></div>
+            <div class="habit-name" style="margin-bottom:0; font-size:18px;">${item.title}</div>
+          </div>
+          <div class="check ${item.done ? 'done' : ''}" style="color:${item.color}">${item.done ? '✓' : ''}</div>
+        `;
+        demoHabitList.appendChild(row);
+      });
+    }
+
+    function updateSlides() {
+      slides.style.transform = `translateX(-${slideIndex * 33.3333}%)`;
+      slideDots.forEach((dot, i) => dot.classList.toggle('active', i === slideIndex));
+      nextSlideBtn.textContent = slideIndex === 2 ? 'はじめる' : '次へ';
+    }
+
+    function startApp() {
+      state.seenOnboarding = true;
+      render();
+    }
+
+    function openModal() {
+      habitModal.classList.add('active');
+      habitTitle.focus();
+    }
+
+    function closeModal() {
+      habitModal.classList.remove('active');
+      habitTitle.value = '';
+      habitPurpose.value = '';
+      state.selectedColor = COLORS[0];
+      renderColorPicker();
+      saveState();
+    }
+
+    function saveHabit() {
+      const title = habitTitle.value.trim();
+      const purpose = habitPurpose.value.trim();
+      if (!title) {
+        alert('タイトルを入力してください。');
+        return;
+      }
+
+      state.habits.push({
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+        title,
+        purpose,
+        color: state.selectedColor
+      });
+
+      closeModal();
+      render();
+    }
+
+    function toggleHabit(habitId) {
+      const todayKey = getTodayKey();
+      if (!state.completions[todayKey]) state.completions[todayKey] = {};
+      state.completions[todayKey][habitId] = !state.completions[todayKey][habitId];
+      maybeAdvanceBuilding();
+      render();
+    }
+
+    function maybeAdvanceBuilding() {
+      const todayKey = getTodayKey();
+      const daily = state.completions[todayKey] || {};
+      if (!state.habits.length) return;
+
+      const allDone = state.habits.every(habit => daily[habit.id]);
+      if (!allDone) return;
+      if (state.rewardedDates[todayKey]) return;
+
+      state.currentBuilding.step += 1;
+      state.rewardedDates[todayKey] = true;
+
+      if (state.currentBuilding.step >= 5) {
+        state.completedBuildings.push(state.currentBuilding.name);
+        const nextName = BUILDINGS[state.completedBuildings.length % BUILDINGS.length];
+        state.currentBuilding = { name: nextName, step: 0 };
+      }
+    }
+
+    function resetToday() {
+      const todayKey = getTodayKey();
+      delete state.completions[todayKey];
+      delete state.rewardedDates[todayKey];
+      render();
+    }
+
+    function renderColorPicker() {
+      colorPicker.innerHTML = '';
+      COLORS.forEach(color => {
+        const btn = document.createElement('button');
+        btn.className = `color-btn ${state.selectedColor === color ? 'active' : ''}`;
+        btn.style.background = color;
+        btn.addEventListener('click', () => {
+          state.selectedColor = color;
+          renderColorPicker();
+        });
+        colorPicker.appendChild(btn);
+      });
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? { ...defaultState, ...JSON.parse(raw) } : structuredClone(defaultState);
+      } catch (error) {
+        return structuredClone(defaultState);
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function getTodayKey() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function formatDate(date) {
+      return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function renderBuildingSVG(step, name, small = false) {
+      const scale = small ? 0.5 : 1;
+      const labelSize = small ? 16 : 30;
+      const base = `
+        <svg viewBox="0 0 320 230" aria-label="${name}">
+          <defs>
+            <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#8a6c49"/>
+              <stop offset="100%" stop-color="#6e573c"/>
+            </linearGradient>
+            <linearGradient id="concrete" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#bfc6cb"/>
+              <stop offset="100%" stop-color="#9ba3aa"/>
+            </linearGradient>
+            <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#d3b27d"/>
+              <stop offset="100%" stop-color="#ba945f"/>
+            </linearGradient>
+            <linearGradient id="roof" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#7d6953"/>
+              <stop offset="100%" stop-color="#594938"/>
+            </linearGradient>
+          </defs>
+          <g transform="translate(0, ${small ? 18 : 0}) scale(${scale})">
+            <polygon points="56,167 162,114 266,167 158,219" fill="url(#ground)"/>
+            <polygon points="97,141 161,110 225,141 161,170" fill="url(#concrete)" opacity="${step >= 0 ? 1 : 0}"/>
+            <polygon points="97,141 97,162 161,194 161,170" fill="#adb5ba" opacity="${step >= 0 ? 1 : 0}"/>
+            <polygon points="225,141 225,162 161,194 161,170" fill="#8f979e" opacity="${step >= 0 ? 1 : 0}"/>
+
+            ${step >= 1 ? '<g><rect x="116" y="90" width="8" height="55" fill="url(#wood)"/><rect x="150" y="74" width="8" height="70" fill="url(#wood)"/><rect x="184" y="92" width="8" height="52" fill="url(#wood)"/><rect x="132" y="120" width="60" height="8" fill="url(#wood)"/></g>' : ''}
+            ${step >= 2 ? '<g><polygon points="114,106 160,83 206,107 160,129" fill="#ddb883"/><polygon points="114,106 114,150 160,175 160,129" fill="#c9a06b"/><polygon points="206,107 206,150 160,175 160,129" fill="#b28656"/><rect x="148" y="122" width="16" height="35" fill="#76563a"/></g>' : ''}
+            ${step >= 3 ? '<g><polygon points="125,92 160,74 196,92 160,110" fill="#e5c38f"/><rect x="128" y="92" width="8" height="26" fill="url(#wood)"/><rect x="184" y="92" width="8" height="26" fill="url(#wood)"/><rect x="156" y="80" width="8" height="40" fill="url(#wood)"/></g>' : ''}
+            ${step >= 4 ? '<g><polygon points="112,101 160,58 208,100 160,121" fill="url(#roof)"/><polygon points="112,101 105,115 160,139 160,121" fill="#675544"/><polygon points="208,100 215,114 160,139 160,121" fill="#4e4033"/></g>' : ''}
+            ${step >= 5 ? '<g><rect x="176" y="72" width="10" height="28" fill="#b9b1a6"/><rect x="174" y="65" width="14" height="10" fill="#8a7f71"/><circle cx="95" cy="169" r="4" fill="#4caf50"/><circle cx="226" cy="171" r="4" fill="#4caf50"/><circle cx="84" cy="160" r="3" fill="#5ebf63"/><circle cx="238" cy="162" r="3" fill="#5ebf63"/></g>' : ''}
+          </g>
+          ${small ? '' : `<text x="22" y="210" fill="rgba(255,255,255,.95)" font-size="${labelSize}" font-weight="900">Day ${step} / 5</text>`}
+        </svg>
+      `;
+      return base;
+    }
+  </script>
+</body>
+</html>

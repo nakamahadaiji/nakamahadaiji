@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ルネ高受験対策navi</title>
+<style>
+:root{
+  --bg:#f4f8ff;
+  --panel:#ffffff;
+  --line:#d7e2f0;
+  --line-strong:#b7c8df;
+  --text:#243247;
+  --muted:#627389;
+  --brand:#2463b5;
+  --brand-2:#4f8ee6;
+  --sub:#eef5ff;
+  --accent:#ff7b6b;
+  --ok:#2d7a51;
+  --warn:#b7791f;
+  --chip:#eef4ff;
+  --shadow:0 14px 34px rgba(46,92,168,.12);
+  --radius:16px;
+  --font-size:16px;
+}
+*{box-sizing:border-box}
+html{font-size:var(--font-size)}
+body{
+  margin:0;
+  background:linear-gradient(180deg,#eaf3ff 0,#f7fbff 180px,#f7fbff 100%);
+  color:var(--text);
+  font-family:"BIZ UDPGothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
+}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+h1,h2,h3,h4,p{margin:0}
+a{text-decoration:none;color:inherit}
+.app-shell{max-width:1320px;margin:0 auto;padding:18px 18px 28px}
+.header{
+  background:linear-gradient(135deg,#2a63b8,#57a0ff);
+  color:#fff;
+  padding:18px 22px;
+  box-shadow:0 8px 24px rgba(32,78,135,.2);
+}
+.header-row{
+  max-width:1320px;
+  margin:0 auto;
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:18px;
+  align-items:center;
+}
+.brand-small{font-size:0.9rem;font-weight:700;opacity:.92;letter-spacing:.03em}
+.brand-main{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;margin-top:4px}
+.brand-name{font-size:2rem;font-weight:800;letter-spacing:.02em}
+.brand-role{font-size:1rem;font-weight:700;opacity:.92;padding-bottom:4px}
+.header-tools{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}
+.switch{
+  display:flex;gap:6px;align-items:center;background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.18);padding:6px;border-radius:999px
+}
+.switch-label{font-size:.85rem;font-weight:700;padding:0 8px;opacity:.92}
+.switch button{
+  border:none;padding:9px 14px;border-radius:999px;background:transparent;color:#fff;font-weight:700
+}
+.switch button.active{background:#fff;color:var(--brand)}
+.layout{display:grid;grid-template-columns:240px 1fr;gap:16px;margin-top:16px}
+.sidebar{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px
+}
+.sidebar h3{font-size:1rem;color:var(--brand);margin-bottom:12px}
+.nav-list{display:grid;gap:8px}
+.nav-btn{
+  width:100%;text-align:left;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:linear-gradient(180deg,#ffffff,#f7fbff);color:var(--text);font-weight:700
+}
+.nav-btn small{display:block;font-size:.82rem;color:var(--muted);font-weight:400;margin-top:4px}
+.nav-btn.active{background:linear-gradient(135deg,#eef5ff,#dfeeff);border-color:#b7cce6;color:var(--brand);box-shadow:0 8px 18px rgba(79,142,230,.14)}
+.main{display:grid;gap:16px}
+.panel{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)
+}
+.panel-head{
+  padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:linear-gradient(180deg,#ffffff,#f6faff)
+}
+.panel-title{font-size:1.1rem;font-weight:800;color:var(--brand)}
+.panel-body{padding:16px 18px}
+.note{
+  background:linear-gradient(135deg,#f3f8ff,#eef7ff);border:1px solid #d7e6f6;border-radius:14px;padding:12px 14px;color:#36506f
+}
+.hero{
+  display:grid;grid-template-columns:1.2fr .8fr;gap:16px
+}
+.hero-card{
+  background:linear-gradient(180deg,#ffffff 0,#f3f8ff 100%);
+  border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px
+}
+.hero-card h1{font-size:1.5rem;color:var(--brand);margin-bottom:8px}
+.hero-card p{color:var(--muted);line-height:1.7}
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.stat{
+  background:linear-gradient(180deg,#ffffff,#f7fbff);border:1px solid var(--line);border-radius:14px;padding:12px
+}
+.stat .label{font-size:.82rem;color:var(--muted)}
+.stat .value{font-size:1.3rem;font-weight:800;color:var(--brand);margin-top:6px}
+.action-list{display:grid;gap:10px;margin-top:12px}
+.action-row{
+  display:flex;justify-content:space-between;gap:10px;align-items:center;
+  background:linear-gradient(180deg,#ffffff,#f9fbff);border:1px solid var(--line);border-radius:14px;padding:10px 12px
+}
+.action-row .left{display:grid;gap:4px}
+.action-row strong{font-size:.95rem}
+.action-row small{color:var(--muted)}
+.chip{
+  display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:var(--chip);font-size:.83rem;font-weight:700;color:#334155
+}
+.with-help{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.info-wrap{position:relative;display:inline-flex;align-items:center}
+.info-dot{
+  width:22px;height:22px;border:none;border-radius:999px;
+  background:linear-gradient(135deg,#eaf2ff,#d7e8ff);color:var(--brand);
+  font-size:.82rem;font-weight:800;display:inline-flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 10px rgba(79,142,230,.12)
+}
+.info-dot:hover{filter:brightness(.98)}
+.tooltip-box{
+  position:absolute;top:30px;right:0;min-width:260px;max-width:360px;
+  background:#fff;border:1px solid #cfe0f7;border-radius:12px;padding:10px 12px;
+  color:#334155;line-height:1.7;box-shadow:0 16px 34px rgba(46,92,168,.16);
+  opacity:0;pointer-events:none;transform:translateY(6px);transition:.16s ease;z-index:30;white-space:pre-wrap
+}
+.info-wrap:hover .tooltip-box,.info-wrap:focus-within .tooltip-box{opacity:1;pointer-events:auto;transform:translateY(0)}
+.compact-text{color:var(--muted);line-height:1.65}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap}
+.toolbar button,.toolbar select,.toolbar input{
+  border:1px solid var(--line-strong);border-radius:10px;background:#fff;padding:10px 12px
+}
+.toolbar button.active{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;border-color:var(--brand)}
+.grade-tabs,.month-tabs{display:flex;gap:8px;flex-wrap:wrap}
+.grade-tabs button,.month-tabs button{
+  border:1px solid var(--line-strong);background:#fff;border-radius:10px;padding:8px 14px;font-weight:700;color:#334155
+}
+.grade-tabs button.active,.month-tabs button.active{background:linear-gradient(135deg,var(--brand),var(--brand-2));border-color:var(--brand);color:#fff;box-shadow:0 8px 16px rgba(79,142,230,.18)}
+.schedule-grid-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}
+.schedule-grid{
+  min-width:0;
+  display:grid;
+  grid-template-columns:180px repeat(12,minmax(0,1fr));
+}
+.grid-cell{
+  border-right:1px solid #e8edf4;border-bottom:1px solid #e8edf4;padding:10px;background:#fff
+}
+.grid-head{position:sticky;top:0;background:#f6f9fd;font-weight:800;color:#334155;z-index:1;text-align:center}
+.grid-label{font-weight:700;color:#334155;background:#fbfcfe;position:sticky;left:0;z-index:1}
+.bar-row{
+  grid-column:2 / span 12;position:relative;min-height:56px;border-bottom:1px solid #e8edf4;background:repeating-linear-gradient(90deg, transparent 0, transparent calc(100%/12 - 1px), #edf1f6 calc(100%/12 - 1px), #edf1f6 calc(100%/12));
+}
+.bar{
+  position:absolute;height:18px;top:19px;border-radius:999px;color:#fff;font-size:.73rem;font-weight:700;padding:0 8px;display:flex;align-items:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  box-shadow:0 4px 10px rgba(0,0,0,.12)
+}
+.schedule-detail{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.info-card{background:linear-gradient(180deg,#ffffff,#f8fbff);border:1px solid var(--line);border-radius:16px;padding:12px}
+.info-card h4{color:var(--brand);margin-bottom:10px;font-size:1rem}
+.info-card p{color:#425466;line-height:1.75}
+.list{display:grid;gap:8px}
+.list-item{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff}
+.phase-card{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fff}
+.phase-card + .phase-card{margin-top:12px}
+.phase-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.phase-name{font-weight:800;color:var(--brand);font-size:1.02rem}
+.guide-item{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fbfcfe}
+.guide-item + .guide-item{margin-top:10px}
+.guide-item h4{font-size:.98rem;color:#1f4f8f;margin-bottom:0}
+.guide-item.warn{background:#fff7e8;border-color:#ead4a2}
+.school-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}
+.pattern-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.pattern-card{border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff}
+.pattern-card h4{display:flex;justify-content:space-between;align-items:center;color:var(--brand);margin-bottom:8px}
+.pattern-meta{font-size:.82rem;color:var(--muted);line-height:1.6}
+.school-list{display:grid;gap:10px}
+.school-card{border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff}
+.school-card .top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.school-card h4{font-size:1rem;color:#223149}
+.school-card p{margin-top:4px;color:var(--muted);font-size:.92rem}
+.school-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.school-tags span{padding:5px 8px;border-radius:999px;background:var(--chip);font-size:.78rem;font-weight:700}
+.school-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.small-btn{border:1px solid var(--line-strong);background:#fff;border-radius:10px;padding:8px 10px;font-weight:700;color:#334155}
+.small-btn.primary{background:linear-gradient(135deg,var(--brand),var(--brand-2));border-color:var(--brand);color:#fff}
+.small-btn.danger{color:#8b1e1e}
+.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.field{display:grid;gap:6px}
+.field.full{grid-column:1 / -1}
+label{font-size:.9rem;font-weight:700;color:#334155}
+input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--line-strong);border-radius:10px;background:#fff;color:var(--text)}
+textarea{min-height:88px;resize:vertical}
+.save-bar{position:sticky;bottom:12px;display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.save-msg{font-size:.9rem;color:var(--ok);font-weight:700;display:none;align-self:center}
+.save-msg.show{display:block}
+.section-split{height:1px;background:var(--line);margin:16px 0}
+.muted{color:var(--muted)}
+.hidden{display:none}
+@media (max-width:1100px){.layout{grid-template-columns:1fr}.hero,.schedule-detail,.school-grid{grid-template-columns:1fr}}
+@media (max-width:760px){.header-row{grid-template-columns:1fr}.brand-name{font-size:1.55rem}.hero-stats,.pattern-grid,.form-grid{grid-template-columns:1fr}.app-shell{padding:12px}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const STORAGE_KEY = 'rene_navi_integrated_v6';
+const monthNames = ['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月'];
+const defaultData = {
+  grades:{
+    '高1':{title:'土台を整える時期',intro:'高1は、評定・提出・活動の継続を通して、受験の土台をつくる時期です。早い段階で完璧に決めるのではなく、まずは続けられる形を整えることを優先します。',items:[
+      {id:'g1-1',label:'評定づくり',color:'#ff8a75',start:0,end:11,description:'授業・提出物・定期考査の基本を崩さない。',actions:['提出期限を月初に確認する','考査2週間前から復習を始める','欠席や未提出が出たらすぐ相談する']},
+      {id:'g1-2',label:'英語資格',color:'#5c87d6',start:1,end:11,description:'英検などの資格学習を早めに開始する。',actions:['受験級を決める','週ごとの勉強時間を固定する','受験月の前月から過去問に入る']},
+      {id:'g1-3',label:'校内活動',color:'#56b38a',start:1,end:10,description:'継続的に話せる役割を持つ。',actions:['活動を1つ選ぶ','月1回記録を残す','中途で投げ出さない']},
+      {id:'g1-4',label:'進路の情報収集',color:'#8a6ad9',start:5,end:9,description:'学部・学科・入試方式の違いを知る。',actions:['気になる分野を3つ挙げる','大学情報を比べる','気づいたことをメモする']}
+    ]},
+    '高2':{title:'深めて絞る時期',intro:'高2は、活動を深めながら、受験で説明できる形へ整えていく時期です。評定の維持と探究の具体化が特に重要になります。',items:[
+      {id:'g2-1',label:'評定の維持',color:'#ff8a75',start:0,end:11,description:'高2の成績は出願時に見られやすい。',actions:['苦手教科の対策日を固定する','提出抜けをなくす','テスト後に振り返りを書く']},
+      {id:'g2-2',label:'探究・研究',color:'#46a3e6',start:1,end:11,description:'興味をテーマに育てて、説明できる状態にする。',actions:['テーマを1つに絞る','月1回途中経過をまとめる','資料を読む']},
+      {id:'g2-3',label:'課外活動',color:'#f2b55f',start:3,end:10,description:'外部の経験を加えて、視野を広げる。',actions:['参加候補を探す','参加後に記録する','続けられるものを選ぶ']},
+      {id:'g2-4',label:'志望校比較',color:'#6d7f99',start:7,end:11,description:'必要条件と方式の違いを比べる。',actions:['候補校を3〜5校に絞る','必要書類を表にする','専願・併願を確認する']}
+    ]},
+    '高3':{title:'仕上げる時期',intro:'高3は、出願準備と試験対策を実務レベルで進める時期です。締切から逆算して動くことが重要です。',items:[
+      {id:'g3-1',label:'受験校確定',color:'#46a3e6',start:0,end:3,description:'受験校と方式を最終確認する。',actions:['受験校を確定する','提出物を確認する','締切一覧を作る']},
+      {id:'g3-2',label:'書類作成',color:'#8a6ad9',start:0,end:8,description:'志望理由書・活動報告書を早めに作る。',actions:['下書きを早めに出す','添削回数を確保する','誤字脱字を確認する']},
+      {id:'g3-3',label:'面接・小論文',color:'#56b38a',start:5,end:8,description:'想定問答と時間管理を意識して練習する。',actions:['想定問答をつくる','声に出して練習する','時間を計って書く']},
+      {id:'g3-4',label:'出願・確認',color:'#6d7f99',start:4,end:9,description:'提出漏れや日程ミスを防ぐ。',actions:['提出前日に再確認する','不足書類をなくす','提出方法を確認する']}
+    ]}
+  },
+  guides:{phases:[
+    {id:'phase-1',name:'高1・高2前半',title:'土台をつくり、視野を広げる時期',items:[
+      {id:'p1-1',title:'この時期に大切にしていること',body:'「すぐに受験対策を完成させること」ではなく、探求し、しっかりと自分の言葉で語れる受験生になるための土台をつくることを大切にします。',type:'normal'},
+      {id:'p1-2',title:'評定平均・英語資格について',body:'総合型選抜では、評定平均と英語資格が多くの大学で必要です。これは「あると有利」ではなく、ないと出願できない場合もある条件です。早期に目標を整理し、計画的に積み上げます。',type:'normal'},
+      {id:'p1-3',title:'いろいろな活動に参加する理由',body:'やりたいことは最初から決まっているものではありません。部活動・委員会活動・ボランティア・探究活動など、分野を問わず経験することで、興味や視点が見えてきます。',type:'normal'},
+      {id:'p1-4',title:'自分を知る時間を大切にする',body:'これまでの経験・心が動くこと・強み・環境などを少しずつ整理します。この積み重ねが、後の志望理由や研究テーマにつながっていきます。',type:'normal'},
+      {id:'p1-5',title:'この時期に無理に決めないこと',body:'高1・2年生の段階では、無理に研究テーマや学部を固定しません。迷ったり試したりすること自体が大切なプロセスです。',type:'warn'}
+    ]},
+    {id:'phase-2',name:'高2後半〜高3',title:'受験に向かって仕上げていく時期',items:[
+      {id:'p2-1',title:'自分の軸を決める',body:'これまでの経験や自己分析をもとに、どんな分野に向いているのか、どんな問題に向き合いたいのかを整理し、「これを軸にしていこう」という方向性を決めます。',type:'normal'},
+      {id:'p2-2',title:'研究・探究を深めていく',body:'本や論文を読む・データを調べる・人に話を聞く・レポートにまとめるなど、「好き」を「説明できる考え」にしていく段階です。',type:'normal'},
+      {id:'p2-3',title:'やることを絞っていく',body:'受験が近づくにつれ、本当に強みになることに集中します。今の受験に必要のないことは手放す判断も大切です。',type:'normal'},
+      {id:'p2-4',title:'志望校は「結果として」決まるもの',body:'取り組んできたこと・研究テーマ・評定平均や英語資格がそろった結果として、「この大学が合いそうだ」という候補が見えてきます。',type:'normal'},
+      {id:'p2-5',title:'書類・小論文・面接へ',body:'最後は志望理由書・自己推薦書・活動報告・小論文・面接へ進みます。これまで積み重ねてきた内容の集大成として、「相手に伝わるか」を意識して仕上げます。',type:'normal'}
+    ]}]
+  },
+  schools:[]
+};
+let appData = loadData();
+let state = {role:'student',page:'dashboard',grade:'高1',month:0,fontSize:'m',compareArea:'すべて',comparePattern:'すべて',compareExclusive:'すべて',teacherGrade:'高1',teacherPhase:'phase-1',editingSchoolId:null};
+function clone(v){return JSON.parse(JSON.stringify(v))}
+function loadData(){try{const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));if(saved && saved.grades && saved.guides && saved.schools) return saved;}catch(e){}return clone(defaultData);}
+function saveData(){localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));const msg = document.getElementById('saveMsg');if(msg){msg.classList.add('show');clearTimeout(window.__saveTimer);window.__saveTimer = setTimeout(()=>msg.classList.remove('show'), 1600);}}
+function resetData(){if(!confirm('初期データに戻します。よろしいですか。')) return;appData = clone(defaultData);state.editingSchoolId = null;saveData();render();}
+function setFontSize(size){state.fontSize = size;const map = {s:'15px',m:'16px',l:'17px',xl:'19px'};document.documentElement.style.setProperty('--font-size', map[size]);render();}
+function switchRole(role){state.role = role;state.page = role === 'student' ? 'dashboard' : 'scheduleEdit';render();}
+function setPage(page){ state.page = page; render(); }
+function setGrade(grade){ state.grade = grade; render(); }
+function setMonth(month){ state.month = month; render(); }
+function setTeacherGrade(grade){ state.teacherGrade = grade; render(); }
+function setTeacherPhase(phaseId){ state.teacherPhase = phaseId; render(); }
+function numberOr(n,d=0){ const v = Number(n); return Number.isFinite(v) ? v : d; }
+function render(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <header class="header">
+      <div class="header-row">
+        <div>
+          <div class="brand-small">総合型選抜 受験支援ツール</div>
+          <div class="brand-main">
+            <div class="brand-name">ルネ高受験対策navi</div>
+            <div class="brand-role">${state.role === 'student' ? '生徒用' : '教員用'}</div>
+          </div>
+        </div>
+        <div class="header-tools">
+          <div class="switch"><span class="switch-label">表示</span><button class="${state.role==='student'?'active':''}" onclick="switchRole('student')">生徒用</button><button class="${state.role==='teacher'?'active':''}" onclick="switchRole('teacher')">教員用</button></div>
+          <div class="switch"><span class="switch-label">文字</span><button class="${state.fontSize==='s'?'active':''}" onclick="setFontSize('s')">小</button><button class="${state.fontSize==='m'?'active':''}" onclick="setFontSize('m')">中</button><button class="${state.fontSize==='l'?'active':''}" onclick="setFontSize('l')">大</button><button class="${state.fontSize==='xl'?'active':''}" onclick="setFontSize('xl')">特大</button></div>
+        </div>
+      </div>
+    </header>
+    <div class="app-shell"><div class="layout"><aside class="sidebar">${state.role === 'student' ? renderStudentNav() : renderTeacherNav()}</aside><main class="main">${state.role === 'student' ? renderStudentMain() : renderTeacherMain()}</main></div></div>`;
+}
+function renderStudentNav(){return `<h3>生徒メニュー</h3><div class="nav-list"><button class="nav-btn ${state.page==='dashboard'?'active':''}" onclick="setPage('dashboard')">トップ<small>今月の重点と締切を見る</small></button><button class="nav-btn ${state.page==='schedule'?'active':''}" onclick="setPage('schedule')">年間スケジュール<small>学年ごとの流れを確認する</small></button><button class="nav-btn ${state.page==='guide'?'active':''}" onclick="setPage('guide')">学年別ガイド<small>この時期に考えることを読む</small></button><button class="nav-btn ${state.page==='schools'?'active':''}" onclick="setPage('schools')">志望校・併願校<small>受験校の整理と比較をする</small></button></div>`;}
+function renderTeacherNav(){return `<h3>教員メニュー</h3><div class="nav-list"><button class="nav-btn ${state.page==='scheduleEdit'?'active':''}" onclick="setPage('scheduleEdit')">スケジュール編集<small>カテゴリ名・時期・説明を修正する</small></button><button class="nav-btn ${state.page==='guideEdit'?'active':''}" onclick="setPage('guideEdit')">ガイド編集<small>学年別の説明文を修正する</small></button><button class="nav-btn ${state.page==='schoolEdit'?'active':''}" onclick="setPage('schoolEdit')">志望校データ編集<small>大学情報を追加・修正する</small></button><button class="nav-btn" onclick="resetData()">初期データに戻す<small>保存内容を初期状態に戻す</small></button></div>`;}
+function renderStudentMain(){if(state.page === 'schedule') return renderSchedulePage();if(state.page === 'guide') return renderGuidePage();if(state.page === 'schools') return renderSchoolsPage();return renderDashboard();}
+function renderTeacherMain(){if(state.page === 'guideEdit') return renderGuideEditPage();if(state.page === 'schoolEdit') return renderSchoolEditPage();return renderScheduleEditPage();}
+function gradeData(){ return appData.grades[state.grade]; }
+function teacherGradeData(){ return appData.grades[state.teacherGrade]; }
+function currentMonthItems(){return appData.grades[state.grade].items.filter(item => state.month >= item.start && state.month <= item.end);}
+function nextDeadlines(){return appData.schools.slice().sort((a,b)=> (a.examDate||'').localeCompare(b.examDate||'')).slice(0,3);}
+function renderDashboard(){const items = currentMonthItems();const deadlines = nextDeadlines();return `
+<section class="hero"><div class="hero-card"><div class="with-help"><h1>${state.grade}｜${gradeData().title}</h1>${infoTip(gradeData().intro)}</div><p class="compact-text">今の時期にやるべきことを先に確認できるトップ画面です。</p><div class="hero-stats"><div class="stat"><div class="label">今月</div><div class="value">${monthNames[state.month]}</div></div><div class="stat"><div class="label">今月の重点</div><div class="value">${items.length}件</div></div><div class="stat"><div class="label">登録校</div><div class="value">${appData.schools.length}校</div></div></div></div><div class="hero-card"><div class="with-help"><h1>今月の動き方</h1>${infoTip('学年と月を選ぶと、その時期に意識したい項目が切り替わります。先に全体の流れを見てから、今月の重点に絞って確認する使い方を想定しています。')}</div><p class="compact-text">学年と月を選ぶだけで、必要な項目だけを見られます。</p><div class="toolbar" style="margin-top:12px">${renderGradeTabs('state.grade','setGrade')}${renderMonthTabs()}</div></div></section>
+<section class="panel"><div class="panel-head"><div class="with-help"><div class="panel-title">今月やること</div>${infoTip('この月に設定されたカテゴリだけを抽出して表示します。押すと年間スケジュール画面の該当位置へ移動します。')}</div><div class="chip">${state.grade}・${monthNames[state.month]}</div></div><div class="panel-body"><div class="action-list">${items.length ? items.map(item => `<div class="action-row"><div class="left"><div class="with-help"><strong>${item.label}</strong>${infoTip(item.description + (item.actions?.length ? '\n\n具体的な行動\n・' + item.actions.join('\n・') : ''))}</div><small>${item.actions && item.actions[0] ? item.actions[0] : item.description}</small></div><button class="small-btn" onclick="jumpToItem('${item.id}')">詳しく見る</button></div>`).join('') : `<div class="note">この月に設定されている重点はありません。</div>`}</div></div></section>
+<section class="panel"><div class="panel-head"><div class="with-help"><div class="panel-title">次の締切・試験日</div>${infoTip('登録した大学データの試験日順に、先頭から3件を表示しています。')}</div><button class="small-btn" onclick="setPage('schools')">志望校一覧へ</button></div><div class="panel-body"><div class="action-list">${deadlines.length ? deadlines.map(s => `<div class="action-row"><div class="left"><div class="with-help"><strong>${s.name} ${s.faculty||''}</strong>${infoTip('試験方式：' + (s.method || '-') + '\n評定：' + (s.ratingReq || '-') + '\n英語：' + (s.englishReq || '-') + (s.memo ? '\n\nメモ\n' + s.memo : ''))}</div><small>試験日 ${s.examDate || '-'} ／ 一次結果 ${s.firstResult || '-'}</small></div><span class="chip">${s.pattern || '-' }パターン</span></div>`).join('') : `<div class="note">大学データが未登録です。教員用画面から追加してください。</div>`}</div></div></section>`;}
+function renderGradeTabs(model, fnName){return `<div class="grade-tabs">${['高1','高2','高3'].map(g => `<button class="${state.grade===g?'active':''}" onclick="${fnName}('${g}')">${g}</button>`).join('')}</div>`;}
+function renderMonthTabs(){return `<div class="month-tabs">${monthNames.map((m,i)=>`<button class="${state.month===i?'active':''}" onclick="setMonth(${i})">${m}</button>`).join('')}</div>`;}
+function renderSchedulePage(){const data = gradeData();const activeItems = currentMonthItems();return `<section class="panel"><div class="panel-head"><div class="with-help"><div class="panel-title">年間スケジュール</div>${infoTip(data.intro)}</div><div class="toolbar">${renderGradeTabs('state.grade','setGrade')}</div></div><div class="panel-body"><div class="toolbar" style="margin:0 0 12px">${renderMonthTabs()}</div><div class="schedule-grid-wrap"><div class="schedule-grid"><div class="grid-cell grid-head">カテゴリ</div>${monthNames.map(m=>`<div class="grid-cell grid-head">${m}</div>`).join('')}${data.items.map(item => `<div class="grid-cell grid-label"><div class="with-help"><span>${item.label}</span>${infoTip(item.description)}</div></div><div class="bar-row"><div class="bar" style="background:${item.color};left:calc((100% / 12) * ${item.start} + 6px);width:calc((100% / 12) * ${(item.end-item.start+1)} - 12px)">${item.label}</div></div>`).join('')}</div></div><div class="schedule-detail"><div class="info-card"><div class="with-help"><h4>${state.grade}｜${monthNames[state.month]}の重点</h4>${infoTip('選択中の月にかかっているカテゴリだけを表示しています。')}</div><div class="list">${activeItems.length ? activeItems.map(item => `<div class="list-item"><div class="with-help"><strong>${item.label}</strong>${infoTip(item.description)}</div></div>`).join('') : `<div class="note">この月の重点は未設定です。</div>`}</div></div><div class="info-card"><div class="with-help"><h4>具体的な行動</h4>${infoTip('行動案は教員用画面から改行区切りで編集できます。')}</div><div class="list">${activeItems.flatMap(item => item.actions.map(a => `<div class="list-item">${a}</div>`)).join('') || `<div class="note">具体的な行動は未設定です。</div>`}</div></div></div></div></section>`;}
+function renderGuidePage(){return `<section class="panel"><div class="panel-head"><div class="with-help"><div class="panel-title">学年別ガイド</div>${infoTip('説明文は長くなりやすいため、見出し中心で並べています。詳しい内容は ? にカーソルを合わせるか押すと確認できます。')}</div><div class="chip">時期ごとの考え方</div></div><div class="panel-body">${appData.guides.phases.map(phase => `<div class="phase-card"><div class="phase-head"><div><div class="chip">${phase.name}</div><div class="phase-name" style="margin-top:8px">${phase.title}</div></div></div>${phase.items.map(item => `<div class="guide-item ${item.type==='warn'?'warn':''}"><div class="with-help"><h4>${item.title}</h4>${infoTip(item.body)}</div></div>`).join('')}</div>`).join('')}</div></section>`;}
+function patternSummary(){const labels = {A:'ベスト',B:'評定中心',C:'英語中心',D:'安全校'};return ['A','B','C','D'].map(p => {const rows = appData.schools.filter(s => s.pattern === p).sort((a,b)=>numberOr(a.priority,99)-numberOr(b.priority,99));const rating = rows.some(s => s.ratingReq && s.ratingReq !== '不問' && s.ratingReq !== '不要') ? '評定条件あり' : '評定条件弱め';const english = rows.some(s => s.englishReq && s.englishReq !== '不問' && s.englishReq !== '不要') ? '英語条件あり' : '英語条件弱め';return {pattern:p,label:labels[p],count:rows.length,rating,english,rows};});}
+function filteredSchools(){return appData.schools.filter(s => {if(state.compareArea !== 'すべて' && s.area !== state.compareArea) return false;if(state.comparePattern !== 'すべて' && s.pattern !== state.comparePattern) return false;if(state.compareExclusive !== 'すべて' && s.exclusive !== state.compareExclusive) return false;return true;}).sort((a,b)=>{if(a.pattern !== b.pattern) return a.pattern.localeCompare(b.pattern);return numberOr(a.priority,99) - numberOr(b.priority,99);});}
+function renderSchoolsPage(){const patterns = patternSummary();const schools = filteredSchools();const areas = ['すべて', ...new Set(appData.schools.map(s=>s.area).filter(Boolean))];return `<section class="school-grid"><div class="panel"><div class="panel-head"><div class="with-help"><div class="panel-title">パターン別志望校</div>${infoTip('Aはベスト、Bは評定中心、Cは英語中心、Dは安全校の想定です。優先順位の小さいものほど上位です。')}</div><div class="chip">A〜Dで整理</div></div><div class="panel-body"><div class="pattern-grid">${patterns.map(p => `<div class="pattern-card"><h4><span>${p.pattern}</span><span class="chip">${p.label}</span></h4><div class="pattern-meta">${p.rating}<br>${p.english}<br>${p.count}校</div></div>`).join('')}</div><div class="section-split"></div><div class="school-list">${patterns.some(p => p.rows.length) ? patterns.map(p => p.rows.map(s => `<div class="school-card"><div class="top"><div><div class="with-help"><h4>${p.pattern}第${s.priority}志望　${s.name}</h4>${infoTip('学部学科：' + (s.faculty || '-') + ' ' + (s.department || '-') + '\n方式：' + (s.method || '-') + '\n評定：' + (s.ratingReq || '-') + '\n英語：' + (s.englishReq || '-') + '\n試験日：' + (s.examDate || '-') + (s.memo ? '\n\nメモ\n' + s.memo : ''))}</div><p>${s.faculty || ''} ${s.department || ''}</p></div><span class="chip">${s.exclusive || '-'}</span></div><div class="school-tags"><span>評定 ${s.ratingReq || '不問'}</span><span>英語 ${s.englishReq || '不要'}</span><span>倍率 ${s.ratio || '-'}</span><span>${s.method || '-'}</span></div></div>`).join('')).join('') : `<div class="note">大学データが未登録です。教員用画面から追加してください。</div>`}</div></div></div><div class="panel"><div class="panel-head"><div class="with-help"><div class="panel-title">条件比較</div>${infoTip('地域・パターン・専願/併願で絞り込めます。詳細条件は各大学の ? から確認します。')}</div><button class="small-btn" onclick="clearFilters()">条件を戻す</button></div><div class="panel-body"><div class="toolbar"><select onchange="state.compareArea=this.value; render()">${areas.map(a=>`<option value="${a}" ${state.compareArea===a?'selected':''}>${a}</option>`).join('')}</select><select onchange="state.comparePattern=this.value; render()">${['すべて','A','B','C','D'].map(v=>`<option value="${v}" ${state.comparePattern===v?'selected':''}>${v==='すべて'?'パターンすべて':v}</option>`).join('')}</select><select onchange="state.compareExclusive=this.value; render()">${['すべて','専願','併願可'].map(v=>`<option value="${v}" ${state.compareExclusive===v?'selected':''}>${v}</option>`).join('')}</select></div><div class="section-split"></div><div class="school-list">${schools.length ? schools.map(s => `<div class="school-card"><div class="top"><div><div class="with-help"><h4>${s.name}</h4>${infoTip('学部学科：' + (s.faculty || '-') + ' ' + (s.department || '-') + '\n評定：' + (s.ratingReq || '-') + '\n英語：' + (s.englishReq || '-') + '\n方式：' + (s.method || '-') + '\n試験日：' + (s.examDate || '-') + (s.memo ? '\n\nメモ\n' + s.memo : ''))}</div><p>${s.faculty || ''} ${s.department || ''}</p></div><span class="chip">${s.pattern}</span></div><div class="school-tags"><span>評定 ${s.ratingReq || '不問'}</span><span>英語 ${s.englishReq || '不要'}</span><span>${s.exclusive || '-'}</span><span>倍率 ${s.ratio || '-'}</span></div></div>`).join('') : `<div class="note">条件に合う学校がありません。</div>`}</div></div></div></section>`;}
+function clearFilters(){state.compareArea='すべて';state.comparePattern='すべて';state.compareExclusive='すべて';render();}
+function renderScheduleEditPage(){const data = teacherGradeData();return `<section class="panel"><div class="panel-head"><div class="panel-title">スケジュール編集</div><div class="toolbar"><div class="grade-tabs">${['高1','高2','高3'].map(g=>`<button class="${state.teacherGrade===g?'active':''}" onclick="setTeacherGrade('${g}')">${g}</button>`).join('')}</div></div></div><div class="panel-body"><div class="note">カテゴリ名、開始月、終了月、説明、具体的な行動を編集できます。保存すると生徒用画面へ反映されます。</div><div class="field" style="margin-top:14px"><label>導入文</label><textarea onchange="appData.grades['${state.teacherGrade}'].intro=this.value; saveData()">${escapeHtml(data.intro)}</textarea></div><div class="section-split"></div><div class="list">${data.items.map(item => `<div class="info-card"><div class="form-grid"><div class="field"><label>カテゴリ名</label><input value="${escapeAttr(item.label)}" onchange="updateScheduleItem('${state.teacherGrade}','${item.id}','label',this.value)"></div><div class="field"><label>開始月</label><select onchange="updateScheduleItem('${state.teacherGrade}','${item.id}','start',this.value)">${monthNames.map((m,i)=>`<option value="${i}" ${item.start===i?'selected':''}>${m}</option>`).join('')}</select></div><div class="field"><label>終了月</label><select onchange="updateScheduleItem('${state.teacherGrade}','${item.id}','end',this.value)">${monthNames.map((m,i)=>`<option value="${i}" ${item.end===i?'selected':''}>${m}</option>`).join('')}</select></div><div class="field"><label>色</label><input type="color" value="${item.color}" onchange="updateScheduleItem('${state.teacherGrade}','${item.id}','color',this.value)"></div><div class="field full"><label>説明文</label><textarea onchange="updateScheduleItem('${state.teacherGrade}','${item.id}','description',this.value)">${escapeHtml(item.description)}</textarea></div><div class="field full"><label>具体的な行動（改行区切り）</label><textarea onchange="updateScheduleActions('${state.teacherGrade}','${item.id}',this.value)">${escapeHtml(item.actions.join('\n'))}</textarea></div></div><div class="school-actions"><button class="small-btn danger" onclick="removeScheduleItem('${state.teacherGrade}','${item.id}')">削除</button></div></div>`).join('')}</div><div class="save-bar"><span class="save-msg" id="saveMsg">保存しました</span><button class="small-btn" onclick="addScheduleItem('${state.teacherGrade}')">カテゴリを追加</button></div></div></section>`;}
+function updateScheduleItem(grade,id,key,value){const item = appData.grades[grade].items.find(x=>x.id===id);if(!item) return;item[key] = (key==='start' || key==='end') ? Number(value) : value;if(item.start > item.end){ const t=item.start; item.start=item.end; item.end=t; }saveData(); render();}
+function updateScheduleActions(grade,id,text){const item = appData.grades[grade].items.find(x=>x.id===id);if(!item) return;item.actions = text.split('\n').map(v=>v.trim()).filter(Boolean);saveData(); render();}
+function addScheduleItem(grade){appData.grades[grade].items.push({id:'item-' + Date.now(),label:'新しいカテゴリ',color:'#5b88c5',start:0,end:0,description:'説明を入力してください。',actions:['行動を入力してください。']});saveData(); render();}
+function removeScheduleItem(grade,id){if(!confirm('このカテゴリを削除しますか。')) return;appData.grades[grade].items = appData.grades[grade].items.filter(x=>x.id!==id);saveData(); render();}
+function renderGuideEditPage(){const phase = appData.guides.phases.find(p=>p.id===state.teacherPhase) || appData.guides.phases[0];return `<section class="panel"><div class="panel-head"><div class="panel-title">ガイド編集</div><div class="toolbar"><select onchange="setTeacherPhase(this.value)">${appData.guides.phases.map(p=>`<option value="${p.id}" ${state.teacherPhase===p.id?'selected':''}>${p.name}</option>`).join('')}</select></div></div><div class="panel-body"><div class="field"><label>区分名</label><input value="${escapeAttr(phase.name)}" onchange="updateGuidePhase('${phase.id}','name',this.value)"></div><div class="field" style="margin-top:10px"><label>見出し</label><input value="${escapeAttr(phase.title)}" onchange="updateGuidePhase('${phase.id}','title',this.value)"></div><div class="section-split"></div><div class="list">${phase.items.map(item => `<div class="info-card"><div class="field"><label>見出し</label><input value="${escapeAttr(item.title)}" onchange="updateGuideItem('${phase.id}','${item.id}','title',this.value)"></div><div class="field" style="margin-top:10px"><label>表示タイプ</label><select onchange="updateGuideItem('${phase.id}','${item.id}','type',this.value)"><option value="normal" ${item.type==='normal'?'selected':''}>通常</option><option value="warn" ${item.type==='warn'?'selected':''}>注意</option></select></div><div class="field" style="margin-top:10px"><label>本文</label><textarea onchange="updateGuideItem('${phase.id}','${item.id}','body',this.value)">${escapeHtml(item.body)}</textarea></div><div class="school-actions"><button class="small-btn danger" onclick="removeGuideItem('${phase.id}','${item.id}')">削除</button></div></div>`).join('')}</div><div class="save-bar"><span class="save-msg" id="saveMsg">保存しました</span><button class="small-btn" onclick="addGuideItem('${phase.id}')">項目を追加</button></div></div></section>`;}
+function updateGuidePhase(phaseId,key,value){const phase = appData.guides.phases.find(p=>p.id===phaseId); if(!phase) return;phase[key] = value; saveData(); render();}
+function updateGuideItem(phaseId,itemId,key,value){const phase = appData.guides.phases.find(p=>p.id===phaseId); if(!phase) return;const item = phase.items.find(i=>i.id===itemId); if(!item) return;item[key] = value; saveData(); render();}
+function addGuideItem(phaseId){const phase = appData.guides.phases.find(p=>p.id===phaseId); if(!phase) return;phase.items.push({id:'guide-'+Date.now(),title:'新しい見出し',body:'本文を入力してください。',type:'normal'});saveData(); render();}
+function removeGuideItem(phaseId,itemId){if(!confirm('この項目を削除しますか。')) return;const phase = appData.guides.phases.find(p=>p.id===phaseId); if(!phase) return;phase.items = phase.items.filter(i=>i.id!==itemId);saveData(); render();}
+function getEditingSchool(){ return appData.schools.find(s=>s.id===state.editingSchoolId) || appData.schools[0] || null; }
+function renderSchoolEditPage(){const school = getEditingSchool();return `<section class="panel"><div class="panel-head"><div class="panel-title">志望校データ編集</div><div class="toolbar"><button class="small-btn" onclick="startNewSchool()">新規追加</button></div></div><div class="panel-body"><div class="school-grid"><div><div class="school-list">${appData.schools.sort((a,b)=>a.name.localeCompare(b.name,'ja')).map(s => `<div class="school-card"><div class="top"><div><h4>${s.name || '名称未入力'}</h4><p>${s.faculty || ''} ${s.department || ''}</p></div><span class="chip">${s.pattern || '-'}</span></div><div class="school-tags"><span>${s.exclusive || '-'}</span><span>評定 ${s.ratingReq || '不問'}</span><span>英語 ${s.englishReq || '不要'}</span></div><div class="school-actions"><button class="small-btn ${state.editingSchoolId===s.id?'primary':''}" onclick="editSchool('${s.id}')">編集</button><button class="small-btn danger" onclick="deleteSchool('${s.id}')">削除</button></div></div>`).join('') || '<div class="note">まだ大学データはありません。右の新規追加から作成してください。</div>'}</div></div><div>${school ? renderSchoolForm(school) : `<div class="note">編集する大学を選択してください。</div>`}</div></div></div></section>`;}
+function renderSchoolForm(s){return `<div class="info-card"><h4>${s.name || '新しい志望校'}</h4><div class="form-grid" style="margin-top:12px"><div class="field"><label>大学名</label><input value="${escapeAttr(s.name||'')}" onchange="updateSchoolField('${s.id}','name',this.value)"></div><div class="field"><label>学部</label><input value="${escapeAttr(s.faculty||'')}" onchange="updateSchoolField('${s.id}','faculty',this.value)"></div><div class="field"><label>学科</label><input value="${escapeAttr(s.department||'')}" onchange="updateSchoolField('${s.id}','department',this.value)"></div><div class="field"><label>地域</label><input value="${escapeAttr(s.area||'')}" onchange="updateSchoolField('${s.id}','area',this.value)"></div><div class="field"><label>専願/併願</label><select onchange="updateSchoolField('${s.id}','exclusive',this.value)"><option value="専願" ${s.exclusive==='専願'?'selected':''}>専願</option><option value="併願可" ${s.exclusive==='併願可'?'selected':''}>併願可</option></select></div><div class="field"><label>試験方式</label><input value="${escapeAttr(s.method||'')}" onchange="updateSchoolField('${s.id}','method',this.value)"></div><div class="field"><label>パターン</label><select onchange="updateSchoolField('${s.id}','pattern',this.value)">${['A','B','C','D'].map(v=>`<option value="${v}" ${s.pattern===v?'selected':''}>${v}</option>`).join('')}</select></div><div class="field"><label>優先順位</label><input type="number" value="${escapeAttr(String(s.priority||1))}" onchange="updateSchoolField('${s.id}','priority',this.value)"></div><div class="field"><label>評定条件</label><input value="${escapeAttr(s.ratingReq||'')}" onchange="updateSchoolField('${s.id}','ratingReq',this.value)"></div><div class="field"><label>英語条件</label><input value="${escapeAttr(s.englishReq||'')}" onchange="updateSchoolField('${s.id}','englishReq',this.value)"></div><div class="field full"><label>出願書類</label><input value="${escapeAttr(s.docs||'')}" onchange="updateSchoolField('${s.id}','docs',this.value)"></div><div class="field"><label>推薦状</label><input value="${escapeAttr(s.recommendation||'')}" onchange="updateSchoolField('${s.id}','recommendation',this.value)"></div><div class="field"><label>英語証明形式</label><input value="${escapeAttr(s.englishProof||'')}" onchange="updateSchoolField('${s.id}','englishProof',this.value)"></div><div class="field"><label>締切扱い</label><input value="${escapeAttr(s.deadlineType||'')}" onchange="updateSchoolField('${s.id}','deadlineType',this.value)"></div><div class="field"><label>小論文</label><input value="${escapeAttr(s.essay||'')}" onchange="updateSchoolField('${s.id}','essay',this.value)"></div><div class="field"><label>面接</label><input value="${escapeAttr(s.interview||'')}" onchange="updateSchoolField('${s.id}','interview',this.value)"></div><div class="field"><label>口頭試問</label><input value="${escapeAttr(s.oral||'')}" onchange="updateSchoolField('${s.id}','oral',this.value)"></div><div class="field"><label>グループ討議</label><input value="${escapeAttr(s.gd||'')}" onchange="updateSchoolField('${s.id}','gd',this.value)"></div><div class="field"><label>実施形式</label><input value="${escapeAttr(s.format||'')}" onchange="updateSchoolField('${s.id}','format',this.value)"></div><div class="field"><label>英語面接</label><input value="${escapeAttr(s.englishInterview||'')}" onchange="updateSchoolField('${s.id}','englishInterview',this.value)"></div><div class="field"><label>英語プレゼン</label><input value="${escapeAttr(s.englishPresentation||'')}" onchange="updateSchoolField('${s.id}','englishPresentation',this.value)"></div><div class="field"><label>プレゼン発表</label><input value="${escapeAttr(s.presentation||'')}" onchange="updateSchoolField('${s.id}','presentation',this.value)"></div><div class="field"><label>二次科目試験</label><input value="${escapeAttr(s.secondExam||'')}" onchange="updateSchoolField('${s.id}','secondExam',this.value)"></div><div class="field"><label>資料作成</label><input value="${escapeAttr(s.material||'')}" onchange="updateSchoolField('${s.id}','material',this.value)"></div><div class="field"><label>動画資料</label><input value="${escapeAttr(s.video||'')}" onchange="updateSchoolField('${s.id}','video',this.value)"></div><div class="field"><label>一次発表</label><input value="${escapeAttr(s.firstNotice||'')}" onchange="updateSchoolField('${s.id}','firstNotice',this.value)"></div><div class="field"><label>試験日</label><input value="${escapeAttr(s.examDate||'')}" onchange="updateSchoolField('${s.id}','examDate',this.value)"></div><div class="field"><label>一次結果</label><input value="${escapeAttr(s.firstResult||'')}" onchange="updateSchoolField('${s.id}','firstResult',this.value)"></div><div class="field"><label>二次出願期間</label><input value="${escapeAttr(s.secondTerm||'')}" onchange="updateSchoolField('${s.id}','secondTerm',this.value)"></div><div class="field"><label>偏差値</label><input value="${escapeAttr(s.deviation||'')}" onchange="updateSchoolField('${s.id}','deviation',this.value)"></div><div class="field"><label>倍率</label><input value="${escapeAttr(s.ratio||'')}" onchange="updateSchoolField('${s.id}','ratio',this.value)"></div><div class="field"><label>志願者数</label><input value="${escapeAttr(s.applicants||'')}" onchange="updateSchoolField('${s.id}','applicants',this.value)"></div><div class="field full"><label>メモ</label><textarea onchange="updateSchoolField('${s.id}','memo',this.value)">${escapeHtml(s.memo||'')}</textarea></div></div><div class="save-bar"><span class="save-msg" id="saveMsg">保存しました</span></div></div>`;}
+function startNewSchool(){const id = 'school-' + Date.now();appData.schools.unshift({id:id,name:'',faculty:'',department:'',area:'',exclusive:'専願',method:'総合型',pattern:'A',priority:1,ratingReq:'',englishReq:'',docs:'',recommendation:'',englishProof:'',deadlineType:'',essay:'',interview:'',oral:'',gd:'',format:'',englishInterview:'',englishPresentation:'',presentation:'',secondExam:'',material:'',video:'',firstNotice:'',examDate:'',firstResult:'',secondTerm:'',deviation:'',ratio:'',applicants:'',memo:''});state.editingSchoolId = id;saveData(); render();}
+function editSchool(id){ state.editingSchoolId = id; render(); }
+function updateSchoolField(id,key,value){const school = appData.schools.find(s=>s.id===id); if(!school) return;school[key] = key === 'priority' ? Number(value || 1) : value;saveData(); render();}
+function deleteSchool(id){if(!confirm('この大学データを削除しますか。')) return;appData.schools = appData.schools.filter(s=>s.id!==id);if(state.editingSchoolId === id) state.editingSchoolId = appData.schools[0]?.id || null;saveData(); render();}
+function jumpToItem(itemId){const targetGrade = state.grade;const item = appData.grades[targetGrade].items.find(x=>x.id===itemId);if(!item) return;state.page = 'schedule';state.month = item.start;render();}
+function infoTip(text){return `<span class="info-wrap"><button type="button" class="info-dot" aria-label="説明を表示">?</button><span class="tooltip-box">${escapeHtml(text)}</span></span>`;}
+function escapeHtml(v){return String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');}
+function escapeAttr(v){return escapeHtml(v).replaceAll('"','&quot;');}
+state.editingSchoolId = appData.schools[0]?.id || null;setFontSize('m');render();
+</script>
+</body>
+</html>

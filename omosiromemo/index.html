@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>omosiromemo｜おもしろメモ</title>
+  <style>
+    :root{
+      --blue:#1d5fc2;
+      --blue-dark:#12479b;
+      --aqua:#5fd6df;
+      --orange:#f58a3d;
+      --bg1:#17335d;
+      --bg2:#102340;
+      --text:#172332;
+      --muted:#637389;
+      --line:rgba(23,35,50,.12);
+      --card:#ffffff;
+      --soft:#f6f8fc;
+      --shadow:0 12px 28px rgba(8,24,51,.14);
+    }
+    *{box-sizing:border-box}
+    html,body{
+      margin:0;
+      min-height:100%;
+      font-family:"Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(95,214,223,.14), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(245,138,61,.12), transparent 24%),
+        linear-gradient(180deg,var(--bg1) 0%, var(--bg2) 100%);
+    }
+    body{padding:14px 12px 28px}
+    .app{max-width:1120px;margin:0 auto}
+    .topbar{display:grid;gap:12px;margin-bottom:12px}
+    .brand{
+      background:var(--aqua);
+      color:#fff;
+      border:3px solid rgba(18,33,50,.75);
+      border-radius:999px;
+      padding:14px 18px;
+      font-weight:800;
+      font-size:16px;
+      box-shadow:var(--shadow);
+    }
+    .action-row{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:10px;
+    }
+    button,a.btn{
+      appearance:none;
+      -webkit-appearance:none;
+      border:none;
+      text-decoration:none;
+      font:inherit;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      pointer-events:auto;
+      user-select:none;
+      -webkit-user-select:none;
+      border-radius:16px;
+      min-height:54px;
+      padding:12px 10px;
+      font-weight:800;
+      line-height:1.3;
+    }
+    .btn-white{
+      background:rgba(255,255,255,.97);
+      color:var(--text);
+      box-shadow:var(--shadow);
+    }
+    .btn-orange{
+      background:var(--orange);
+      color:#fff;
+      box-shadow:var(--shadow);
+    }
+    .btn-sub{
+      background:#fff;
+      color:var(--blue-dark);
+      border:1px solid rgba(29,95,194,.18);
+      min-height:auto;
+      padding:10px 12px;
+      border-radius:12px;
+    }
+
+    .layout{display:grid;gap:12px}
+    .nav{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:8px;
+    }
+    .nav button{
+      background:rgba(255,255,255,.96);
+      color:#6b5f55;
+      border:2px solid rgba(23,35,50,.78);
+      min-height:48px;
+      border-radius:999px;
+      box-shadow:var(--shadow);
+      font-size:13px;
+    }
+    .nav button.active{
+      background:var(--orange);
+      color:#fff;
+    }
+
+    .panel{
+      background:rgba(255,255,255,.98);
+      border-radius:24px;
+      overflow:hidden;
+      border:3px solid rgba(255,255,255,.72);
+      box-shadow:var(--shadow);
+    }
+    .hero{
+      background:linear-gradient(135deg,var(--blue),var(--blue-dark) 62%, #1e69d0 100%);
+      color:#fff;
+      padding:18px 16px;
+      display:grid;
+      gap:12px;
+    }
+    .hero h1{
+      margin:0;
+      font-size:28px;
+      line-height:1.15;
+      letter-spacing:-.02em;
+    }
+    .hero p{
+      margin:0;
+      font-size:14px;
+      line-height:1.7;
+      color:rgba(255,255,255,.92);
+    }
+    .hero-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .hero-box{
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:16px;
+      padding:12px;
+    }
+    .hero-box strong{
+      display:block;
+      margin-bottom:4px;
+      font-size:17px;
+    }
+    .hero-box span{
+      display:block;
+      font-size:12px;
+      line-height:1.6;
+      color:rgba(255,255,255,.86);
+    }
+
+    .content{
+      background:var(--soft);
+      padding:16px 12px 18px;
+    }
+    .section{display:none}
+    .section.active{display:block}
+    .section-head{
+      display:grid;
+      gap:8px;
+      margin-bottom:12px;
+    }
+    .section-head h2{
+      margin:0;
+      font-size:20px;
+      line-height:1.3;
+    }
+    .section-head p{
+      margin:0;
+      font-size:13px;
+      line-height:1.7;
+      color:var(--muted);
+    }
+
+    .card, .card-soft, .output-box, .preview-box{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:18px;
+      box-shadow:0 8px 20px rgba(17,35,63,.05);
+      padding:14px;
+    }
+    .card-soft{
+      background:linear-gradient(180deg,#fff,#fffaf5);
+      border-color:rgba(245,138,61,.18);
+    }
+    .split, .basic-grid, .cards, .copy-grid, .help-list{
+      display:grid;
+      gap:12px;
+    }
+
+    .help-item{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      padding:10px 12px;
+      background:#fff;
+      border:1px solid rgba(23,35,50,.07);
+      border-radius:14px;
+    }
+    .help-badge{
+      width:24px;
+      height:24px;
+      border-radius:999px;
+      background:rgba(29,95,194,.1);
+      color:var(--blue-dark);
+      font-weight:800;
+      display:grid;
+      place-items:center;
+      font-size:12px;
+      flex:0 0 auto;
+    }
+    .help-text{
+      font-size:13px;
+      line-height:1.7;
+    }
+    .help-title{
+      margin:0 0 10px;
+      font-size:17px;
+      font-weight:800;
+    }
+
+    .field-label{
+      display:block;
+      margin-bottom:6px;
+      font-size:13px;
+      font-weight:800;
+      color:var(--muted);
+    }
+    input, textarea{
+      width:100%;
+      border:1px solid rgba(23,35,50,.12);
+      border-radius:12px;
+      padding:12px 13px;
+      font:inherit;
+      color:var(--text);
+      background:#fff;
+      outline:none;
+    }
+    input:focus, textarea:focus{
+      border-color:rgba(29,95,194,.45);
+      box-shadow:0 0 0 4px rgba(29,95,194,.10);
+    }
+    .input-strong{
+      font-size:18px;
+      font-weight:800;
+    }
+    .input-sub{
+      font-size:13px;
+      color:var(--muted);
+    }
+
+    .cards{grid-template-columns:1fr}
+    .factor-card-top{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      margin-bottom:10px;
+    }
+    .factor-num{
+      width:34px;
+      height:34px;
+      border-radius:50%;
+      background:#b5bcc7;
+      color:#fff;
+      display:grid;
+      place-items:center;
+      font-size:15px;
+      font-weight:800;
+      flex:0 0 auto;
+    }
+    .factor-head{
+      display:grid;
+      gap:8px;
+      width:100%;
+    }
+    textarea{
+      resize:vertical;
+      line-height:1.7;
+    }
+    .factor-card textarea{min-height:118px;margin-top:10px}
+    .status{
+      justify-self:start;
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(95,214,223,.12);
+      border:1px solid rgba(95,214,223,.3);
+      color:#0a6f79;
+      font-size:12px;
+      font-weight:800;
+    }
+    .note{
+      margin-top:12px;
+      padding:12px 14px;
+      background:rgba(245,138,61,.1);
+      border:1px solid rgba(245,138,61,.22);
+      border-radius:14px;
+      color:#8b562d;
+      font-size:13px;
+      line-height:1.7;
+    }
+
+    .actions{
+      display:grid;
+      gap:8px;
+    }
+    .actions-help{
+      font-size:12px;
+      line-height:1.7;
+      color:var(--muted);
+    }
+    .output-box h3, .preview-box h3{
+      margin:0 0 10px;
+      font-size:17px;
+    }
+    .output-area{min-height:300px}
+
+    .preview-card{
+      background:linear-gradient(135deg,var(--blue),var(--blue-dark) 66%);
+      color:#fff;
+      border-radius:16px;
+      padding:14px;
+    }
+    .preview-card h4{
+      margin:0 0 10px;
+      font-size:17px;
+    }
+    .preview-grid{
+      display:grid;
+      gap:10px;
+    }
+    .preview-item{
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:12px;
+      padding:12px;
+    }
+    .preview-item strong{
+      display:block;
+      margin-bottom:4px;
+      font-size:15px;
+    }
+    .preview-sub{
+      display:block;
+      margin-bottom:6px;
+      font-size:12px;
+      line-height:1.5;
+      color:rgba(255,255,255,.78);
+    }
+    .preview-item p{
+      margin:0 0 8px;
+      font-size:13px;
+      line-height:1.7;
+      color:rgba(255,255,255,.95);
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+
+    .footer{
+      margin-top:12px;
+      text-align:center;
+      font-size:12px;
+      color:rgba(255,255,255,.78);
+    }
+
+    @media (min-width:768px){
+      body{padding:20px 18px 34px}
+      .app{max-width:1140px}
+      .layout{grid-template-columns:minmax(0,1fr) 220px;align-items:start}
+      .nav{grid-template-columns:1fr;position:sticky;top:18px;order:2}
+      .panel{order:1}
+      .topbar{grid-template-columns:minmax(0,1fr) auto;align-items:center}
+      .action-row{display:flex}
+      .hero{grid-template-columns:1.2fr .8fr;padding:24px 24px 22px}
+      .hero h1{font-size:42px}
+      .hero p{font-size:15px;max-width:640px}
+      .content{padding:20px}
+      .section-head{grid-template-columns:1fr auto;align-items:end}
+      .split{grid-template-columns:1fr 1fr}
+      .basic-grid{grid-template-columns:1fr 1fr}
+      .cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .copy-grid{grid-template-columns:1.05fr .95fr}
+      .actions{grid-template-columns:auto auto}
+    }
+    @media (min-width:1024px){
+      .cards{grid-template-columns:repeat(3,minmax(0,1fr))}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">omosiromemo｜おもしろメモ</div>
+      <div class="action-row">
+        <button type="button" class="btn-white" id="fillSampleBtn">見本を入れる</button>
+        <button type="button" class="btn-white" id="resetBtn">リセット</button>
+        <button type="button" class="btn-orange" id="copyBtn">一気にコピー</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <nav class="nav">
+        <button type="button" class="nav-btn active" data-target="section-basic">説明</button>
+        <button type="button" class="nav-btn" data-target="section-elements">入力</button>
+        <button type="button" class="nav-btn" data-target="section-copy">出力</button>
+      </nav>
+
+      <div class="panel">
+        <div class="hero">
+          <div>
+            <h1>おもしろくする構成を、<br>すぐ使える形で整理する</h1>
+            <p>研修で使うことを前提に、最初に説明を読み、次に入力し、最後にコピーして使える流れにしています。</p>
+          </div>
+          <div class="hero-grid">
+            <div class="hero-box"><strong>説明</strong><span>最初に使い方とボタンの意味を確認します。</span></div>
+            <div class="hero-box"><strong>入力</strong><span>見本を入れてから自分用に直します。</span></div>
+          </div>
+        </div>
+
+        <div class="content">
+          <section class="section active" id="section-basic">
+            <div class="section-head">
+              <div>
+                <h2>使い方の説明</h2>
+                <p>この画面は説明だけを見る場所です。入力欄はこの下に混ぜず、別の入力カードに分けています。</p>
+              </div>
+            </div>
+
+            <div class="split">
+              <div class="card-soft">
+                <h3 class="help-title">使う順番</h3>
+                <div class="help-list">
+                  <div class="help-item"><div class="help-badge">1</div><div class="help-text"><strong>見本を入れる</strong> を押して、完成イメージを出します。</div></div>
+                  <div class="help-item"><div class="help-badge">2</div><div class="help-text">次に「入力」タブへ進み、タイトル・誰に向けるか・ねらい・5要素を書き換えます。</div></div>
+                  <div class="help-item"><div class="help-badge">3</div><div class="help-text">最後に「出力」タブで文章を確認し、コピーして使います。</div></div>
+                </div>
+              </div>
+
+              <div class="card-soft">
+                <h3 class="help-title">ボタンの意味</h3>
+                <div class="help-list">
+                  <div class="help-item"><div class="help-badge">A</div><div class="help-text"><strong>見本を入れる</strong><br>入力例を自動で入れます。ゼロから考えにくいときの土台です。</div></div>
+                  <div class="help-item"><div class="help-badge">B</div><div class="help-text"><strong>リセット</strong><br>今の内容を全部消して、空の状態に戻します。</div></div>
+                  <div class="help-item"><div class="help-badge">C</div><div class="help-text"><strong>一気にコピー</strong><br>今の内容をその場でまとめてコピーします。</div></div>
+                  <div class="help-item"><div class="help-badge">D</div><div class="help-text"><strong>NotebookLMを開く</strong><br>コピーした文章を別画面で整理したいときのボタンです。使わない場合は押さなくて大丈夫です。</div></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-top:14px;">
+              <div class="section-head" style="margin-bottom:10px;">
+                <div>
+                  <h2>基本情報の入力</h2>
+                  <p>ここは説明ではなく、実際に入力する場所です。見落としにくいように分けています。</p>
+                </div>
+              </div>
+              <div class="basic-grid">
+                <div>
+                  <label class="field-label" for="projectTitle">タイトル</label>
+                  <input id="projectTitle" class="input-strong" type="text">
+                </div>
+                <div>
+                  <label class="field-label" for="projectAudience">誰に向けるか</label>
+                  <input id="projectAudience" class="input-strong" type="text">
+                </div>
+              </div>
+              <div style="margin-top:12px;">
+                <label class="field-label" for="projectGoal">ねらい</label>
+                <textarea id="projectGoal" rows="4"></textarea>
+              </div>
+            </div>
+          </section>
+
+          <section class="section" id="section-elements">
+            <div class="section-head">
+              <div>
+                <h2>5要素の入力</h2>
+                <p>見本を入れたあとに、必要なところだけ自分用に直してください。</p>
+              </div>
+              <div class="status" id="statusText">入力数 0 / 5</div>
+            </div>
+
+            <div class="cards" id="cards"></div>
+            <div class="note">見本をまだ入れていない場合は空です。まず上の「見本を入れる」を押すと、入力例が入ります。</div>
+          </section>
+
+          <section class="section" id="section-copy">
+            <div class="section-head">
+              <div>
+                <h2>出力</h2>
+                <p>ここで文章を確認して、そのままコピーできます。</p>
+              </div>
+              <div class="actions">
+                <button type="button" class="btn-orange" id="copyBtnSecondary">この内容をコピー</button>
+                <a class="btn btn-sub" href="https://notebooklm.google.com/" target="_blank" rel="noopener noreferrer">NotebookLMを開く</a>
+              </div>
+            </div>
+
+            <div class="actions-help">NotebookLM のボタンは、コピーした文章を別の画面で整理したいときに使うものです。使わない場合は押さなくて大丈夫です。</div>
+
+            <div class="copy-grid" style="margin-top:12px;">
+              <div class="output-box">
+                <h3>出力テキスト</h3>
+                <textarea class="output-area" id="outputText" readonly></textarea>
+              </div>
+              <div class="preview-box">
+                <div class="preview-card">
+                  <h4>入力内容の要約</h4>
+                  <div id="previewList" class="preview-grid"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">入力内容はこの端末の中だけに保存されます。</div>
+  </div>
+
+  <script>
+    var defaultElements = [
+      {key:'purpose', number:'1', title:'', description:'', content:''},
+      {key:'empathy', number:'2', title:'', description:'', content:''},
+      {key:'surprise', number:'3', title:'', description:'', content:''},
+      {key:'useful', number:'4', title:'', description:'', content:''},
+      {key:'direction', number:'5', title:'', description:'', content:''}
+    ];
+
+    var sampleSet = {
+      project_title:'伝わる話し方研修',
+      project_audience:'教員向け',
+      project_goal:'話し方そのものではなく、相手が動きやすくなる伝え方を持ち帰ってもらう。',
+      purpose_title:'目的がわかる',
+      purpose_description:'最初に見る意味が伝わるか',
+      purpose:'この時間で何を持ち帰ってほしいのかを最初にはっきり示す。「うまく話す」ではなく「相手が動きやすくなる伝え方」を今日のゴールにする。',
+      empathy_title:'共感できる',
+      empathy_description:'自分の話だと感じるか',
+      empathy:'「説明したのに伝わらなかった場面」から入る。参加者が自分の失敗や違和感を思い出せる入り口を作る。',
+      surprise_title:'裏切りがある',
+      surprise_description:'少し意外さがあるか',
+      surprise:'話し方のうまさよりも、順番や問いの置き方の方が効くと途中で気づかせる。予想を少し裏切ることで続きを聞きたくさせる。',
+      useful_title:'活用できる',
+      useful_description:'あとで使える形か',
+      useful:'授業冒頭、面談、保護者対応、教員同士の依頼でそのまま使える言い換えや型まで落とし込む。',
+      direction_title:'演出がよい',
+      direction_description:'流れや見せ方がよいか',
+      direction:'失敗例を見る→あるあるで笑う→分解して考える→自分の場面に置き換える、の順にして気持ちが切れないように組む。'
+    };
+
+    var storageKey = 'omosiromemo-v4-fixed';
+    var cards = document.getElementById('cards');
+    var outputText = document.getElementById('outputText');
+    var previewList = document.getElementById('previewList');
+    var statusText = document.getElementById('statusText');
+    var projectTitleInput = document.getElementById('projectTitle');
+    var projectAudienceInput = document.getElementById('projectAudience');
+    var projectGoalInput = document.getElementById('projectGoal');
+
+    function escapeHtml(text){
+      return String(text)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;')
+        .replace(/'/g,'&#39;');
+    }
+
+    function getSaved(){
+      try { return JSON.parse(localStorage.getItem(storageKey)) || {}; }
+      catch(error) { return {}; }
+    }
+
+    function save(data){
+      localStorage.setItem(storageKey, JSON.stringify(data));
+    }
+
+    function getElementMeta(item, saved){
+      return {
+        title: saved[item.key + '_title'] || item.title || '',
+        description: saved[item.key + '_description'] || item.description || '',
+        content: saved[item.key] || item.content || ''
+      };
+    }
+
+    function switchSection(targetId){
+      var buttons = document.querySelectorAll('.nav-btn');
+      var sections = document.querySelectorAll('.section');
+
+      buttons.forEach(function(btn){
+        btn.classList.toggle('active', btn.getAttribute('data-target') === targetId);
+      });
+
+      sections.forEach(function(sec){
+        sec.classList.toggle('active', sec.id === targetId);
+      });
+
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+
+    function renderBasic(){
+      var saved = getSaved();
+      projectTitleInput.value = saved.project_title || '';
+      projectAudienceInput.value = saved.project_audience || '';
+      projectGoalInput.value = saved.project_goal || '';
+    }
+
+    function bindBasic(){
+      [projectTitleInput, projectAudienceInput, projectGoalInput].forEach(function(field){
+        field.addEventListener('input', function(){
+          var current = getSaved();
+          current.project_title = projectTitleInput.value;
+          current.project_audience = projectAudienceInput.value;
+          current.project_goal = projectGoalInput.value;
+          save(current);
+          buildOutput();
+        });
+      });
+    }
+
+    function renderCards(){
+      var saved = getSaved();
+      var html = '';
+
+      defaultElements.forEach(function(item){
+        var meta = getElementMeta(item, saved);
+        html += ''
+          + '<article class="card factor-card">'
+          +   '<div class="factor-card-top">'
+          +     '<div class="factor-num">' + item.number + '</div>'
+          +     '<div class="factor-head">'
+          +       '<input class="label-input" type="text" data-role="title" data-key="' + item.key + '" value="' + escapeHtml(meta.title) + '">'
+          +       '<input class="desc-input" type="text" data-role="description" data-key="' + item.key + '" value="' + escapeHtml(meta.description) + '">'
+          +     '</div>'
+          +   '</div>'
+          +   '<textarea data-role="content" data-key="' + item.key + '">' + escapeHtml(meta.content) + '</textarea>'
+          + '</article>';
+      });
+
+      cards.innerHTML = html;
+
+      cards.querySelectorAll('[data-key]').forEach(function(field){
+        field.addEventListener('input', function(event){
+          var current = getSaved();
+          var key = event.target.getAttribute('data-key');
+          var role = event.target.getAttribute('data-role');
+
+          if(role === 'title'){
+            current[key + '_title'] = event.target.value;
+          } else if(role === 'description'){
+            current[key + '_description'] = event.target.value;
+          } else {
+            current[key] = event.target.value;
+          }
+
+          save(current);
+          buildOutput();
+        });
+      });
+    }
+
+    function buildOutput(){
+      var saved = getSaved();
+      var filled = 0;
+      var lines = [];
+      var previewHtml = '';
+
+      var title = (saved.project_title || '').trim();
+      var audience = (saved.project_audience || '').trim();
+      var goal = (saved.project_goal || '').trim();
+
+      lines.push('【タイトル】');
+      lines.push(title || '未入力');
+      lines.push('');
+      lines.push('【誰に向けるか】');
+      lines.push(audience || '未入力');
+
+      if(goal){
+        lines.push('');
+        lines.push('【ねらい】');
+        lines.push(goal);
+      }
+
+      lines.push('');
+      lines.push('【おもしろくする5要素】');
+
+      previewHtml += '<div class="preview-item"><strong>タイトル</strong><p>' + escapeHtml(title || '未入力') + '</p></div>';
+      previewHtml += '<div class="preview-item"><strong>誰に向けるか</strong><p>' + escapeHtml(audience || '未入力') + '</p></div>';
+      if(goal){
+        previewHtml += '<div class="preview-item"><strong>ねらい</strong><p>' + escapeHtml(goal) + '</p></div>';
+      }
+
+      defaultElements.forEach(function(item, index){
+        var meta = getElementMeta(item, saved);
+        var elementTitle = (meta.title || '').trim() || ('項目' + (index + 1));
+        var description = (meta.description || '').trim();
+        var content = (meta.content || '').trim();
+
+        if(content){ filled += 1; }
+
+        lines.push(item.number + '. ' + elementTitle + (description ? '（' + description + '）' : ''));
+        lines.push(content || '未入力');
+        lines.push('');
+
+        previewHtml += ''
+          + '<div class="preview-item">'
+          +   '<strong>' + escapeHtml(elementTitle) + '</strong>'
+          +   (description ? '<span class="preview-sub">' + escapeHtml(description) + '</span>' : '')
+          +   '<p>' + escapeHtml(content || '未入力') + '</p>'
+          +   '<button type="button" class="btn-sub" data-edit-key="' + item.key + '">この項目を編集</button>'
+          + '</div>';
+      });
+
+      statusText.textContent = '入力数 ' + filled + ' / 5';
+      outputText.value = lines.join('\n');
+      previewList.innerHTML = previewHtml;
+
+      previewList.querySelectorAll('[data-edit-key]').forEach(function(btn){
+        btn.addEventListener('click', function(event){
+          var key = event.currentTarget.getAttribute('data-edit-key');
+          switchSection('section-elements');
+          setTimeout(function(){
+            var target = document.querySelector('[data-role="content"][data-key="' + key + '"]');
+            if(target){
+              target.focus();
+              target.scrollIntoView({behavior:'smooth', block:'center'});
+            }
+          }, 80);
+        });
+      });
+    }
+
+    function flashCopy(text){
+      [document.getElementById('copyBtn'), document.getElementById('copyBtnSecondary')].forEach(function(btn){
+        var original = btn.textContent;
+        btn.textContent = text;
+        setTimeout(function(){ btn.textContent = original; }, 1200);
+      });
+    }
+
+    function fallbackCopy(text){
+      outputText.removeAttribute('readonly');
+      outputText.value = text;
+      outputText.select();
+      try { document.execCommand('copy'); } catch(error) {}
+      outputText.setAttribute('readonly', 'readonly');
+    }
+
+    function copyOutput(){
+      buildOutput();
+      var text = outputText.value;
+      if(navigator.clipboard && window.isSecureContext){
+        navigator.clipboard.writeText(text).then(function(){
+          flashCopy('コピーしました');
+        }).catch(function(){
+          fallbackCopy(text);
+          flashCopy('コピーしました');
+        });
+      } else {
+        fallbackCopy(text);
+        flashCopy('コピーしました');
+      }
+    }
+
+    function fillSample(){
+      var current = getSaved();
+      var sample = JSON.parse(JSON.stringify(sampleSet));
+      Object.keys(sample).forEach(function(key){
+        current[key] = sample[key];
+      });
+      save(current);
+      renderBasic();
+      renderCards();
+      buildOutput();
+      switchSection('section-basic');
+    }
+
+    function resetAll(){
+      if(!window.confirm('入力内容をすべて消します。よろしいですか。')) return;
+      localStorage.removeItem(storageKey);
+      renderBasic();
+      renderCards();
+      buildOutput();
+      switchSection('section-basic');
+    }
+
+    function setupNav(){
+      document.querySelectorAll('.nav-btn').forEach(function(btn){
+        btn.addEventListener('click', function(event){
+          switchSection(event.currentTarget.getAttribute('data-target'));
+        });
+      });
+    }
+
+    document.getElementById('fillSampleBtn').addEventListener('click', fillSample);
+    document.getElementById('resetBtn').addEventListener('click', resetAll);
+    document.getElementById('copyBtn').addEventListener('click', copyOutput);
+    document.getElementById('copyBtnSecondary').addEventListener('click', copyOutput);
+
+    renderBasic();
+    bindBasic();
+    renderCards();
+    buildOutput();
+    setupNav();
+  </script>
+</body>
+</html>

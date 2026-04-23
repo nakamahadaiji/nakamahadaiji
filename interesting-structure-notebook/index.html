@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>おもしろくする構成メモ</title>
+  <style>
+    :root { --blue:#1657b8; --blue-deep:#0d4aa3; --aqua:#52d1dd; --orange:#f5873a; --text:#142132; --muted:#68788e; --line:rgba(20,33,50,.12); --card:#ffffff; --soft:#f7f9fc; --shadow:0 14px 36px rgba(4,24,51,.16); }
+    * { box-sizing:border-box; }
+    html, body { margin:0; min-height:100%; font-family:"Hiragino Sans","Yu Gothic","Meiryo",sans-serif; color:var(--text); background:radial-gradient(circle at top left, rgba(82,209,221,.16), transparent 28%),radial-gradient(circle at bottom right, rgba(245,135,58,.12), transparent 22%),linear-gradient(180deg,#18335c 0%,#102340 100%); }
+    .app { max-width:1120px; margin:0 auto; padding:14px 12px 28px; }
+    .topbar { display:grid; gap:12px; margin-bottom:12px; }
+    .brand-pill { width:100%; padding:14px 18px; border-radius:999px; background:var(--aqua); color:#fff; font-weight:800; font-size:16px; border:3px solid rgba(18,33,50,.75); box-shadow:var(--shadow); }
+    .top-actions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+    button, a.button-link { border:none; cursor:pointer; font:inherit; transition:transform .16s ease, opacity .16s ease; text-decoration:none; }
+    button:hover, a.button-link:hover { transform:translateY(-1px); }
+    .ghost-btn, .primary-btn, .sub-btn, .delete-btn, .edit-btn, .notebooklm-btn { min-height:56px; padding:12px 10px; border-radius:18px; font-weight:800; line-height:1.3; word-break:break-word; box-shadow:var(--shadow); }
+    .ghost-btn { background:rgba(255,255,255,.96); color:var(--text); }
+    .primary-btn { background:var(--orange); color:#fff; }
+    .sub-btn, .delete-btn, .edit-btn, .notebooklm-btn { min-height:auto; padding:10px 12px; border-radius:12px; box-shadow:none; font-size:13px; background:#fff; color:var(--blue-deep); border:1px solid rgba(21,87,184,.18); display:inline-flex; align-items:center; justify-content:center; text-align:center; }
+    .delete-btn { color:var(--text); border-color:rgba(20,33,50,.12); background:rgba(20,33,50,.05); }
+    .notebooklm-btn { background:rgba(21,87,184,.08); }
+    .layout { display:grid; gap:12px; }
+    .nav { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; order:1; }
+    .nav-btn { min-height:48px; padding:10px 8px; border-radius:999px; background:rgba(255,255,255,.95); border:2px solid rgba(20,33,50,.75); text-align:center; font-weight:800; font-size:13px; color:#6a5f55; box-shadow:var(--shadow); }
+    .nav-btn.active { background:var(--orange); color:#fff; }
+    .panel { order:2; background:rgba(255,255,255,.98); border-radius:24px; overflow:hidden; box-shadow:var(--shadow); border:3px solid rgba(255,255,255,.7); }
+    .hero { background:linear-gradient(135deg,var(--blue),#0d4aa3 62%,#1c66cb 100%); color:#fff; padding:18px 16px; display:grid; gap:12px; }
+    .hero h1 { margin:0; font-size:28px; line-height:1.15; letter-spacing:-.02em; }
+    .hero p { margin:0; font-size:14px; line-height:1.7; color:rgba(255,255,255,.92); }
+    .hero-points { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .hero-point { background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.18); border-radius:16px; padding:12px; }
+    .hero-point strong { display:block; margin-bottom:4px; font-size:17px; }
+    .hero-point span { display:block; font-size:12px; line-height:1.6; color:rgba(255,255,255,.86); }
+    .content { padding:16px 12px 18px; background:var(--soft); }
+    .section { display:none; } .section.active { display:block; }
+    .section-head { display:grid; gap:8px; margin-bottom:12px; }
+    .section-head h2 { margin:0; font-size:20px; line-height:1.3; }
+    .section-head p { margin:0; font-size:13px; line-height:1.6; color:var(--muted); }
+    .section-actions { display:grid; gap:8px; }
+    .status { justify-self:start; padding:8px 12px; border-radius:999px; background:rgba(82,209,221,.12); border:1px solid rgba(82,209,221,.3); color:#0b6d76; font-size:12px; font-weight:800; }
+    .basic-card, .card, .idea-item, .output-box, .preview-box { background:var(--card); border:1px solid var(--line); border-radius:18px; box-shadow:0 8px 22px rgba(17,35,63,.06); padding:14px; }
+    .basic-grid, .cards, .idea-list, .copy-wrap { display:grid; gap:12px; }
+    .field-label { display:block; margin-bottom:6px; font-size:13px; font-weight:800; color:var(--muted); }
+    .text-input, .label-input, .desc-input, .idea-title-input, .idea-body-input, textarea { width:100%; border:1px solid rgba(20,33,50,.12); border-radius:12px; padding:12px 13px; font:inherit; color:var(--text); background:#fff; outline:none; }
+    .text-input:focus, .label-input:focus, .desc-input:focus, .idea-title-input:focus, .idea-body-input:focus, textarea:focus { border-color:rgba(21,87,184,.45); box-shadow:0 0 0 4px rgba(21,87,184,.10); }
+    .text-input, .label-input { font-size:18px; font-weight:800; }
+    .desc-input, .idea-title-input { font-size:13px; color:var(--muted); }
+    .cards { grid-template-columns:1fr; }
+    .card-top { display:flex; align-items:flex-start; gap:10px; margin-bottom:10px; }
+    .card-number { width:32px; height:32px; border-radius:50%; background:#b3bac5; color:#fff; display:grid; place-items:center; font-size:15px; font-weight:800; flex:0 0 auto; }
+    .card-label-row { display:grid; gap:8px; width:100%; }
+    .card textarea, .idea-body-input, .output-area { resize:vertical; line-height:1.7; }
+    .card textarea { min-height:108px; margin-top:10px; }
+    .idea-body-input { min-height:92px; }
+    .output-area { min-height:280px; }
+    .mini-note { margin-top:12px; padding:12px 14px; background:rgba(245,135,58,.1); border:1px solid rgba(245,135,58,.22); border-radius:14px; color:#8b562d; font-size:13px; line-height:1.7; }
+    .idea-row { display:grid; gap:10px; }
+    .idea-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .preview-card { background:linear-gradient(135deg,var(--blue),#0d4aa3 66%); color:#fff; border-radius:16px; padding:14px; }
+    .preview-card h4, .output-box h3, .preview-box h3 { margin:0 0 10px; font-size:17px; }
+    .preview-grid { display:grid; gap:10px; }
+    .preview-item { background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.18); border-radius:12px; padding:12px; }
+    .preview-item strong { display:block; margin-bottom:4px; font-size:15px; }
+    .preview-sub { display:block; margin-bottom:6px; font-size:12px; line-height:1.5; color:rgba(255,255,255,.78); }
+    .preview-item p { margin:0 0 8px; font-size:13px; line-height:1.7; color:rgba(255,255,255,.95); white-space:pre-wrap; word-break:break-word; }
+    .footer { margin-top:12px; text-align:center; font-size:12px; color:rgba(255,255,255,.78); }
+    @media (min-width:768px) { .app{padding:20px 18px 34px;} .layout{grid-template-columns:minmax(0,1fr) 220px;align-items:start;} .nav{order:2;grid-template-columns:1fr;position:sticky;top:18px;} .panel{order:1;} .topbar{grid-template-columns:minmax(0,1fr) auto;align-items:center;} .top-actions{display:flex;} .hero{grid-template-columns:1.2fr .8fr;padding:24px 24px 22px;} .hero h1{font-size:42px;} .hero p{font-size:15px;max-width:640px;} .content{padding:20px;} .section-head{grid-template-columns:1fr auto;align-items:end;} .section-actions{grid-template-columns:auto auto;} .basic-grid{grid-template-columns:1fr 1fr;} .cards{grid-template-columns:repeat(2,minmax(0,1fr));} .copy-wrap{grid-template-columns:1.05fr .95fr;} }
+    @media (min-width:1024px) { .cards{grid-template-columns:repeat(3,minmax(0,1fr));} }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand-pill">おもしろくする構成メモ</div>
+      <div class="top-actions">
+        <button type="button" class="ghost-btn" id="fillSampleBtn">見本を入れる</button>
+        <button type="button" class="ghost-btn" id="resetBtn">リセット</button>
+        <button type="button" class="primary-btn" id="copyBtn">一気にコピー</button>
+      </div>
+    </div>
+    <div class="layout">
+      <nav class="nav">
+        <button type="button" class="nav-btn active" data-target="section-basic">基本</button>
+        <button type="button" class="nav-btn" data-target="section-elements">5要素</button>
+        <button type="button" class="nav-btn" data-target="section-ideas">考え方</button>
+        <button type="button" class="nav-btn" data-target="section-copy">出力</button>
+      </nav>
+      <div class="panel">
+        <div class="hero">
+          <div>
+            <h1>おもしろくする構成を、<br>すぐ使える形で整理する</h1>
+            <p>授業、研修、発表、動画、イベントなどに使えるように、タイトル、相手、5要素、考え方をまとめて整理できます。</p>
+          </div>
+          <div class="hero-points">
+            <div class="hero-point"><strong>基本</strong><span>何を、誰向けに作るかを整理。</span></div>
+            <div class="hero-point"><strong>出力</strong><span>最後にまとめてメモ化。</span></div>
+          </div>
+        </div>
+        <div class="content">
+          <section class="section active" id="section-basic">
+            <div class="section-head"><div><h2>基本情報</h2><p>まずは構成の土台を短く決めます。</p></div></div>
+            <div class="basic-card">
+              <div class="basic-grid">
+                <div><label class="field-label" for="projectTitle">タイトル</label><input id="projectTitle" class="text-input" type="text"></div>
+                <div><label class="field-label" for="projectAudience">誰に向けるか</label><input id="projectAudience" class="text-input" type="text"></div>
+              </div>
+              <div><label class="field-label" for="projectGoal">ねらい</label><textarea id="projectGoal" rows="4"></textarea></div>
+            </div>
+          </section>
+          <section class="section" id="section-elements">
+            <div class="section-head"><div><h2>おもしろくする5要素</h2><p>必要なところだけ短く書けば大丈夫です。</p></div><div class="status" id="statusText">入力数 0 / 5</div></div>
+            <div class="cards" id="cards"></div>
+            <div class="mini-note">要素名も説明文も内容も、あとから何度でも直せます。</div>
+          </section>
+          <section class="section" id="section-ideas">
+            <div class="section-head"><div><h2>考え方メモ</h2><p>初期の3つをベースに、追加や編集ができます。</p></div><button type="button" class="sub-btn" id="addIdeaBtn">考え方を追加</button></div>
+            <div class="idea-list" id="ideaList"></div>
+          </section>
+          <section class="section" id="section-copy">
+            <div class="section-head">
+              <div><h2>コピー用まとめ</h2><p>企画メモとしてそのまま使えます。</p></div>
+              <div class="section-actions">
+                <button type="button" class="primary-btn" id="copyBtnSecondary">この内容をコピー</button>
+                <a class="button-link notebooklm-btn" href="https://notebooklm.google.com/" target="_blank" rel="noopener noreferrer">NotebookLMを開く</a>
+              </div>
+            </div>
+            <div class="copy-wrap">
+              <div class="output-box"><h3>出力テキスト</h3><textarea class="output-area" id="outputText" readonly></textarea></div>
+              <div class="preview-box"><div class="preview-card"><h4>入力内容の要約</h4><div id="previewList" class="preview-grid"></div></div></div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="footer">入力内容はこの端末の中だけに保存されます。</div>
+  </div>
+  <script>
+    var defaultElements=[{key:'purpose',number:'1',title:'目的がわかる',description:'最初にねらいが伝わるか'},{key:'empathy',number:'2',title:'共感できる',description:'自分事として入れるか'},{key:'surprise',number:'3',title:'裏切りがある',description:'少し意外さがあるか'},{key:'useful',number:'4',title:'活用できる',description:'あとで使える形か'},{key:'direction',number:'5',title:'演出がよい',description:'流れや見せ方がよいか'}];
+    var defaultIdeas=[{id:'idea-1',title:'資料を作るな、体験を作れ',body:'説明を整える前に、相手にどんな感覚を持ち帰ってほしいかを先に決める。'},{id:'idea-2',title:'正しさより、なるほど感',body:'説明が正しくても、相手が動けなければ弱い。腹落ちする形を優先する。'},{id:'idea-3',title:'全部を伝えようとしない',body:'細かく言い切るより、相手に残したい一言を絞る方が強い。'}];
+    var sampleSet={project_title:'面白い授業の導入づくり',project_audience:'高校生向け',project_goal:'最初の3分で「続きを見たい」と思わせる構成にする。',purpose_title:'目的がわかる',purpose_description:'最初に見る意味が伝わるか',purpose:'最初に「今日は何がわかるのか」「なぜ今これを見るのか」をはっきり示す。',empathy_title:'共感できる',empathy_description:'自分の話だと感じるか',empathy:'身近な失敗やあるあるから入り、自分にも関係あると感じてもらう。',surprise_title:'裏切りがある',surprise_description:'少し意外さがあるか',surprise:'予想と違う答えや展開を途中で入れて、続きを見たくさせる。',useful_title:'活用できる',useful_description:'見た後に使えるか',useful:'見た内容がその場の感想で終わらず、次の行動に変わる形にする。',direction_title:'演出がよい',direction_description:'流れや見せ方がよいか',direction:'問い→共感→意外性→回収、の順で気持ちが下がらないように組む。',ideas:[{id:'idea-s1',title:'最初の10秒で止める',body:'冒頭で強い問いや映像を出して、続きを見る理由を作る。'},{id:'idea-s2',title:'説明より順番',body:'同じ内容でも、見せる順番で面白さは大きく変わる。'},{id:'idea-s3',title:'最後に回収する',body:'最初の問いや違和感を最後に回収すると、全体が締まる。'}]};
+    var storageKey='interesting-structure-v1-notebook';
+    var cards=document.getElementById('cards'); var ideaList=document.getElementById('ideaList'); var outputText=document.getElementById('outputText'); var previewList=document.getElementById('previewList'); var statusText=document.getElementById('statusText'); var projectTitleInput=document.getElementById('projectTitle'); var projectAudienceInput=document.getElementById('projectAudience'); var projectGoalInput=document.getElementById('projectGoal');
+    function escapeHtml(text){return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#39;');}
+    function getSaved(){try{var parsed=JSON.parse(localStorage.getItem(storageKey))||{}; if(!Array.isArray(parsed.ideas)) parsed.ideas=JSON.parse(JSON.stringify(defaultIdeas)); return parsed;}catch(error){return {ideas:JSON.parse(JSON.stringify(defaultIdeas))};}}
+    function save(data){localStorage.setItem(storageKey,JSON.stringify(data));}
+    function getElementMeta(item,saved){return {title:saved[item.key+'_title']||item.title,description:saved[item.key+'_description']||item.description,content:saved[item.key]||''};}
+    function switchSection(targetId){var buttons=document.querySelectorAll('.nav-btn'); var sections=document.querySelectorAll('.section'); for(var i=0;i<buttons.length;i+=1){buttons[i].classList.remove('active'); if(buttons[i].getAttribute('data-target')===targetId) buttons[i].classList.add('active');} for(var j=0;j<sections.length;j+=1) sections[j].classList.remove('active'); document.getElementById(targetId).classList.add('active'); window.scrollTo({top:0,behavior:'smooth'});}
+    function renderBasic(){var saved=getSaved(); projectTitleInput.value=saved.project_title||''; projectAudienceInput.value=saved.project_audience||''; projectGoalInput.value=saved.project_goal||'';}
+    function bindBasic(){[projectTitleInput,projectAudienceInput,projectGoalInput].forEach(function(field){field.addEventListener('input',function(){var current=getSaved(); current.project_title=projectTitleInput.value; current.project_audience=projectAudienceInput.value; current.project_goal=projectGoalInput.value; save(current); buildOutput();});});}
+    function renderCards(){var saved=getSaved(); var html=''; for(var i=0;i<defaultElements.length;i+=1){var item=defaultElements[i]; var meta=getElementMeta(item,saved); html+='<article class="card"><div class="card-top"><div class="card-number">'+item.number+'</div><div class="card-label-row"><input class="label-input" type="text" data-role="title" data-key="'+item.key+'" value="'+escapeHtml(meta.title)+'"><input class="desc-input" type="text" data-role="description" data-key="'+item.key+'" value="'+escapeHtml(meta.description)+'"></div></div><textarea data-role="content" data-key="'+item.key+'">'+escapeHtml(meta.content)+'</textarea></article>';} cards.innerHTML=html; var fields=cards.querySelectorAll('[data-key]'); for(var j=0;j<fields.length;j+=1){fields[j].addEventListener('input',function(event){var current=getSaved(); var key=event.target.getAttribute('data-key'); var role=event.target.getAttribute('data-role'); if(role==='title') current[key+'_title']=event.target.value; else if(role==='description') current[key+'_description']=event.target.value; else current[key]=event.target.value; save(current); buildOutput();});}}
+    function renderIdeas(){var saved=getSaved(); var ideas=Array.isArray(saved.ideas)?saved.ideas:JSON.parse(JSON.stringify(defaultIdeas)); var html=''; for(var i=0;i<ideas.length;i+=1){html+='<div class="idea-item"><div class="idea-row"><input class="idea-title-input" type="text" data-idea-id="'+ideas[i].id+'" data-role="idea-title" value="'+escapeHtml(ideas[i].title||'')+'"><textarea class="idea-body-input" data-idea-id="'+ideas[i].id+'" data-role="idea-body">'+escapeHtml(ideas[i].body||'')+'</textarea><div class="idea-actions"><button type="button" class="delete-btn" data-role="delete-idea" data-idea-id="'+ideas[i].id+'">削除</button></div></div></div>';} ideaList.innerHTML=html; var fields=ideaList.querySelectorAll('[data-idea-id]'); for(var j=0;j<fields.length;j+=1){fields[j].addEventListener('input',function(event){var current=getSaved(); current.ideas=(current.ideas||[]).map(function(item){if(item.id!==event.target.getAttribute('data-idea-id')) return item; if(event.target.getAttribute('data-role')==='idea-title') return {id:item.id,title:event.target.value,body:item.body||''}; return {id:item.id,title:item.title||'',body:event.target.value};}); save(current); buildOutput();});} var deleteButtons=ideaList.querySelectorAll('[data-role="delete-idea"]'); for(var k=0;k<deleteButtons.length;k+=1){deleteButtons[k].addEventListener('click',function(event){var current=getSaved(); current.ideas=(current.ideas||[]).filter(function(item){return item.id!==event.target.getAttribute('data-idea-id');}); save(current); renderIdeas(); buildOutput();});}}
+    function buildOutput(){var saved=getSaved(); var filled=0; var lines=[]; var previewHtml=''; var title=(saved.project_title||'').trim(); var audience=(saved.project_audience||'').trim(); var goal=(saved.project_goal||'').trim(); lines.push('【タイトル】'); lines.push(title||'未入力'); lines.push(''); lines.push('【誰に向けるか】'); lines.push(audience||'未入力'); if(goal){lines.push(''); lines.push('【ねらい】'); lines.push(goal);} lines.push(''); lines.push('【おもしろくする5要素】'); previewHtml+='<div class="preview-item"><strong>タイトル</strong><p>'+escapeHtml(title||'未入力')+'</p></div>'; previewHtml+='<div class="preview-item"><strong>誰に向けるか</strong><p>'+escapeHtml(audience||'未入力')+'</p></div>'; if(goal) previewHtml+='<div class="preview-item"><strong>ねらい</strong><p>'+escapeHtml(goal)+'</p></div>'; for(var i=0;i<defaultElements.length;i+=1){var item=defaultElements[i]; var meta=getElementMeta(item,saved); var elementTitle=(meta.title||'').trim()||item.title; var description=(meta.description||'').trim(); var content=(meta.content||'').trim(); if(content) filled+=1; var displayValue=content||'未入力'; lines.push(item.number+'. '+elementTitle+(description?'（'+description+'）':'')); lines.push(displayValue); lines.push(''); previewHtml+='<div class="preview-item"><strong>'+escapeHtml(elementTitle)+'</strong>'+(description?'<span class="preview-sub">'+escapeHtml(description)+'</span>':'')+'<p>'+escapeHtml(displayValue)+'</p><button type="button" class="edit-btn" data-edit-key="'+item.key+'">この項目を編集</button></div>'; } lines.push('【考え方メモ】'); var ideas=Array.isArray(saved.ideas)?saved.ideas:[]; if(ideas.length===0){lines.push('未入力');} else {for(var j=0;j<ideas.length;j+=1){var ideaTitle=(ideas[j].title||'').trim()||('考え方'+(j+1)); var ideaBody=(ideas[j].body||'').trim()||'未入力'; lines.push((j+1)+'. '+ideaTitle); lines.push(ideaBody); lines.push('');}} statusText.textContent='入力数 '+filled+' / 5'; outputText.value=lines.join('\n'); previewList.innerHTML=previewHtml; var editButtons=previewList.querySelectorAll('[data-edit-key]'); for(var k=0;k<editButtons.length;k+=1){editButtons[k].addEventListener('click',function(event){var key=event.target.getAttribute('data-edit-key'); switchSection('section-elements'); setTimeout(function(){var target=document.querySelector('[data-role="content"][data-key="'+key+'"]'); if(target){target.focus(); target.scrollIntoView({behavior:'smooth',block:'center'});}},80);});}}
+    function flashCopy(text){var buttons=[document.getElementById('copyBtn'),document.getElementById('copyBtnSecondary')]; for(var i=0;i<buttons.length;i+=1){(function(btn){var original=btn.textContent; btn.textContent=text; setTimeout(function(){btn.textContent=original;},1200);})(buttons[i]);}}
+    function fallbackCopy(text){outputText.removeAttribute('readonly'); outputText.value=text; outputText.select(); try{document.execCommand('copy');}catch(error){} outputText.setAttribute('readonly','readonly');}
+    function copyOutput(){buildOutput(); var text=outputText.value; if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(text).then(function(){flashCopy('コピーしました');}).catch(function(){fallbackCopy(text); flashCopy('コピーしました');});} else {fallbackCopy(text); flashCopy('コピーしました');}}
+    function fillSample(){save(JSON.parse(JSON.stringify(sampleSet))); renderBasic(); renderCards(); renderIdeas(); buildOutput(); switchSection('section-basic');}
+    function resetAll(){if(!window.confirm('入力内容をすべて消します。よろしいですか。')) return; localStorage.removeItem(storageKey); renderBasic(); renderCards(); renderIdeas(); buildOutput(); switchSection('section-basic');}
+    function addIdea(){var current=getSaved(); var newIdea={id:'idea-'+Date.now(),title:'',body:''}; current.ideas=Array.isArray(current.ideas)?current.ideas:[]; current.ideas.push(newIdea); save(current); renderIdeas(); buildOutput(); setTimeout(function(){var target=document.querySelector('[data-idea-id="'+newIdea.id+'"][data-role="idea-title"]'); if(target){target.focus(); target.scrollIntoView({behavior:'smooth',block:'center'});}},80);}
+    function setupNav(){var buttons=document.querySelectorAll('.nav-btn'); for(var i=0;i<buttons.length;i+=1){buttons[i].addEventListener('click',function(event){switchSection(event.currentTarget.getAttribute('data-target'));});}}
+    document.getElementById('copyBtn').addEventListener('click',copyOutput); document.getElementById('copyBtnSecondary').addEventListener('click',copyOutput); document.getElementById('fillSampleBtn').addEventListener('click',fillSample); document.getElementById('resetBtn').addEventListener('click',resetAll); document.getElementById('addIdeaBtn').addEventListener('click',addIdea);
+    renderBasic(); bindBasic(); renderCards(); renderIdeas(); buildOutput(); setupNav();
+  </script>
+</body>
+</html>

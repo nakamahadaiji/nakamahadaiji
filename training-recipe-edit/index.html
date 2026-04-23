@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>研修おもしろ設計アプリ</title>
+  <style>
+    :root {
+      --blue: #1657b8;
+      --blue-deep: #0d4aa3;
+      --aqua: #52d1dd;
+      --orange: #f5873a;
+      --text: #142132;
+      --muted: #5d6b7d;
+      --line: rgba(20,33,50,.12);
+      --shadow: 0 18px 48px rgba(4,24,51,.22);
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+      color: var(--text);
+      background:
+        linear-gradient(135deg, rgba(10,29,57,.92), rgba(20,41,78,.88)),
+        radial-gradient(circle at top left, rgba(82,209,221,.18), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(245,135,58,.14), transparent 22%),
+        linear-gradient(180deg, #d9c2a0 0%, #d3b28a 18%, #b5885f 34%, #92663e 52%, #cfb08b 68%, #d5bea0 100%);
+      background-attachment: fixed;
+    }
+    .app { max-width: 1440px; margin: 0 auto; padding: 24px 20px 40px; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; }
+    .brand-pill {
+      display:inline-flex; align-items:center; gap:10px; padding:12px 22px; border-radius:999px;
+      background:var(--aqua); color:#fff; font-weight:800; letter-spacing:.03em;
+      box-shadow:var(--shadow); border:3px solid rgba(18,33,50,.8); font-size:clamp(15px,2vw,24px);
+    }
+    .top-actions { display:flex; gap:12px; flex-wrap:wrap; }
+    button {
+      border:none; cursor:pointer; font:inherit; transition:transform .18s ease, background .18s ease;
+    }
+    button:hover { transform:translateY(-1px); }
+    .ghost-btn,.primary-btn,.edit-btn { padding:12px 18px; border-radius:14px; font-weight:700; box-shadow:var(--shadow); }
+    .primary-btn { background:var(--orange); color:#fff; }
+    .ghost-btn { background:rgba(255,255,255,.94); color:var(--text); }
+    .edit-btn { background:rgba(21,87,184,.12); color:var(--blue-deep); box-shadow:none; border:1px solid rgba(21,87,184,.18); }
+    .stage { display:grid; grid-template-columns:minmax(0,1fr) 220px; gap:18px; align-items:start; }
+    .panel {
+      background:linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.92));
+      border-radius:26px; box-shadow:var(--shadow); border:4px solid rgba(255,255,255,.7); overflow:hidden;
+    }
+    .hero {
+      background:linear-gradient(135deg, var(--blue), #0d4aa3 58%, #1b64c7 100%); color:#fff;
+      padding:clamp(20px,3vw,34px); min-height:220px; display:grid; grid-template-columns:1.1fr .9fr; gap:24px; align-items:center;
+    }
+    .hero h1 { margin:0 0 14px; font-size:clamp(28px,4vw,58px); line-height:1.08; }
+    .hero p { margin:0; font-size:clamp(15px,1.5vw,20px); line-height:1.8; color:rgba(255,255,255,.9); }
+    .hero-badges { display:grid; gap:12px; }
+    .hero-badge { background:rgba(255,255,255,.12); border:2px solid rgba(255,255,255,.22); border-radius:18px; padding:16px 18px; }
+    .hero-badge strong { display:block; font-size:clamp(20px,2.3vw,34px); margin-bottom:4px; }
+    .hero-badge span { font-size:14px; line-height:1.6; color:rgba(255,255,255,.88); }
+    .content { padding:22px; }
+    .section { display:none; }
+    .section.active { display:block; }
+    .section-head { display:flex; justify-content:space-between; gap:16px; margin-bottom:18px; flex-wrap:wrap; }
+    .section-head h2 { margin:0 0 8px; font-size:clamp(24px,2vw,36px); }
+    .section-head p { margin:0; color:var(--muted); line-height:1.7; }
+    .status { background:rgba(82,209,221,.12); color:#0b6d76; border:1px solid rgba(82,209,221,.28); border-radius:999px; padding:10px 14px; font-weight:700; }
+    .cards { display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:16px; }
+    .card {
+      background:linear-gradient(180deg, #fff, #f8fbff); border:1px solid var(--line); border-radius:22px; padding:18px;
+      min-height:360px; display:flex; flex-direction:column; box-shadow:0 10px 28px rgba(17,35,63,.08);
+    }
+    .card-number {
+      width:42px; height:42px; border-radius:50%; background:#aeb4bf; color:#fff; display:grid; place-items:center;
+      font-weight:800; margin:-34px auto 10px; box-shadow:0 6px 12px rgba(0,0,0,.15); font-size:22px;
+    }
+    .card-label-row { display:grid; gap:8px; margin-bottom:12px; }
+    .label-input,.desc-input,textarea {
+      width:100%; border:1px solid rgba(20,33,50,.12); border-radius:14px; padding:14px; font:inherit; color:var(--text); background:#fff; outline:none;
+    }
+    .label-input:focus,.desc-input:focus,textarea:focus { border-color:rgba(21,87,184,.45); box-shadow:0 0 0 4px rgba(21,87,184,.11); }
+    .label-input { font-size:22px; font-weight:800; text-align:center; }
+    .desc-input { font-size:14px; color:var(--muted); text-align:center; }
+    .card textarea { min-height:120px; resize:vertical; margin-top:auto; line-height:1.7; }
+    .mini-note { margin-top:18px; padding:16px 18px; background:rgba(245,135,58,.1); border-radius:18px; border:1px solid rgba(245,135,58,.22); line-height:1.8; color:#8b562d; }
+    .idea-list { display:grid; gap:14px; }
+    .idea-item { background:#fff; border:1px solid var(--line); border-radius:20px; overflow:hidden; box-shadow:0 8px 20px rgba(17,35,63,.06); }
+    .idea-toggle { width:100%; background:#fff; padding:18px 20px; display:flex; align-items:center; justify-content:space-between; gap:14px; text-align:left; font-size:clamp(20px,1.6vw,28px); font-weight:800; color:var(--text); }
+    .idea-toggle span:last-child { font-size:28px; color:var(--blue); }
+    .idea-body { display:none; padding:0 20px 20px; color:var(--muted); line-height:1.9; font-size:16px; }
+    .idea-item.open .idea-body { display:block; }
+    .copy-wrap { display:grid; grid-template-columns:1.1fr .9fr; gap:18px; align-items:start; }
+    .output-box,.preview-box { background:#f8fbff; border:1px solid rgba(21,87,184,.14); border-radius:20px; padding:18px; }
+    .output-box h3,.preview-box h3 { margin:0 0 12px; font-size:24px; }
+    .output-area { width:100%; min-height:360px; resize:vertical; line-height:1.75; background:#fff; }
+    .preview-card { background:linear-gradient(135deg, var(--blue), #0d4aa3 66%); color:#fff; border-radius:22px; padding:22px; box-shadow:0 18px 36px rgba(11,41,86,.2); }
+    .preview-card h4 { margin:0 0 16px; font-size:24px; }
+    .preview-grid { display:grid; gap:12px; }
+    .preview-item { background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.18); border-radius:16px; padding:14px; }
+    .preview-item strong { display:block; margin-bottom:6px; font-size:17px; }
+    .preview-sub { display:block; margin-bottom:8px; font-size:13px; color:rgba(255,255,255,.78); line-height:1.6; }
+    .preview-item p { margin:0 0 10px; line-height:1.8; color:rgba(255,255,255,.94); white-space:pre-wrap; word-break:break-word; }
+    .nav { position:sticky; top:18px; display:grid; gap:10px; }
+    .nav-btn { background:rgba(255,255,255,.92); border:3px solid rgba(20,33,50,.85); border-radius:999px; padding:18px; text-align:center; font-weight:800; font-size:clamp(18px,1.45vw,24px); color:#6b5d50; }
+    .nav-btn.active { background:var(--orange); color:#fff; }
+    .footer { margin-top:18px; color:rgba(255,255,255,.8); text-align:center; font-size:13px; }
+    @media (max-width:1200px) { .cards { grid-template-columns:repeat(2, minmax(0,1fr)); } .copy-wrap,.hero { grid-template-columns:1fr; } }
+    @media (max-width:900px) { .stage { grid-template-columns:1fr; } .nav { position:static; grid-template-columns:repeat(3,minmax(0,1fr)); } .nav-btn:last-child { grid-column:span 3; } }
+    @media (max-width:700px) { .app { padding:14px 12px 28px; } .cards { grid-template-columns:1fr; } .topbar { align-items:stretch; flex-direction:column; } .top-actions { width:100%; } .top-actions > * { flex:1; } .content { padding:16px; } .hero { padding:18px; min-height:auto; } .nav { grid-template-columns:1fr 1fr; } .nav-btn:last-child { grid-column:span 2; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand-pill">おもしろい研修のレシピ</div>
+      <div class="top-actions">
+        <button type="button" class="ghost-btn" id="fillSampleBtn">見本を入れる</button>
+        <button type="button" class="ghost-btn" id="resetBtn">リセット</button>
+        <button type="button" class="primary-btn" id="copyBtn">一気にコピー</button>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="panel">
+        <div class="hero">
+          <div>
+            <h1>資料を作るな、<br>体験を作れ</h1>
+            <p>研修を「聞いて終わり」にせず、あとで使える形に整えるための設計テンプレです。面白さの5要素を入力し、最後にそのまま企画メモとしてコピーできます。</p>
+          </div>
+          <div class="hero-badges">
+            <div class="hero-badge">
+              <strong>5要素</strong>
+              <span>要素名も説明も内容も、あとから自由に編集できます。</span>
+            </div>
+            <div class="hero-badge">
+              <strong>考え方3つ</strong>
+              <span>迷ったときに戻るための考え方を、ヒントとしてすぐ見返せます。</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="content">
+          <section class="section active" id="section-elements">
+            <div class="section-head">
+              <div>
+                <h2>研修を面白くする5要素</h2>
+                <p>要素名・説明・内容をその場で編集できます。</p>
+              </div>
+              <div class="status" id="statusText">入力数 0 / 5</div>
+            </div>
+            <div class="cards" id="cards"></div>
+            <div class="mini-note">必要なところだけ短く書いても使えます。あとから何度でも直せます。</div>
+          </section>
+
+          <section class="section" id="section-ideas">
+            <div class="section-head">
+              <div>
+                <h2>迷ったときの考え方3つ</h2>
+                <p>これは入力欄ではなく、設計の判断に迷ったときのヒントです。</p>
+              </div>
+            </div>
+            <div class="idea-list" id="ideaList"></div>
+          </section>
+
+          <section class="section" id="section-copy">
+            <div class="section-head">
+              <div>
+                <h2>コピー用まとめ</h2>
+                <p>そのまま企画メモ、共有文、AIへの指示文の土台として使えます。</p>
+              </div>
+              <button type="button" class="primary-btn" id="copyBtnSecondary">この内容をコピー</button>
+            </div>
+            <div class="copy-wrap">
+              <div class="output-box">
+                <h3>出力テキスト</h3>
+                <textarea class="output-area" id="outputText" readonly></textarea>
+              </div>
+              <div class="preview-box">
+                <h3>見た目の確認</h3>
+                <div class="preview-card">
+                  <h4>5要素の要約</h4>
+                  <div id="previewList" class="preview-grid"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <button type="button" class="nav-btn active" data-target="section-elements">5要素を考える</button>
+        <button type="button" class="nav-btn" data-target="section-ideas">考え方3つ</button>
+        <button type="button" class="nav-btn" data-target="section-copy">レシピ</button>
+      </nav>
+    </div>
+    <div class="footer">入力内容はこの端末の中だけに保存されます。</div>
+  </div>
+
+  <script>
+    var defaultElements = [
+      { key: 'purpose', number: '1', title: '目的がわかる', description: '参加者が「なぜこれをやるのか」を最初に理解できるか' },
+      { key: 'empathy', number: '2', title: '共感できる', description: '自分事だと思える入口があるか' },
+      { key: 'surprise', number: '3', title: '裏切りがある', description: '予想を少し超える展開や気づきがあるか' },
+      { key: 'useful', number: '4', title: '活用できる', description: '研修後すぐに試せる形に落ちるか' },
+      { key: 'direction', number: '5', title: '演出がよい', description: '空気・順番・見せ方まで含めて引き込めるか' }
+    ];
+    var ideas = [
+      { title: '資料を作るな、体験を作れ', body: '研修は一連の体験です。資料やワークは主役ではなく、参加者が「なるほど」と感じて動きたくなる流れを支える道具です。まず先に、参加者に何を感じさせたいかを決めてから、中身を作ります。' },
+      { title: '“正しさ”よりも“なるほど感”', body: '内容がきれいに整理されていること自体よりも、参加者が「それなら使えそう」と思えることの方が重要です。説明し切るより、腹落ちする例や一言の方が効く場面があります。' },
+      { title: '誰もちゃんと見ていない', body: '作り手は内容を熟知していますが、参加者はそこまで細かく見ていません。全部を伝えようとせず、2割伝われば十分という前提で、何を残すかを絞る方が伝わります。' }
+    ];
+    var storageKey = 'training-ui-five-elements-v3';
+    var cards = document.getElementById('cards');
+    var ideaList = document.getElementById('ideaList');
+    var outputText = document.getElementById('outputText');
+    var previewList = document.getElementById('previewList');
+    var statusText = document.getElementById('statusText');
+
+    function escapeHtml(text) {
+      return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    function getSaved() {
+      try { return JSON.parse(localStorage.getItem(storageKey)) || {}; } catch (error) { return {}; }
+    }
+    function save(data) { localStorage.setItem(storageKey, JSON.stringify(data)); }
+    function getElementMeta(item, saved) {
+      return {
+        title: saved[item.key + '_title'] || item.title,
+        description: saved[item.key + '_description'] || item.description,
+        content: saved[item.key] || ''
+      };
+    }
+    function switchSection(targetId) {
+      var buttons = document.querySelectorAll('.nav-btn');
+      var sections = document.querySelectorAll('.section');
+      for (var i = 0; i < buttons.length; i += 1) {
+        buttons[i].classList.remove('active');
+        if (buttons[i].getAttribute('data-target') === targetId) { buttons[i].classList.add('active'); }
+      }
+      for (var j = 0; j < sections.length; j += 1) { sections[j].classList.remove('active'); }
+      document.getElementById(targetId).classList.add('active');
+    }
+    function renderCards() {
+      var saved = getSaved();
+      var html = '';
+      for (var i = 0; i < defaultElements.length; i += 1) {
+        var item = defaultElements[i];
+        var meta = getElementMeta(item, saved);
+        html += '<article class="card">'
+          + '<div class="card-number">' + item.number + '</div>'
+          + '<div class="card-label-row">'
+          + '<input class="label-input" type="text" data-role="title" data-key="' + item.key + '" value="' + escapeHtml(meta.title) + '">'
+          + '<input class="desc-input" type="text" data-role="description" data-key="' + item.key + '" value="' + escapeHtml(meta.description) + '">'
+          + '</div>'
+          + '<textarea data-role="content" data-key="' + item.key + '">' + escapeHtml(meta.content) + '</textarea>'
+          + '</article>';
+      }
+      cards.innerHTML = html;
+      var fields = cards.querySelectorAll('[data-key]');
+      for (var j = 0; j < fields.length; j += 1) {
+        fields[j].addEventListener('input', function(event) {
+          var current = getSaved();
+          var key = event.target.getAttribute('data-key');
+          var role = event.target.getAttribute('data-role');
+          if (role === 'title') { current[key + '_title'] = event.target.value; }
+          else if (role === 'description') { current[key + '_description'] = event.target.value; }
+          else { current[key] = event.target.value; }
+          save(current);
+          buildOutput();
+        });
+      }
+    }
+    function renderIdeas() {
+      var html = '';
+      for (var i = 0; i < ideas.length; i += 1) {
+        var sign = i === 0 ? '−' : '＋';
+        var openClass = i === 0 ? ' open' : '';
+        html += '<div class="idea-item' + openClass + '"><button type="button" class="idea-toggle"><span>' + ideas[i].title + '</span><span>' + sign + '</span></button><div class="idea-body">' + ideas[i].body + '</div></div>';
+      }
+      ideaList.innerHTML = html;
+      var boxes = ideaList.querySelectorAll('.idea-item');
+      for (var j = 0; j < boxes.length; j += 1) {
+        (function(box) {
+          var button = box.querySelector('.idea-toggle');
+          var signNode = button.querySelector('span:last-child');
+          button.addEventListener('click', function() {
+            box.classList.toggle('open');
+            signNode.textContent = box.classList.contains('open') ? '−' : '＋';
+          });
+        })(boxes[j]);
+      }
+    }
+    function buildOutput() {
+      var saved = getSaved();
+      var filled = 0;
+      var lines = ['【研修を面白くする5要素】'];
+      var previewHtml = '';
+      for (var i = 0; i < defaultElements.length; i += 1) {
+        var item = defaultElements[i];
+        var meta = getElementMeta(item, saved);
+        var title = meta.title.replace(/^\s+|\s+$/g, '') || item.title;
+        var description = meta.description.replace(/^\s+|\s+$/g, '');
+        var content = meta.content.replace(/^\s+|\s+$/g, '');
+        if (content) { filled += 1; }
+        var displayValue = content || '未入力';
+        lines.push(item.number + '. ' + title + (description ? '（' + description + '）' : '') + '\n' + displayValue);
+        previewHtml += '<div class="preview-item"><strong>' + escapeHtml(title) + '</strong>' + (description ? '<span class="preview-sub">' + escapeHtml(description) + '</span>' : '') + '<p>' + escapeHtml(displayValue) + '</p><button type="button" class="edit-btn" data-edit-key="' + item.key + '">この項目を編集</button></div>';
+      }
+      lines.push('');
+      lines.push('【考え方3つ】');
+      for (var j = 0; j < ideas.length; j += 1) { lines.push((j + 1) + '. ' + ideas[j].title + '\n' + ideas[j].body); }
+      statusText.textContent = '入力数 ' + filled + ' / 5';
+      outputText.value = lines.join('\n\n');
+      previewList.innerHTML = previewHtml;
+      var editButtons = previewList.querySelectorAll('.edit-btn');
+      for (var k = 0; k < editButtons.length; k += 1) {
+        editButtons[k].addEventListener('click', function(event) {
+          var key = event.target.getAttribute('data-edit-key');
+          switchSection('section-elements');
+          setTimeout(function() {
+            var target = document.querySelector('[data-role="content"][data-key="' + key + '"]');
+            if (target) { target.focus(); target.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+          }, 50);
+        });
+      }
+    }
+    function flashCopy(text) {
+      var buttons = [document.getElementById('copyBtn'), document.getElementById('copyBtnSecondary')];
+      for (var i = 0; i < buttons.length; i += 1) {
+        (function(btn) {
+          var original = btn.textContent;
+          btn.textContent = text;
+          setTimeout(function() { btn.textContent = original; }, 1200);
+        })(buttons[i]);
+      }
+    }
+    function fallbackCopy(text) {
+      outputText.removeAttribute('readonly');
+      outputText.value = text;
+      outputText.select();
+      try { document.execCommand('copy'); } catch (error) {}
+      outputText.setAttribute('readonly', 'readonly');
+    }
+    function copyOutput() {
+      buildOutput();
+      var text = outputText.value;
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(function() { flashCopy('コピーしました'); }).catch(function() { fallbackCopy(text); flashCopy('コピーしました'); });
+      } else { fallbackCopy(text); flashCopy('コピーしました'); }
+    }
+    function fillSample() {
+      var sample = {
+        purpose_title: '目的がわかる', purpose_description: '参加者が最初にねらいをつかめるか', purpose: '教員が「伝えたつもり」を減らし、授業・面談・校内連携で相手が動く伝え方に変える。',
+        empathy_title: '共感できる', empathy_description: '自分事だと思える入口があるか', empathy: '参加者全員が経験している「うまく説明したのに伝わらなかった場面」から入る。',
+        surprise_title: '裏切りがある', surprise_description: '予想を少し超える展開や気づきがあるか', surprise: '話し方のうまさではなく、順番・問い・具体例の置き方で伝わり方が変わると示す。',
+        useful_title: '活用できる', useful_description: '研修後すぐに試せるか', useful: '明日から使える導入の型、依頼の言い換え、面談で使う問いを持ち帰らせる。',
+        direction_title: '演出がよい', direction_description: '空気・順番・見せ方まで引き込めるか', direction: '導入でミス例を体験→笑う→分解して考える→自分の場面に置き換える流れにする。'
+      };
+      save(sample); renderCards(); buildOutput(); switchSection('section-elements');
+    }
+    function resetAll() {
+      if (!window.confirm('入力内容をすべて消します。よろしいですか。')) { return; }
+      localStorage.removeItem(storageKey); renderCards(); buildOutput(); switchSection('section-elements');
+    }
+    function setupNav() {
+      var buttons = document.querySelectorAll('.nav-btn');
+      for (var i = 0; i < buttons.length; i += 1) {
+        buttons[i].addEventListener('click', function(event) {
+          var targetId = event.currentTarget.getAttribute('data-target');
+          switchSection(targetId);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      }
+    }
+    document.getElementById('copyBtn').addEventListener('click', copyOutput);
+    document.getElementById('copyBtnSecondary').addEventListener('click', copyOutput);
+    document.getElementById('fillSampleBtn').addEventListener('click', fillSample);
+    document.getElementById('resetBtn').addEventListener('click', resetAll);
+    renderCards(); renderIdeas(); buildOutput(); setupNav();
+  </script>
+</body>
+</html>

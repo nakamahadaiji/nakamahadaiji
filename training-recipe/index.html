@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>研修おもしろ設計アプリ</title>
+  <style>
+    :root {
+      --bg-1: #11233f;
+      --bg-2: #1b355c;
+      --panel: rgba(255,255,255,0.92);
+      --panel-soft: rgba(255,255,255,0.82);
+      --blue: #1657b8;
+      --blue-deep: #0d4aa3;
+      --aqua: #52d1dd;
+      --orange: #f5873a;
+      --text: #142132;
+      --muted: #5d6b7d;
+      --line: rgba(20,33,50,.12);
+      --shadow: 0 18px 48px rgba(4, 24, 51, .22);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+      color: var(--text);
+      background:
+        linear-gradient(135deg, rgba(10,29,57,.92), rgba(20,41,78,.88)),
+        radial-gradient(circle at top left, rgba(82,209,221,.18), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(245,135,58,.14), transparent 22%),
+        linear-gradient(180deg, #d9c2a0 0%, #d3b28a 18%, #b5885f 34%, #92663e 52%, #cfb08b 68%, #d5bea0 100%);
+      background-attachment: fixed;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      pointer-events: none;
+    }
+
+    .app {
+      position: relative;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px 20px 40px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .brand-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 22px;
+      border-radius: 999px;
+      background: var(--aqua);
+      color: #fff;
+      font-weight: 800;
+      letter-spacing: .03em;
+      box-shadow: var(--shadow);
+      border: 3px solid rgba(18,33,50,.8);
+      font-size: clamp(15px, 2vw, 24px);
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      cursor: pointer;
+      font: inherit;
+      transition: transform .18s ease, opacity .18s ease, background .18s ease, box-shadow .18s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .ghost-btn,
+    .primary-btn,
+    .sub-btn {
+      padding: 12px 18px;
+      border-radius: 14px;
+      font-weight: 700;
+      box-shadow: var(--shadow);
+    }
+
+    .primary-btn {
+      background: var(--orange);
+      color: #fff;
+    }
+
+    .ghost-btn {
+      background: rgba(255,255,255,.92);
+      color: var(--text);
+    }
+
+    .sub-btn {
+      background: rgba(21,87,184,.12);
+      color: var(--blue-deep);
+      box-shadow: none;
+      border: 1px solid rgba(21,87,184,.18);
+    }
+
+    .stage {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 220px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.92));
+      border-radius: 26px;
+      box-shadow: var(--shadow);
+      border: 4px solid rgba(255,255,255,.7);
+      overflow: hidden;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, var(--blue), #0d4aa3 58%, #1b64c7 100%);
+      color: #fff;
+      padding: clamp(20px, 3vw, 34px);
+      min-height: 220px;
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .hero h1 {
+      margin: 0 0 14px;
+      font-size: clamp(28px, 4vw, 58px);
+      line-height: 1.08;
+      letter-spacing: .02em;
+    }
+
+    .hero p {
+      margin: 0;
+      font-size: clamp(15px, 1.5vw, 20px);
+      line-height: 1.8;
+      color: rgba(255,255,255,.9);
+    }
+
+    .hero-badges {
+      display: grid;
+      gap: 12px;
+    }
+
+    .hero-badge {
+      background: rgba(255,255,255,.12);
+      border: 2px solid rgba(255,255,255,.22);
+      border-radius: 18px;
+      padding: 16px 18px;
+    }
+
+    .hero-badge strong {
+      display: block;
+      font-size: clamp(20px, 2.3vw, 34px);
+      margin-bottom: 4px;
+    }
+
+    .hero-badge span {
+      font-size: 14px;
+      line-height: 1.6;
+      color: rgba(255,255,255,.88);
+    }
+
+    .content {
+      padding: 22px;
+    }
+
+    .section {
+      display: none;
+      animation: fade .24s ease;
+    }
+
+    .section.active { display: block; }
+
+    @keyframes fade {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .section-head h2 {
+      margin: 0 0 8px;
+      font-size: clamp(24px, 2vw, 36px);
+    }
+
+    .section-head p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .status {
+      background: rgba(82,209,221,.12);
+      color: #0b6d76;
+      border: 1px solid rgba(82,209,221,.28);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, #fff, #f8fbff);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 18px;
+      min-height: 290px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 28px rgba(17,35,63,.08);
+    }
+
+    .card-number {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #aeb4bf;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      margin: -34px auto 10px;
+      box-shadow: 0 6px 12px rgba(0,0,0,.15);
+      font-size: 22px;
+    }
+
+    .card h3 {
+      margin: 8px 0 8px;
+      font-size: clamp(22px, 1.6vw, 34px);
+      line-height: 1.2;
+      text-align: center;
+      min-height: 86px;
+      display: grid;
+      place-items: center;
+    }
+
+    .card small {
+      color: var(--muted);
+      line-height: 1.6;
+      text-align: center;
+      min-height: 54px;
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    textarea, input[type="text"] {
+      width: 100%;
+      border: 1px solid rgba(20,33,50,.12);
+      border-radius: 14px;
+      padding: 14px 14px;
+      font: inherit;
+      color: var(--text);
+      background: #fff;
+      outline: none;
+      transition: border-color .18s ease, box-shadow .18s ease;
+    }
+
+    textarea:focus, input[type="text"]:focus {
+      border-color: rgba(21,87,184,.45);
+      box-shadow: 0 0 0 4px rgba(21,87,184,.11);
+    }
+
+    .card textarea {
+      min-height: 110px;
+      resize: vertical;
+      margin-top: auto;
+      line-height: 1.7;
+    }
+
+    .idea-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .idea-item {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 8px 20px rgba(17,35,63,.06);
+    }
+
+    .idea-toggle {
+      width: 100%;
+      background: #fff;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      text-align: left;
+      font-size: clamp(20px, 1.6vw, 28px);
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .idea-toggle span:last-child {
+      font-size: 28px;
+      color: var(--blue);
+      flex: none;
+    }
+
+    .idea-body {
+      display: none;
+      padding: 0 20px 20px;
+      color: var(--muted);
+      line-height: 1.9;
+      font-size: 16px;
+    }
+
+    .idea-item.open .idea-body { display: block; }
+    .idea-item.open .idea-toggle { background: rgba(21,87,184,.04); }
+
+    .copy-wrap {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .output-box, .preview-box {
+      background: #f8fbff;
+      border: 1px solid rgba(21,87,184,.14);
+      border-radius: 20px;
+      padding: 18px;
+    }
+
+    .output-box h3, .preview-box h3 {
+      margin: 0 0 12px;
+      font-size: 24px;
+    }
+
+    .output-area {
+      width: 100%;
+      min-height: 360px;
+      resize: vertical;
+      line-height: 1.75;
+      background: #fff;
+    }
+
+    .preview-card {
+      background: linear-gradient(135deg, var(--blue), #0d4aa3 66%);
+      color: #fff;
+      border-radius: 22px;
+      padding: 22px;
+      box-shadow: 0 18px 36px rgba(11,41,86,.2);
+    }
+
+    .preview-card h4 {
+      margin: 0 0 16px;
+      font-size: 24px;
+    }
+
+    .preview-card ol {
+      margin: 0;
+      padding-left: 22px;
+      line-height: 1.9;
+    }
+
+    .preview-card li + li { margin-top: 6px; }
+
+    .nav {
+      position: sticky;
+      top: 18px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .nav-btn {
+      background: rgba(255,255,255,.92);
+      border: 3px solid rgba(20,33,50,.85);
+      border-radius: 999px;
+      padding: 18px 18px;
+      text-align: center;
+      font-weight: 800;
+      font-size: clamp(18px, 1.45vw, 24px);
+      color: #6b5d50;
+    }
+
+    .nav-btn.active {
+      background: var(--orange);
+      color: #fff;
+    }
+
+    .mini-note {
+      margin-top: 18px;
+      padding: 16px 18px;
+      background: rgba(245,135,58,.1);
+      border-radius: 18px;
+      border: 1px solid rgba(245,135,58,.22);
+      line-height: 1.8;
+      color: #8b562d;
+    }
+
+    .footer {
+      margin-top: 18px;
+      color: rgba(255,255,255,.8);
+      text-align: center;
+      font-size: 13px;
+    }
+
+    @media (max-width: 1200px) {
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .copy-wrap, .hero { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 900px) {
+      .stage { grid-template-columns: 1fr; }
+      .nav {
+        position: static;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .nav-btn:last-child { grid-column: span 3; }
+    }
+
+    @media (max-width: 700px) {
+      .app { padding: 14px 12px 28px; }
+      .cards { grid-template-columns: 1fr; }
+      .topbar { align-items: stretch; flex-direction: column; }
+      .top-actions { width: 100%; }
+      .top-actions > * { flex: 1; }
+      .content { padding: 16px; }
+      .hero { padding: 18px; min-height: auto; }
+      .nav { grid-template-columns: 1fr 1fr; }
+      .nav-btn:last-child { grid-column: span 2; }
+      .section-head { margin-bottom: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand-pill">おもしろい研修のレシピ</div>
+      <div class="top-actions">
+        <button class="ghost-btn" id="fillSampleBtn">見本を入れる</button>
+        <button class="ghost-btn" id="resetBtn">リセット</button>
+        <button class="primary-btn" id="copyBtn">一気にコピー</button>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="panel">
+        <div class="hero">
+          <div>
+            <h1>資料を作るな、<br>体験を作れ</h1>
+            <p>
+              研修を「聞いて終わり」にせず、あとで使える形に整えるための設計テンプレです。<br>
+              面白さの5要素を入力し、最後にそのまま企画メモとしてコピーできます。
+            </p>
+          </div>
+          <div class="hero-badges">
+            <div class="hero-badge">
+              <strong>5要素</strong>
+              <span>目的・共感・裏切り・活用・演出の5つを整理します。</span>
+            </div>
+            <div class="hero-badge">
+              <strong>考え方3つ</strong>
+              <span>迷ったときに戻るための考え方を、ヒントとしてすぐ見返せます。</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="content">
+          <section class="section active" id="section-elements">
+            <div class="section-head">
+              <div>
+                <h2>研修を面白くする5要素</h2>
+                <p>各要素に書き込むと、自動で下のコピー用テキストにも反映されます。</p>
+              </div>
+              <div class="status" id="statusText">入力数 0 / 5</div>
+            </div>
+
+            <div class="cards" id="cards"></div>
+
+            <div class="mini-note">
+              書き方の目安：短い単語だけではなく、
+              「何をするのか」「なぜ効くのか」「参加者がどう感じるか」まで入れると企画メモとして使いやすくなります。
+            </div>
+          </section>
+
+          <section class="section" id="section-ideas">
+            <div class="section-head">
+              <div>
+                <h2>迷ったときの考え方3つ</h2>
+                <p>これは入力欄ではなく、設計の判断に迷ったときのヒントです。</p>
+              </div>
+            </div>
+
+            <div class="idea-list" id="ideaList"></div>
+          </section>
+
+          <section class="section" id="section-copy">
+            <div class="section-head">
+              <div>
+                <h2>コピー用まとめ</h2>
+                <p>そのまま企画メモ、共有文、AIへの指示文の土台として使えます。</p>
+              </div>
+              <button class="primary-btn" id="copyBtnSecondary">この内容をコピー</button>
+            </div>
+
+            <div class="copy-wrap">
+              <div class="output-box">
+                <h3>出力テキスト</h3>
+                <textarea class="output-area" id="outputText" readonly></textarea>
+              </div>
+              <div class="preview-box">
+                <h3>見た目の確認</h3>
+                <div class="preview-card">
+                  <h4>5要素の要約</h4>
+                  <ol id="previewList"></ol>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-btn active" data-target="section-elements">5要素を考える</button>
+        <button class="nav-btn" data-target="section-ideas">考え方3つ</button>
+        <button class="nav-btn" data-target="section-copy">レシピ</button>
+      </nav>
+    </div>
+
+    <div class="footer">入力内容はこの端末の中だけに保存されます。</div>
+  </div>
+
+  <script>
+    const elements = [
+      {
+        key: 'purpose',
+        number: '1',
+        title: '目的がわかる',
+        description: '参加者が「なぜこれをやるのか」を最初に理解できるか',
+        placeholder: '例：ただ話し方を学ぶのではなく、生徒対応・保護者対応・校内連携で使えるようにする。'
+      },
+      {
+        key: 'empathy',
+        number: '2',
+        title: '共感できる',
+        description: '自分事だと思える入口があるか',
+        placeholder: '例：伝えたつもりでも伝わらなかった実例を出し、全員が「あるある」と感じられるようにする。'
+      },
+      {
+        key: 'surprise',
+        number: '3',
+        title: '裏切りがある',
+        description: '予想を少し超える展開や気づきがあるか',
+        placeholder: '例：うまい話し方より、相手が動く設計の方が重要だと途中でひっくり返す。'
+      },
+      {
+        key: 'useful',
+        number: '4',
+        title: '活用できる',
+        description: '研修後すぐに試せる形に落ちるか',
+        placeholder: '例：1分で使える言い換えテンプレ、面談の問い、授業冒頭の話し方を持ち帰らせる。'
+      },
+      {
+        key: 'direction',
+        number: '5',
+        title: '演出がよい',
+        description: '空気・順番・見せ方まで含めて引き込めるか',
+        placeholder: '例：導入で失敗例を見せる→笑う→考える→発表で回収、の流れにする。'
+      }
+    ];
+
+    const ideas = [
+      {
+        title: '資料を作るな、体験を作れ',
+        body: '研修は一連の体験です。資料やワークは主役ではなく、参加者が「なるほど」と感じて動きたくなる流れを支える道具です。まず先に、参加者に何を感じさせたいかを決めてから、中身を作ります。'
+      },
+      {
+        title: '“正しさ”よりも“なるほど感”',
+        body: '内容がきれいに整理されていること自体よりも、参加者が「それなら使えそう」と思えることの方が重要です。説明し切るより、腹落ちする例や一言の方が効く場面があります。'
+      },
+      {
+        title: '誰もちゃんと見ていない',
+        body: '作り手は内容を熟知していますが、参加者はそこまで細かく見ていません。全部を伝えようとせず、2割伝われば十分という前提で、何を残すかを絞る方が伝わります。'
+      }
+    ];
+
+    const storageKey = 'training-ui-five-elements-v1';
+    const cards = document.getElementById('cards');
+    const ideaList = document.getElementById('ideaList');
+    const outputText = document.getElementById('outputText');
+    const previewList = document.getElementById('previewList');
+    const statusText = document.getElementById('statusText');
+
+    function getSaved() {
+      try {
+        return JSON.parse(localStorage.getItem(storageKey)) || {};
+      } catch {
+        return {};
+      }
+    }
+
+    function save(data) {
+      localStorage.setItem(storageKey, JSON.stringify(data));
+    }
+
+    function renderCards() {
+      const saved = getSaved();
+      cards.innerHTML = elements.map(item => `
+        <article class="card">
+          <div class="card-number">${item.number}</div>
+          <h3>${item.title}</h3>
+          <small>${item.description}</small>
+          <textarea data-key="${item.key}" placeholder="${item.placeholder}">${saved[item.key] || ''}</textarea>
+        </article>
+      `).join('');
+
+      cards.querySelectorAll('textarea').forEach(area => {
+        area.addEventListener('input', () => {
+          const current = getSaved();
+          current[area.dataset.key] = area.value;
+          save(current);
+          buildOutput();
+        });
+      });
+    }
+
+    function renderIdeas() {
+      ideaList.innerHTML = ideas.map((item, index) => `
+        <div class="idea-item ${index === 0 ? 'open' : ''}">
+          <button class="idea-toggle" type="button">
+            <span>${item.title}</span>
+            <span>＋</span>
+          </button>
+          <div class="idea-body">${item.body}</div>
+        </div>
+      `).join('');
+
+      ideaList.querySelectorAll('.idea-item').forEach(box => {
+        const button = box.querySelector('.idea-toggle');
+        button.addEventListener('click', () => {
+          box.classList.toggle('open');
+          const sign = box.classList.contains('open') ? '−' : '＋';
+          box.querySelector('.idea-toggle span:last-child').textContent = sign;
+        });
+        if (box.classList.contains('open')) {
+          box.querySelector('.idea-toggle span:last-child').textContent = '−';
+        }
+      });
+    }
+
+    function buildOutput() {
+      const data = getSaved();
+      const filled = elements.filter(item => (data[item.key] || '').trim()).length;
+      statusText.textContent = `入力数 ${filled} / 5`;
+
+      const lines = [
+        '【研修を面白くする5要素】',
+        ...elements.map(item => `${item.number}. ${item.title}\n${(data[item.key] || '未入力').trim() || '未入力'}`),
+        '',
+        '【考え方3つ】',
+        ...ideas.map((item, idx) => `${idx + 1}. ${item.title}\n${item.body}`)
+      ];
+
+      outputText.value = lines.join('\n\n');
+
+      previewList.innerHTML = elements.map(item => {
+        const value = (data[item.key] || '').trim() || '未入力';
+        return `<li><strong>${item.title}</strong><br>${escapeHtml(value)}</li>`;
+      }).join('');
+    }
+
+    function escapeHtml(text) {
+      return text
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    async function copyOutput() {
+      buildOutput();
+      try {
+        await navigator.clipboard.writeText(outputText.value);
+        flashCopy('コピーしました');
+      } catch {
+        outputText.focus();
+        outputText.select();
+        document.execCommand('copy');
+        flashCopy('コピーしました');
+      }
+    }
+
+    function flashCopy(text) {
+      const buttons = [document.getElementById('copyBtn'), document.getElementById('copyBtnSecondary')];
+      buttons.forEach(btn => {
+        const original = btn.textContent;
+        btn.textContent = text;
+        setTimeout(() => {
+          btn.textContent = original;
+        }, 1200);
+      });
+    }
+
+    function fillSample() {
+      const sample = {
+        purpose: '教員が「伝えたつもり」を減らし、授業・面談・校内連携で相手が動く伝え方に変える。',
+        empathy: '参加者全員が経験している「うまく説明したのに伝わらなかった場面」から入る。',
+        surprise: '話し方のうまさではなく、順番・問い・具体例の置き方で伝わり方が変わると示す。',
+        useful: '明日から使える導入の型、依頼の言い換え、面談で使う問いを持ち帰らせる。',
+        direction: '導入でミス例を体験→笑う→分解して考える→自分の場面に置き換える流れにする。'
+      };
+      save(sample);
+      renderCards();
+      buildOutput();
+    }
+
+    function resetAll() {
+      if (!window.confirm('入力内容をすべて消します。よろしいですか。')) return;
+      localStorage.removeItem(storageKey);
+      renderCards();
+      buildOutput();
+    }
+
+    function setupNav() {
+      const buttons = document.querySelectorAll('.nav-btn');
+      const sections = document.querySelectorAll('.section');
+      buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          buttons.forEach(b => b.classList.remove('active'));
+          sections.forEach(sec => sec.classList.remove('active'));
+          btn.classList.add('active');
+          document.getElementById(btn.dataset.target).classList.add('active');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      });
+    }
+
+    document.getElementById('copyBtn').addEventListener('click', copyOutput);
+    document.getElementById('copyBtnSecondary').addEventListener('click', copyOutput);
+    document.getElementById('fillSampleBtn').addEventListener('click', fillSample);
+    document.getElementById('resetBtn').addEventListener('click', resetAll);
+
+    renderCards();
+    renderIdeas();
+    buildOutput();
+    setupNav();
+  </script>
+</body>
+</html>

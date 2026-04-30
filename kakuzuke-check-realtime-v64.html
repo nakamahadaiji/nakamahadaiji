@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>オリジナル格付けチェック リアルタイム版 v64</title>
+<style>
+html,body{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden}
+iframe{border:0;width:100%;height:100%;display:block;background:#000}
+</style>
+</head>
+<body>
+<iframe id="appFrame" src="./kakuzuke-check-realtime-v60.html"></iframe>
+<script type="module">
+import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+const cfg={apiKey:'AIzaSyBXRVlcx-eZKrF6NpboKl8Z87w2sIkrOq4',authDomain:'kakuduke-fe62d.firebaseapp.com',databaseURL:'https://kakuduke-fe62d-default-rtdb.firebaseio.com',projectId:'kakuduke-fe62d',storageBucket:'kakuduke-fe62d.firebasestorage.app',messagingSenderId:'224688087057',appId:'1:224688087057:web:a0f6c8404728f761e9d1b0',measurementId:'G-05D75P50F2'};
+const rankNames=['一流高校生','普通高校生','二流高校生','三流高校生','そっくりさん','映す価値なし'];
+const app=getApps().length?getApps()[0]:initializeApp(cfg);
+const db=getDatabase(app);
+const roomRef=ref(db,'kakuzukeRealtime/default-room');
+const frame=document.getElementById('appFrame');
+let latestState=null;
+let prevStatus='';
+let judgedStartedAt=0;
+let frozenRanks={};
+let frozenQuestionKey='';
+let tickTimer=null;
+
+function teamsArray(state){
+  const teams=state&&state.teams?Object.entries(state.teams).map(([id,v])=>({id,...v})):[];
+  teams.sort((a,b)=>((a.rank||0)-(b.rank||0))||((a.joinedAt||0)-(b.joinedAt||0)));
+  return teams;
+}
+function questionKey(state){ return String((state&&state.game&&state.game.currentQuestion)||1); }
+function snapshotRanks(state){
+  const next={};
+  Object.entries((state&&state.teams)||{}).forEach(([id,team])=>{ next[id]=Number(team&&team.rank?team.rank:0); });
+  frozenRanks=next;
+  frozenQuestionKey=questionKey(state);
+}
+function maybeFreeze(state){
+  const status=state&&state.game?state.game.status:'';
+  const key=questionKey(state);
+  if(!frozenQuestionKey){ snapshotRanks(state); return; }
+  if((status==='registration'||status==='question_open')&&key!==frozenQuestionKey){ snapshotRanks(state); }
+}
+function ensureStyle(doc){
+  if(doc.getElementById('v64-style')) return;
+  const style=doc.createElement('style');
+  style.id='v64-style';
+  style.textContent=`
+    .v64-board{padding:8px 0 0}
+    .v64-stage{max-width:1080px;margin:0 auto 18px;padding:22px 24px;border-radius:26px;border:1px solid rgba(255,223,127,.22);background:radial-gradient(circle at 50% 0%,rgba(255,244,196,.16),transparent 38%),linear-gradient(180deg,#2a2418,#121212 60%,#1a1712);text-align:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 18px 30px rgba(0,0,0,.22)}
+    .v64-stage-main{font-size:clamp(30px,5vw,58px);font-weight:900;color:#fff1b3;letter-spacing:.06em}
+    .v64-stage-sub{margin-top:10px;color:#e4d2a1;font-size:16px;line-height:1.7}
+    .v64-table{max-width:1120px;margin:0 auto;border-radius:26px;border:1px solid rgba(255,223,127,.22);background:linear-gradient(180deg,#242424,#151515);padding:16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03),0 10px 22px rgba(0,0,0,.20);overflow-x:auto}
+    .v64-grid{display:grid;gap:10px;min-width:760px}
+    .v64-grid.status{grid-template-columns:220px minmax(260px,1fr)}
+    .v64-grid.judged{grid-template-columns:220px 120px 220px}
+    .v64-cell,.v64-head{padding:16px 12px;border-radius:18px;border:1px solid rgba(255,223,127,.20);background:linear-gradient(180deg,#181818,#101010);text-align:center;font-size:18px;white-space:nowrap}
+    .v64-head{font-weight:900;background:linear-gradient(180deg,#232323,#111);color:#fff}
+    .v64-status-ok{color:#fff1b3;font-weight:900}
+    .v64-status-wait{color:#d5c7a1}
+    .v64-rank{font-weight:900}
+    .v64-rank.rank0{background:linear-gradient(180deg,#fff2b2,#daa925);color:#2f1d00}
+    .v64-rank.rank1{background:linear-gradient(180deg,#fcfcfc,#d8d8d8);color:#222}
+    .v64-rank.rank2{background:linear-gradient(180deg,#2f88f0,#1258a9);color:#fff}
+    .v64-rank.rank3{background:linear-gradient(180deg,#f9f9f9,#d8d8d8);color:#222}
+    .v64-rank.rank4{background:linear-gradient(180deg,#4a3211,#2c1d09);color:#f0dbb2}
+    .v64-rank.rank5{background:linear-gradient(180deg,#141414,#000);color:#ff5353}
+    .v64-answer{font-weight:900;color:#fff0b4}
+    .v64-anim{animation:v64Flash .7s ease 0s 3 alternate}
+    @keyframes v64Flash{from{transform:scale(1);filter:brightness(1)}to{transform:scale(1.04);filter:brightness(1.16)}}
+    .v64-final-list{display:grid;gap:12px;margin-top:18px}
+    .v64-final-row{display:grid;grid-template-columns:1.3fr 1fr;gap:12px;align-items:center;padding:14px;border-radius:18px;border:1px solid rgba(255,223,127,.18);background:linear-gradient(180deg,#1a1a1a,#101010)}
+    .v64-final-name{font-size:26px;font-weight:900;color:#fff}
+    .v64-final-rank{padding:12px;border-radius:16px;text-align:center;font-size:20px;font-weight:900}
+    @media (max-width:900px){.v64-stage-main{font-size:44px}.v64-stage-sub{font-size:14px}.v64-cell,.v64-head{font-size:16px;padding:14px 10px}.v64-final-row{grid-template-columns:1fr}}
+  `;
+  doc.head.appendChild(style);
+}
+function renderDisplayBoard(doc,state){
+  const screen=doc.getElementById('screen-display');
+  if(!screen) return;
+  ensureStyle(doc);
+  const teams=teamsArray(state);
+  const status=state&&state.game?state.game.status:'registration';
+  const questionText=(state&&state.game&&state.game.question&&state.game.question.text)||'高級品はどっち？';
+  const questionNo=(state&&state.game&&state.game.currentQuestion)||1;
+  const showFinal=!!(state&&state.game&&state.game.showFinal);
+  let html='';
+  if(showFinal){
+    const rows=teams.map(team=>`<div class="v64-final-row"><div class="v64-final-name">${escapeHtml(team.name)}</div><div class="v64-final-rank v64-rank rank${team.rank||0}">${rankNames[team.rank||0]}</div></div>`).join('');
+    html=`<div class="v64-board"><div class="v64-stage"><div class="v64-stage-main">最終結果</div><div class="v64-stage-sub">チーム名と最終ランクを表示しています</div></div><div class="v64-table"><div class="v64-final-list">${rows}</div></div></div>`;
+    screen.innerHTML=html;
+    return;
+  }
+  if(status==='question_open'){
+    const rows=teams.map(team=>`<div class="v64-cell">${escapeHtml(team.name)}</div><div class="v64-cell ${team.answer?'v64-status-ok':'v64-status-wait'}">${team.answer?'回答を受け付けました':'回答待ち'}</div>`).join('');
+    html=`<div class="v64-board"><div class="v64-stage"><div class="v64-stage-main">第${questionNo}問</div><div class="v64-stage-sub">${escapeHtml(questionText)}</div></div><div class="v64-table"><div class="v64-grid status"><div class="v64-head">チーム名</div><div class="v64-head">状態</div>${rows}</div></div></div>`;
+    screen.innerHTML=html;
+    return;
+  }
+  if(status==='judging' || status==='judged'){
+    const elapsed=judgedStartedAt?Date.now()-judgedStartedAt:0;
+    const revealRank = status==='judged' && elapsed >= 5000;
+    const rows=teams.map(team=>{
+      const frozen=frozenRanks[team.id]!==undefined ? frozenRanks[team.id] : (team.rank||0);
+      const shownRank=revealRank ? (team.rank||0) : frozen;
+      const animClass=revealRank && (shownRank!==frozen) ? 'v64-anim' : '';
+      return `<div class="v64-cell">${escapeHtml(team.name)}</div><div class="v64-cell v64-answer">${team.answer||'---'}</div><div class="v64-cell v64-rank rank${shownRank} ${animClass}">${rankNames[shownRank]}</div>`;
+    }).join('');
+    const sub = status==='judging' ? '判定中です' : (revealRank ? 'ランク変動を反映しました' : '回答先を表示しています。5秒後にランクを反映します');
+    html=`<div class="v64-board"><div class="v64-stage"><div class="v64-stage-main">判定結果</div><div class="v64-stage-sub">${sub}</div></div><div class="v64-table"><div class="v64-grid judged"><div class="v64-head">チーム名</div><div class="v64-head">回答</div><div class="v64-head">ランク</div>${rows}</div></div></div>`;
+    screen.innerHTML=html;
+    return;
+  }
+  html=`<div class="v64-board"><div class="v64-stage"><div class="v64-stage-main">受付中</div><div class="v64-stage-sub">参加を受け付けています</div></div></div>`;
+  screen.innerHTML=html;
+}
+function escapeHtml(str){return String(str).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
+function tick(){
+  const doc=frame.contentDocument;
+  if(!doc || !latestState) return;
+  renderDisplayBoard(doc,latestState);
+}
+frame.addEventListener('load',()=>{
+  onValue(roomRef,snapshot=>{
+    const state=snapshot.val()||{};
+    maybeFreeze(state);
+    const status=state&&state.game?state.game.status:'';
+    if(status==='judged' && prevStatus!=='judged') judgedStartedAt=Date.now();
+    if(status==='question_open' && prevStatus!=='question_open') judgedStartedAt=0;
+    prevStatus=status;
+    latestState=state;
+    tick();
+    if(tickTimer) clearInterval(tickTimer);
+    tickTimer=setInterval(tick,250);
+  });
+});
+</script>
+</body>
+</html>

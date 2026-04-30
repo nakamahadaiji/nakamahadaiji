@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>オリジナル格付けチェック リアルタイム版 v59</title>
+  <style>
+    html,body{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden}
+    iframe{border:0;width:100%;height:100%;display:block;background:#000}
+  </style>
+</head>
+<body>
+  <iframe id="appFrame" src="./kakuzuke-check-realtime-v58.html"></iframe>
+  <script type="module">
+    import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+    const FIREBASE_CONFIG={apiKey:'AIzaSyBXRVlcx-eZKrF6NpboKl8Z87w2sIkrOq4',authDomain:'kakuduke-fe62d.firebaseapp.com',databaseURL:'https://kakuduke-fe62d-default-rtdb.firebaseio.com',projectId:'kakuduke-fe62d',storageBucket:'kakuduke-fe62d.firebasestorage.app',messagingSenderId:'224688087057',appId:'1:224688087057:web:a0f6c8404728f761e9d1b0',measurementId:'G-05D75P50F2'};
+    const rankNames=['一流高校生','普通高校生','二流高校生','三流高校生','そっくりさん','映す価値なし'];
+    const rankShort=['一流','普通','二流','三流','そっくりさん','映す価値なし'];
+
+    const frame=document.getElementById('appFrame');
+    const app=getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG);
+    const db=getDatabase(app);
+    const roomRef=ref(db,'kakuzukeRealtime/default-room');
+
+    function applyFinalPatch(doc,state){
+      if(!(state && state.game && state.game.showFinal)) return;
+      const teamId=localStorage.getItem('kakuzukeRealtimeTeamId') || '';
+      if(!teamId) return;
+      const teams=state.teams || {};
+      const myTeam=teams[teamId];
+      if(!myTeam) return;
+
+      const screens=['screen-launcher','screen-host','screen-display','screen-team-register','screen-team-waiting','screen-team-question','screen-team-answered','screen-team-result','screen-firebase-error'];
+      screens.forEach(id=>{
+        const el=doc.getElementById(id);
+        if(el) el.classList.toggle('active', id==='screen-team-result');
+      });
+
+      const resultPanel=doc.querySelector('#screen-team-result .result-panel');
+      const main=doc.getElementById('team-result-main');
+      const sub=doc.getElementById('team-result-sub');
+      const detail=doc.getElementById('team-result-detail');
+      const rankMain=doc.getElementById('team-result-rank-main');
+      const rankSub=doc.getElementById('team-result-rank-sub');
+      const label=doc.querySelector('.result-rank-label');
+      if(!resultPanel || !main || !sub || !detail || !rankMain || !rankSub || !label) return;
+
+      main.className='result-main result-correct';
+      main.textContent='最終結果';
+      sub.className='result-sub result-correct';
+      sub.textContent=myTeam.name;
+      detail.textContent='';
+      detail.style.display='none';
+      label.textContent='YOUR FINAL RANK';
+      rankMain.textContent=rankShort[myTeam.rank||0];
+      rankSub.textContent=rankNames[myTeam.rank||0];
+
+      const extras=resultPanel.querySelectorAll('.v52-final-meta');
+      extras.forEach(el=>el.remove());
+    }
+
+    frame.addEventListener('load',()=>{
+      const doc=frame.contentDocument;
+      if(!doc) return;
+      onValue(roomRef,snapshot=>{
+        const state=snapshot.val() || {};
+        applyFinalPatch(doc,state);
+      });
+      const observer=new MutationObserver(()=>{
+        onValue(roomRef,snapshot=>{
+          const state=snapshot.val() || {};
+          applyFinalPatch(doc,state);
+        }, { onlyOnce:true });
+      });
+      observer.observe(doc.body,{childList:true,subtree:true,characterData:true});
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>オリジナル格付けチェック リアルタイム版 v66</title>
+<style>
+html,body{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden}
+iframe{border:0;width:100%;height:100%;display:block;background:#000}
+</style>
+</head>
+<body>
+<iframe id="appFrame" src="./kakuzuke-check-realtime-v60.html"></iframe>
+<script>
+const frame=document.getElementById('appFrame');
+function patch(doc){
+  const launcher=doc.getElementById('screen-launcher');
+  if(!launcher) return;
+  const status=doc.getElementById('connection-status');
+  launcher.innerHTML='';
+  const grid=doc.createElement('div');
+  grid.className='mode-grid';
+  grid.style.gridTemplateColumns='repeat(2,1fr)';
+  grid.innerHTML='\n    <button class="mode-btn primary" data-mode="team">チーム用</button>\n    <button class="mode-btn" data-mode="host">教員用</button>\n  ';
+  launcher.appendChild(grid);
+  if(status) launcher.appendChild(status);
+  const displayScreen=doc.getElementById('screen-display');
+  if(displayScreen) displayScreen.remove();
+  grid.querySelectorAll('[data-mode]').forEach(btn=>{
+    if(btn.dataset.v66bound) return;
+    btn.dataset.v66bound='1';
+    btn.addEventListener('click',()=>{
+      if(btn.dataset.mode==='team'){
+        const team=doc.getElementById('screen-team-register');
+        if(team){
+          doc.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));
+          team.classList.add('active');
+        }
+      }
+      if(btn.dataset.mode==='host'){
+        const entered=window.prompt('パスワードを入力してください');
+        if(entered!=='0122') return;
+        const host=doc.getElementById('screen-host');
+        if(host){
+          doc.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));
+          host.classList.add('active');
+        }
+      }
+    },true);
+  });
+}
+frame.addEventListener('load',()=>{
+  const doc=frame.contentDocument;
+  if(!doc) return;
+  patch(doc);
+  const observer=new MutationObserver(()=>patch(doc));
+  observer.observe(doc.body,{childList:true,subtree:true});
+});
+</script>
+</body>
+</html>

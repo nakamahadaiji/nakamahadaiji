@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>オリジナル格付けチェック リアルタイム版 v67</title>
+<style>
+html,body{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden}
+iframe{border:0;width:100%;height:100%;display:block;background:#000}
+</style>
+</head>
+<body>
+<iframe id="appFrame" src="./kakuzuke-check-realtime-v60.html"></iframe>
+<script>
+const frame=document.getElementById('appFrame');
+function patch(doc){
+  if(!doc) return;
+
+  const styleId='v67-hide-display-style';
+  if(!doc.getElementById(styleId)){
+    const style=doc.createElement('style');
+    style.id=styleId;
+    style.textContent=`
+      [data-mode="display"],
+      #screen-display,
+      .display-only,
+      .mode-display,
+      .display-mode {
+        display:none !important;
+        visibility:hidden !important;
+        pointer-events:none !important;
+      }
+      #screen-launcher .mode-grid {
+        grid-template-columns:repeat(2,1fr) !important;
+      }
+    `;
+    doc.head.appendChild(style);
+  }
+
+  const launcher=doc.getElementById('screen-launcher');
+  const connection=doc.getElementById('connection-status');
+  if(launcher){
+    const current=launcher.querySelector('.mode-grid');
+    const needsReplace = !current || current.querySelector('[data-mode="display"]') || current.children.length!==2;
+    if(needsReplace){
+      launcher.innerHTML='';
+      const grid=doc.createElement('div');
+      grid.className='mode-grid';
+      grid.innerHTML='\n        <button class="mode-btn primary" type="button" data-mode="team">チーム用</button>\n        <button class="mode-btn" type="button" data-mode="host">教員用</button>\n      ';
+      launcher.appendChild(grid);
+      if(connection) launcher.appendChild(connection);
+
+      const showOnly=(id)=>{
+        doc.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));
+        const target=doc.getElementById(id);
+        if(target) target.classList.add('active');
+      };
+
+      const teamBtn=grid.querySelector('[data-mode="team"]');
+      const hostBtn=grid.querySelector('[data-mode="host"]');
+      if(teamBtn){
+        teamBtn.onclick=()=>showOnly('screen-team-register');
+      }
+      if(hostBtn){
+        hostBtn.onclick=()=>{
+          const entered=window.prompt('パスワードを入力してください');
+          if(entered!=='0122') return;
+          showOnly('screen-host');
+        };
+      }
+    }
+  }
+
+  doc.querySelectorAll('[data-mode="display"]').forEach(el=>el.remove());
+  const displayScreen=doc.getElementById('screen-display');
+  if(displayScreen) displayScreen.remove();
+}
+frame.addEventListener('load',()=>{
+  const doc=frame.contentDocument;
+  if(!doc) return;
+  patch(doc);
+  const observer=new MutationObserver(()=>patch(doc));
+  observer.observe(doc.documentElement||doc.body,{childList:true,subtree:true});
+  setInterval(()=>patch(doc),400);
+});
+</script>
+</body>
+</html>

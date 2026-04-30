@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>オリジナル格付けチェック v63 table fix 2</title>
+<style>html,body{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden}iframe{border:0;width:100%;height:100%;display:block;background:#000}</style>
+</head>
+<body>
+<iframe id="app" src="./kakuzuke-check-realtime-v63.html"></iframe>
+<script>
+const iframe=document.getElementById('app');
+function addStyle(doc){
+  if(doc.getElementById('tablefix-style')) return;
+  const style=doc.createElement('style');
+  style.id='tablefix-style';
+  style.textContent=`
+    .tablefix-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%}
+    .tablefix-table{border-collapse:separate;border-spacing:6px;min-width:520px;width:max-content}
+    .tablefix-table th,.tablefix-table td{border:1px solid rgba(255,223,127,.20);background:linear-gradient(180deg,#181818,#101010);color:#fff;text-align:center;border-radius:14px;padding:10px 8px;font-size:13px;line-height:1.25;white-space:nowrap}
+    .tablefix-table th{background:linear-gradient(180deg,#232323,#111);font-weight:900}
+    .tablefix-r0{background:linear-gradient(180deg,#fff2b2,#daa925)!important;color:#2f1d00!important;font-weight:900}
+    .tablefix-r1{background:linear-gradient(180deg,#fcfcfc,#d8d8d8)!important;color:#222!important;font-weight:900}
+    .tablefix-r2{background:linear-gradient(180deg,#2f88f0,#1258a9)!important;color:#fff!important;font-weight:900}
+    .tablefix-r3{background:linear-gradient(180deg,#f9f9f9,#d8d8d8)!important;color:#222!important;font-weight:900}
+    .tablefix-r4{background:linear-gradient(180deg,#4a3211,#2c1d09)!important;color:#f0dbb2!important;font-weight:900}
+    .tablefix-r5{background:linear-gradient(180deg,#141414,#000)!important;color:#ff5353!important;font-weight:900}
+  `;
+  doc.head.appendChild(style);
+}
+function buildTable(doc){
+  const grid=doc.getElementById('host-answer-grid');
+  if(!grid) return;
+  addStyle(doc);
+  const kids=Array.from(grid.children);
+  const heads=kids.filter(el=>el.classList.contains('answer-head')).map(el=>el.textContent.trim());
+  if(!heads.length) return;
+  const body=kids.filter(el=>el.classList.contains('answer-cell')||el.classList.contains('rank-chip'));
+  const colCount=heads.length;
+  if(!body.length || body.length < colCount) return;
+  const rows=[];
+  for(let i=0;i<body.length;i+=colCount){ const row=body.slice(i,i+colCount); if(row.length===colCount) rows.push(row); }
+  const wrap=doc.createElement('div'); wrap.className='tablefix-wrap';
+  const table=doc.createElement('table'); table.className='tablefix-table';
+  const thead=doc.createElement('thead'); const trh=doc.createElement('tr');
+  heads.forEach(text=>{ const th=doc.createElement('th'); th.textContent=text; trh.appendChild(th); });
+  thead.appendChild(trh); table.appendChild(thead);
+  const tbody=doc.createElement('tbody');
+  rows.forEach(row=>{ const tr=doc.createElement('tr'); row.forEach(cell=>{ const td=doc.createElement('td'); td.textContent=cell.textContent.trim(); const m=(cell.className||'').match(/rank-(\d)/); if(m) td.classList.add('tablefix-r'+m[1]); tr.appendChild(td); }); tbody.appendChild(tr); });
+  table.appendChild(tbody); wrap.appendChild(table);
+  grid.innerHTML=''; grid.style.display='block'; grid.appendChild(wrap);
+}
+iframe.addEventListener('load',()=>{ const doc=iframe.contentDocument; if(!doc) return; const run=()=>{ try{ buildTable(doc); }catch(e){} }; run(); setInterval(run,300); });
+</script>
+</body>
+</html>

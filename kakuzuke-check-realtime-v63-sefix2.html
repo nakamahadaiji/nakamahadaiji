@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>オリジナル格付けチェック リアルタイム版 v63 SE fix 2</title>
+<style>
+html,body{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden}
+iframe{border:0;width:100%;height:100%;display:block;background:#000}
+</style>
+</head>
+<body>
+<iframe id="appFrame" src="./kakuzuke-check-realtime-v63.html"></iframe>
+<script>
+const frame=document.getElementById('appFrame');
+function patchHostGrid(doc){
+  const hostGrid=doc.getElementById('host-answer-grid');
+  if(!hostGrid) return;
+
+  if(!doc.getElementById('sefix2-style')){
+    const style=doc.createElement('style');
+    style.id='sefix2-style';
+    style.textContent=`
+      .sefix2-scroll{width:100%;overflow-x:auto !important;overflow-y:hidden !important;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+      .sefix2-table{display:grid;gap:8px;grid-auto-rows:minmax(56px,auto);align-items:stretch}
+      .sefix2-head,.sefix2-cell{padding:12px 10px;border-radius:16px;border:1px solid rgba(255,223,127,.20);background:linear-gradient(180deg,#181818,#101010);text-align:center;font-size:15px;line-height:1.35;white-space:nowrap;display:flex;align-items:center;justify-content:center}
+      .sefix2-head{font-weight:900;background:linear-gradient(180deg,#232323,#111)}
+      @media (max-width:420px){.sefix2-head,.sefix2-cell{font-size:14px;padding:11px 8px}}
+    `;
+    doc.head.appendChild(style);
+  }
+
+  const heads=Array.from(hostGrid.querySelectorAll('.answer-head')).map(el=>el.textContent.trim());
+  if(!heads.length) return;
+  const colCount=heads.length;
+  const allChildren=Array.from(hostGrid.children);
+  const body=allChildren.slice(colCount);
+  if(body.length===0) return;
+
+  const rows=[];
+  for(let i=0;i<body.length;i+=colCount){
+    rows.push(body.slice(i,i+colCount).map(el=>el.textContent.trim()));
+  }
+
+  hostGrid.innerHTML='';
+  hostGrid.style.display='block';
+  hostGrid.style.width='100%';
+
+  const scroll=doc.createElement('div');
+  scroll.className='sefix2-scroll';
+  const table=doc.createElement('div');
+  table.className='sefix2-table';
+
+  const template=colCount===5
+    ? '160px 88px 88px 88px 132px'
+    : '160px 88px 88px 132px';
+  const minWidth=colCount===5 ? '580px' : '468px';
+  table.style.gridTemplateColumns=template;
+  table.style.minWidth=minWidth;
+
+  heads.forEach(text=>{
+    const el=doc.createElement('div');
+    el.className='sefix2-head';
+    el.textContent=text;
+    table.appendChild(el);
+  });
+
+  rows.forEach(row=>{
+    row.forEach(text=>{
+      const el=doc.createElement('div');
+      el.className='sefix2-cell';
+      el.textContent=text;
+      table.appendChild(el);
+    });
+  });
+
+  scroll.appendChild(table);
+  hostGrid.appendChild(scroll);
+}
+frame.addEventListener('load',()=>{
+  const doc=frame.contentDocument;
+  if(!doc) return;
+  patchHostGrid(doc);
+  const observer=new MutationObserver(()=>patchHostGrid(doc));
+  observer.observe(doc.body,{childList:true,subtree:true,characterData:true});
+});
+</script>
+</body>
+</html>

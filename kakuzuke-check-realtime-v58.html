@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>オリジナル格付けチェック リアルタイム版 v58</title>
+  <style>
+    html,body{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden}
+    iframe{border:0;width:100%;height:100%;display:block;background:#000}
+  </style>
+</head>
+<body>
+  <iframe id="appFrame" src="./kakuzuke-check-realtime-v57.html"></iframe>
+  <script type="module">
+    import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+    const FIREBASE_CONFIG={apiKey:'AIzaSyBXRVlcx-eZKrF6NpboKl8Z87w2sIkrOq4',authDomain:'kakuduke-fe62d.firebaseapp.com',databaseURL:'https://kakuduke-fe62d-default-rtdb.firebaseio.com',projectId:'kakuduke-fe62d',storageBucket:'kakuduke-fe62d.firebasestorage.app',messagingSenderId:'224688087057',appId:'1:224688087057:web:a0f6c8404728f761e9d1b0',measurementId:'G-05D75P50F2'};
+    const rankNames=['一流高校生','普通高校生','二流高校生','三流高校生','そっくりさん','映す価値なし'];
+    const frame=document.getElementById('appFrame');
+    const app=getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG);
+    const db=getDatabase(app);
+    const roomRef=ref(db,'kakuzukeRealtime/default-room');
+
+    function showOnly(doc,id){
+      ['screen-launcher','screen-host','screen-display','screen-team-register','screen-team-waiting','screen-team-question','screen-team-answered','screen-team-result','screen-firebase-error'].forEach(key=>{
+        const el=doc.getElementById(key);
+        if(el) el.classList.toggle('active', key===id);
+      });
+    }
+
+    function patchWaitingRank(doc,myTeam){
+      const pill=doc.getElementById('team-current-rank-pill');
+      if(pill) pill.textContent='現在のランク：' + rankNames[myTeam.rank||0];
+      const namePill=doc.getElementById('team-current-name-pill');
+      if(namePill) namePill.textContent='チーム名：' + myTeam.name;
+      const ansName=doc.getElementById('team-answered-name-pill');
+      if(ansName) ansName.textContent='チーム名：' + myTeam.name;
+      const ansRank=doc.getElementById('team-answered-rank-pill');
+      if(ansRank) ansRank.textContent='現在のランク：' + rankNames[myTeam.rank||0];
+      const ans=doc.getElementById('team-answered-answer-pill');
+      if(ans) ans.textContent='今回の回答：' + (myTeam.answer || '---');
+      const title=doc.getElementById('team-waiting-title');
+      const sub=doc.getElementById('team-waiting-sub');
+      if(title && sub){
+        title.textContent='参加登録が完了しました';
+        sub.textContent='開始をお待ちください。';
+      }
+    }
+
+    function patchQuestion(doc,state,myTeam){
+      const title=doc.getElementById('team-question-title');
+      const text=doc.getElementById('team-question-text');
+      if(title) title.textContent='第' + (state.game.currentQuestion || 1) + '問';
+      if(text) text.textContent=(state.game.question && state.game.question.text) || '高級品はどっち？';
+      const doorC=doc.getElementById('team-door-c');
+      if(doorC) doorC.style.display=(state.game.question && state.game.question.choiceMode)==='3' ? '' : 'none';
+      ['A','B','C'].forEach(choice=>{
+        const el=doc.getElementById('team-door-'+choice.toLowerCase());
+        if(el) el.classList.toggle('selected', myTeam.answer===choice);
+      });
+    }
+
+    function applyTeamRouting(doc,state){
+      const teamId=localStorage.getItem('kakuzukeRealtimeTeamId') || '';
+      if(!teamId) return;
+      const teams=state && state.teams ? state.teams : {};
+      const myTeam=teams[teamId];
+      if(!myTeam) return;
+
+      patchWaitingRank(doc,myTeam);
+      patchQuestion(doc,state,myTeam);
+
+      if(state.game && state.game.showFinal){
+        showOnly(doc,'screen-team-result');
+        return;
+      }
+      const status=state && state.game ? state.game.status : 'registration';
+      if(status==='registration'){
+        showOnly(doc,'screen-team-waiting');
+      }else if(status==='question_open'){
+        showOnly(doc, myTeam.answer ? 'screen-team-answered' : 'screen-team-question');
+      }else if(status==='judging'){
+        showOnly(doc, myTeam.answer ? 'screen-team-answered' : 'screen-team-question');
+      }else{
+        showOnly(doc,'screen-team-result');
+      }
+    }
+
+    frame.addEventListener('load',()=>{
+      const doc=frame.contentDocument;
+      if(!doc) return;
+      onValue(roomRef,snapshot=>{
+        const state=snapshot.val() || {};
+        applyTeamRouting(doc,state);
+      });
+      const observer=new MutationObserver(()=>{
+        onValue(roomRef,snapshot=>{
+          const state=snapshot.val() || {};
+          applyTeamRouting(doc,state);
+        }, { onlyOnce:true });
+      });
+      observer.observe(doc.body,{childList:true,subtree:true,characterData:true});
+    });
+  </script>
+</body>
+</html>

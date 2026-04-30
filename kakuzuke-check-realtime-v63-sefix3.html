@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>オリジナル格付けチェック リアルタイム版 v63 SE fix 3</title>
+<style>
+html,body{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden}
+iframe{border:0;width:100%;height:100%;display:block;background:#000}
+</style>
+</head>
+<body>
+<iframe id="appFrame" src="./kakuzuke-check-realtime-v63.html"></iframe>
+<script>
+const frame=document.getElementById('appFrame');
+function injectStyle(doc){
+  if(doc.getElementById('sefix3-style')) return;
+  const style=doc.createElement('style');
+  style.id='sefix3-style';
+  style.textContent=`
+    #host-answer-grid{display:block !important;width:100% !important;min-width:0 !important}
+    #host-answer-grid > .answer-head,
+    #host-answer-grid > .answer-cell,
+    #host-answer-grid > .rank-chip{display:none !important}
+    .sefix3-scroll{width:100%;overflow-x:auto !important;overflow-y:hidden !important;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+    .sefix3-table{display:grid !important;gap:8px !important;grid-auto-rows:minmax(56px,auto) !important;align-items:stretch !important}
+    .sefix3-head,.sefix3-cell{padding:12px 10px;border-radius:16px;border:1px solid rgba(255,223,127,.20);background:linear-gradient(180deg,#181818,#101010);text-align:center;font-size:15px;line-height:1.35;white-space:nowrap;display:flex;align-items:center;justify-content:center}
+    .sefix3-head{font-weight:900;background:linear-gradient(180deg,#232323,#111)}
+    @media (max-width:420px){.sefix3-head,.sefix3-cell{font-size:14px;padding:11px 8px}}
+  `;
+  doc.head.appendChild(style);
+}
+function rebuildHostGrid(doc){
+  const hostGrid=doc.getElementById('host-answer-grid');
+  if(!hostGrid) return;
+  injectStyle(doc);
+
+  const originalHeads=Array.from(hostGrid.querySelectorAll(':scope > .answer-head')).map(el=>el.textContent.trim());
+  const originalAll=Array.from(hostGrid.children);
+  if(!originalHeads.length || !originalAll.length) return;
+  const colCount=originalHeads.length;
+  const body=originalAll.filter(el=>el.classList.contains('answer-cell')||el.classList.contains('rank-chip'));
+  if(!body.length) return;
+
+  const wantedCols = colCount===5 ? 5 : 4;
+  const rows=[];
+  for(let i=0;i<body.length;i+=wantedCols){
+    const row=body.slice(i,i+wantedCols).map(el=>el.textContent.trim());
+    if(row.length===wantedCols) rows.push(row);
+  }
+
+  let scroll=hostGrid.querySelector(':scope > .sefix3-scroll');
+  if(!scroll){
+    scroll=doc.createElement('div');
+    scroll.className='sefix3-scroll';
+    hostGrid.appendChild(scroll);
+  }
+  let table=scroll.querySelector(':scope > .sefix3-table');
+  if(!table){
+    table=doc.createElement('div');
+    table.className='sefix3-table';
+    scroll.appendChild(table);
+  }
+
+  table.innerHTML='';
+  table.style.gridTemplateColumns = wantedCols===5 ? '160px 88px 88px 88px 132px' : '160px 88px 88px 132px';
+  table.style.minWidth = wantedCols===5 ? '580px' : '468px';
+
+  originalHeads.forEach(text=>{
+    const el=doc.createElement('div');
+    el.className='sefix3-head';
+    el.textContent=text;
+    table.appendChild(el);
+  });
+  rows.forEach(row=>{
+    row.forEach(text=>{
+      const el=doc.createElement('div');
+      el.className='sefix3-cell';
+      el.textContent=text;
+      table.appendChild(el);
+    });
+  });
+}
+frame.addEventListener('load',()=>{
+  const doc=frame.contentDocument;
+  if(!doc) return;
+  rebuildHostGrid(doc);
+  const observer=new MutationObserver(()=>rebuildHostGrid(doc));
+  observer.observe(doc.body,{childList:true,subtree:true,characterData:true});
+  setInterval(()=>rebuildHostGrid(doc),300);
+});
+</script>
+</body>
+</html>

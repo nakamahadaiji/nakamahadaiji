@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>オリジナル格付けチェック リアルタイム版 v63 team large text</title>
+<style>
+html,body{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden}
+iframe{border:0;width:100%;height:100%;display:block;background:#000}
+</style>
+</head>
+<body>
+<iframe id="outer" src="./kakuzuke-check-realtime-v63-problemtext-fix.html"></iframe>
+<script>
+const outer=document.getElementById('outer');
+function getDeepDoc(){
+  try{
+    const doc1=outer.contentDocument;
+    if(!doc1) return null;
+    const frame2=doc1.getElementById('outer') || doc1.getElementById('appFrame');
+    if(!frame2 || !frame2.contentDocument) return null;
+    const doc2=frame2.contentDocument;
+    const frame3=doc2.getElementById('appFrame');
+    if(!frame3 || !frame3.contentDocument) return null;
+    const doc3=frame3.contentDocument;
+    const frame4=doc3.getElementById('appFrame');
+    if(frame4 && frame4.contentDocument) return frame4.contentDocument;
+    return doc3;
+  }catch(e){
+    return null;
+  }
+}
+function applyPatch(doc){
+  if(!doc) return;
+  if(!doc.getElementById('teamlarge-style')){
+    const style=doc.createElement('style');
+    style.id='teamlarge-style';
+    style.textContent=`
+      #screen-team-question .hero{
+        padding:18px 0 10px !important;
+      }
+      #screen-team-question .hero-title,
+      #team-question-title{
+        font-size:clamp(34px,8vw,58px) !important;
+        line-height:1.08 !important;
+        font-weight:900 !important;
+        color:#fff0b4 !important;
+        margin-bottom:18px !important;
+        text-shadow:0 4px 16px rgba(0,0,0,.32) !important;
+      }
+      #screen-team-question .hero-sub,
+      #team-question-text{
+        display:block !important;
+        max-width:92% !important;
+        margin:0 auto 22px !important;
+        font-size:clamp(28px,6.4vw,44px) !important;
+        line-height:1.45 !important;
+        font-weight:800 !important;
+        color:#fff4cf !important;
+        letter-spacing:.02em !important;
+        text-align:center !important;
+        white-space:normal !important;
+        word-break:break-word !important;
+      }
+      #screen-team-question .card{
+        max-width:820px !important;
+        margin:10px auto 0 !important;
+        padding:24px 18px 28px !important;
+        border-radius:26px !important;
+      }
+      #screen-team-question .door-wrap{
+        gap:22px !important;
+        margin-top:8px !important;
+      }
+      #screen-team-question .door{
+        width:min(30vw,182px) !important;
+        height:min(44vw,244px) !important;
+        min-width:120px !important;
+        min-height:168px !important;
+      }
+      #screen-team-question .door span{
+        font-size:clamp(54px,9vw,78px) !important;
+      }
+      @media (max-width:480px){
+        #screen-team-question .hero-title,
+        #team-question-title{
+          font-size:clamp(30px,9vw,42px) !important;
+        }
+        #screen-team-question .hero-sub,
+        #team-question-text{
+          font-size:clamp(24px,7vw,34px) !important;
+          max-width:94% !important;
+          margin-bottom:18px !important;
+        }
+        #screen-team-question .card{
+          padding:20px 14px 22px !important;
+        }
+        #screen-team-question .door-wrap{
+          gap:16px !important;
+        }
+      }
+    `;
+    doc.head.appendChild(style);
+  }
+}
+outer.addEventListener('load',()=>{
+  const run=()=>{
+    const doc=getDeepDoc();
+    if(!doc) return;
+    applyPatch(doc);
+  };
+  run();
+  setInterval(run,300);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>オリジナル格付けチェック リアルタイム版 v63 problem text fix</title>
+<style>
+html,body{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden}
+iframe{border:0;width:100%;height:100%;display:block;background:#000}
+</style>
+</head>
+<body>
+<iframe id="outer" src="./kakuzuke-check-realtime-v63.html"></iframe>
+<script type="module">
+import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getDatabase, ref, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+const DEFAULT_TEXT='問題文を入力してください';
+const FIREBASE_CONFIG={apiKey:'AIzaSyBXRVlcx-eZKrF6NpboKl8Z87w2sIkrOq4',authDomain:'kakuduke-fe62d.firebaseapp.com',databaseURL:'https://kakuduke-fe62d-default-rtdb.firebaseio.com',projectId:'kakuduke-fe62d',storageBucket:'kakuduke-fe62d.firebasestorage.app',messagingSenderId:'224688087057',appId:'1:224688087057:web:a0f6c8404728f761e9d1b0',measurementId:'G-05D75P50F2'};
+const outer=document.getElementById('outer');
+const app=getApps().length?getApps()[0]:initializeApp(FIREBASE_CONFIG);
+const db=getDatabase(app);
+const roomRef=ref(db,'kakuzukeRealtime/default-room');
+
+function getDeepDoc(){
+  try{
+    const doc1=outer.contentDocument;
+    if(!doc1) return null;
+    const frame2=doc1.getElementById('appFrame');
+    if(!frame2 || !frame2.contentDocument) return null;
+    const doc2=frame2.contentDocument;
+    const frame3=doc2.getElementById('appFrame');
+    if(!frame3 || !frame3.contentDocument) return null;
+    return frame3.contentDocument;
+  }catch(e){
+    return null;
+  }
+}
+
+function ensureStyle(doc){
+  if(doc.getElementById('problemfix-style')) return;
+  const style=doc.createElement('style');
+  style.id='problemfix-style';
+  style.textContent=`
+    .problemfix-error{
+      margin-top:10px;
+      padding:12px 14px;
+      border-radius:14px;
+      background:linear-gradient(180deg,#351514,#190b0a);
+      border:1px solid rgba(255,130,120,.24);
+      font-size:13px;
+      line-height:1.8;
+      color:#ffb7b2;
+      white-space:pre-wrap;
+    }
+    .problemfix-hidden{display:none !important;}
+  `;
+  doc.head.appendChild(style);
+}
+
+function getInput(doc){ return doc.getElementById('host-question-text'); }
+function getNextBtn(doc){ return doc.getElementById('host-next-question'); }
+function isBlankQuestion(value){
+  const v=String(value||'').trim();
+  return !v || v===DEFAULT_TEXT;
+}
+function ensureErrorBox(doc){
+  let box=doc.getElementById('problemfix-error-box');
+  if(box) return box;
+  const input=getInput(doc);
+  if(!input) return null;
+  const card=input.closest('.card');
+  if(!card) return null;
+  box=doc.createElement('div');
+  box.id='problemfix-error-box';
+  box.className='problemfix-error problemfix-hidden';
+  input.parentElement.insertAdjacentElement('afterend', box);
+  return box;
+}
+function showError(doc,message){
+  const box=ensureErrorBox(doc);
+  if(!box) return;
+  box.textContent=message;
+  box.classList.remove('problemfix-hidden');
+}
+function hideError(doc){
+  const box=ensureErrorBox(doc);
+  if(!box) return;
+  box.textContent='';
+  box.classList.add('problemfix-hidden');
+}
+function applyDefaultVisual(doc, force=false){
+  const input=getInput(doc);
+  if(!input) return;
+  input.placeholder=DEFAULT_TEXT;
+  if(force || !String(input.value||'').trim()) input.value=DEFAULT_TEXT;
+}
+async function writeDefaultToRoom(){
+  try{
+    await runTransaction(roomRef,state=>{
+      if(!state) return state;
+      state.game=state.game||{};
+      state.game.question=state.game.question||{};
+      state.game.question.text=DEFAULT_TEXT;
+      state.meta=state.meta||{};
+      state.meta.updatedAt=Date.now();
+      return state;
+    });
+  }catch(e){
+    console.error(e);
+  }
+}
+function bind(doc){
+  ensureStyle(doc);
+  applyDefaultVisual(doc,false);
+  const input=getInput(doc);
+  const nextBtn=getNextBtn(doc);
+  if(input && !input.dataset.problemfixBound){
+    input.dataset.problemfixBound='1';
+    input.addEventListener('focus',()=>{
+      if(String(input.value||'').trim()===DEFAULT_TEXT) input.select();
+    });
+    input.addEventListener('input',()=>hideError(doc));
+  }
+  if(nextBtn && !nextBtn.dataset.problemfixBound){
+    nextBtn.dataset.problemfixBound='1';
+    nextBtn.addEventListener('click', async (e)=>{
+      const currentInput=getInput(doc);
+      if(!currentInput) return;
+      if(isBlankQuestion(currentInput.value)){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        showError(doc,'問題文が入力されていません');
+        return false;
+      }
+      hideError(doc);
+      window.setTimeout(async ()=>{
+        await writeDefaultToRoom();
+        applyDefaultVisual(doc,true);
+      },450);
+      return true;
+    }, true);
+  }
+}
+
+outer.addEventListener('load',()=>{
+  const run=()=>{
+    const doc=getDeepDoc();
+    if(!doc) return;
+    bind(doc);
+  };
+  run();
+  setInterval(run,300);
+});
+</script>
+</body>
+</html>

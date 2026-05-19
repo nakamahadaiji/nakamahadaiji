@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coffee Lab Map</title>
+<style>
+body{margin:0;font-family:system-ui,-apple-system,"Hiragino Sans","Yu Gothic",sans-serif;background:#fff7e6;color:#3a2518;}
+header{background:#6f421e;color:#fff;padding:20px;text-align:center;border-radius:0 0 24px 24px;}
+header h1{margin:0;font-size:28px;}.sub{margin-top:8px;opacity:.85;}
+nav{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px;position:sticky;top:0;background:#fff7e6;z-index:2;}
+nav button{border:0;background:#ffb700;color:#3a2518;padding:12px 8px;border-radius:16px;font-weight:700;}
+main{padding:12px;max-width:900px;margin:0 auto;}.section{display:none}.section.active{display:block}
+.card{background:#fffdf7;border:2px solid #f0dcb2;border-radius:20px;padding:16px;margin-bottom:12px;box-shadow:0 6px 0 #f0dcb2;}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}label{font-weight:700;font-size:13px;}
+input,select,textarea{width:100%;box-sizing:border-box;padding:12px;border:2px solid #e0c7a8;border-radius:12px;background:#fff;font-size:16px;margin-top:4px;}textarea{min-height:88px;}
+.btn{display:inline-block;text-decoration:none;border:0;background:#8a522a;color:white;padding:12px 16px;border-radius:14px;font-weight:700;font-size:16px;margin:6px 6px 6px 0;}.btn.sec{background:#218867}.btn.danger{background:#c9342c}
+.stars{font-size:18px;letter-spacing:2px;color:#f59000}.list-item,.term{background:#fff;border:1px solid #e8d3c4;border-radius:16px;padding:12px;margin:8px 0}.badge{display:inline-block;background:#ffb700;padding:6px 10px;margin:4px;border-radius:999px;font-weight:700}.muted{color:#7a6050;font-size:13px;}
+@media(max-width:520px){.grid{grid-template-columns:1fr}nav{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<header><h1>Coffee Lab Map</h1><div class="sub">小さなカフェ開業に近づくコーヒー研究ノート</div></header>
+<nav><button onclick="showSec('home')">ホーム</button><button onclick="showSec('coffee')">コーヒー</button><button onclick="showSec('cafe')">カフェ</button><button onclick="showSec('map')">地図</button><button onclick="showSec('terms')">辞典</button><button onclick="showSec('analysis')">分析</button></nav>
+<main>
+<section id="home" class="section active"><div class="card"><h2>今日の研究室</h2><p id="levelBox"></p><div id="badges"></div></div><div class="card"><h3>今日のミッション</h3><p>同じ豆でクリック数を1つ変えて、味の違いを記録する。</p></div></section>
+<section id="coffee" class="section"><div class="card"><h2>コーヒー記録</h2><p class="muted">TIMEMORE C2MAXのクリック数を必ず残すと、味の再現性が上がります。</p><div class="grid" id="coffeeForm"></div><button class="btn" onclick="saveCoffee()">保存</button></div><div id="coffeeList"></div></section>
+<section id="cafe" class="section"><div class="card"><h2>カフェ記録</h2><div class="grid" id="cafeForm"></div><button class="btn" onclick="saveCafe()">保存</button></div><div id="cafeList"></div></section>
+<section id="map" class="section"><div class="card"><h2>カフェ地図</h2><p class="muted">住所または店名からGoogleマップ検索を開きます。</p><div id="mapList"></div></div></section>
+<section id="terms" class="section"><div class="card"><h2>用語辞典</h2><input id="termSearch" placeholder="用語を検索" oninput="renderTerms()"><div id="termList"></div></div></section>
+<section id="analysis" class="section"><div class="card"><h2>分析</h2><div id="analysisBox"></div><button class="btn sec" onclick="exportData()">エクスポート</button><input type="file" id="importFile" onchange="importData(event)"></div></section>
+</main>
+<script>
+const coffeeFields=[['date','日付','date'],['shop','店名','text'],['bean','豆の名前','text'],['origin','産地','text'],['roast','焙煎度','select','浅煎り,中煎り,深煎り'],['mill','ミル','text','TIMEMORE C2MAX'],['clicks','クリック数','number'],['grams','豆の量g','number'],['water','お湯の量ml','number'],['temp','お湯の温度℃','number'],['method','抽出方法','text'],['time','抽出時間','text'],['acid','酸味★','number'],['bitter','苦味★','number'],['sweet','甘み★','number'],['aroma','香り★','number'],['body','コク★','number'],['rating','総合評価★','number'],['memo','メモ','textarea']];
+const cafeFields=[['date','訪問日','date'],['name','店名','text'],['address','住所','text'],['google','Google評価','number'],['tabelog','食べログ評価','number'],['rating','自分の評価★','number'],['taste','味★','number'],['atmos','雰囲気★','number'],['price','価格★','number'],['service','接客★','number'],['work','作業しやすさ★','number'],['again','また行きたい度★','number'],['status','状態','select','行った,行きたい,お気に入り'],['customers','客層','text'],['seats','席数','number'],['range','価格帯','text'],['signature','看板商品','text'],['hint','店づくりのヒント','textarea'],['improve','改善できそうな点','textarea'],['memo','メモ','textarea']];
+const terms=[['焙煎','ばいせん','コーヒー豆を焼くこと。','浅煎り・中煎り・深煎りを記録する。'],['浅煎り','あさいり','火入れが浅く、酸味や香りが出やすい焙煎。','酸味が強いかを比べる。'],['中煎り','ちゅういり','酸味と苦味のバランスが取りやすい焙煎。','基準の味として使う。'],['深煎り','ふかいり','火入れが深く、苦味やコクが出やすい焙煎。','苦味やミルクとの相性を見る。'],['挽き目','ひきめ','豆を砕く細かさ。','C2MAXのクリック数で記録する。'],['抽出','ちゅうしゅつ','お湯でコーヒーの成分を取り出すこと。','時間・温度・量と一緒に残す。'],['蒸らし','むらし','最初に少量のお湯をかけて豆をふくらませる工程。','30秒など時間を書く。'],['酸味','さんみ','果物のような明るい味。','★で強さを記録する。'],['苦味','にがみ','ビターな味。','出すぎていないかを見る。'],['甘み','あまみ','砂糖とは違う自然な甘さ。','冷めた後も見る。'],['コク','こく','味の厚みや飲みごたえ。','軽いか重いかを記録する。'],['アロマ','あろま','飲む前に感じる香り。','カップに近づけた時の香り。'],['フレーバー','ふれーばー','飲んだ時の味と香りの印象。','ナッツ、チョコ、柑橘など。'],['ボディ','ぼでぃ','口当たりの重さ。','軽い・普通・重いで考える。'],['後味','あとあじ','飲み込んだあとに残る味。','苦味が残るか、すっきりするか。'],['シングルオリジン','しんぐるおりじん','1つの産地や農園の豆。','豆の個性を見る。'],['ブレンド','ぶれんど','複数の豆を混ぜたもの。','バランスを見る。'],['ハンドドリップ','はんどどりっぷ','手でお湯を注ぐ抽出方法。','注ぎ方と時間を記録する。'],['ペーパードリップ','ぺーぱーどりっぷ','紙フィルターを使う抽出方法。','すっきり感を見る。'],['フレンチプレス','ふれんちぷれす','金属フィルターで浸して抽出する方法。','ボディが出やすい。'],['エスプレッソ','えすぷれっそ','圧力で短時間抽出する濃いコーヒー。','通常のドリップとは分けて記録。'],['スペシャルティコーヒー','すぺしゃるてぃこーひー','品質や産地管理にこだわった高品質なコーヒー。','店の売りを分析する。'],['精製','せいせい','コーヒーの実から豆を取り出す方法。','味の違いの原因として見る。'],['ウォッシュド','うぉっしゅど','水洗式の精製。すっきりしやすい。','透明感を見る。'],['ナチュラル','なちゅらる','果実ごと乾燥させる精製。果実感が出やすい。','フルーティさを見る。'],['ハニー製法','はにーせいほう','果肉を少し残して乾燥させる精製。','甘みを見やすい。'],['TIMEMORE C2MAX','たいむもあ しーつーまっくす','手動のコーヒーミル。','クリック数を必ず残す。'],['クリック数','くりっくすう','ミルの挽き目調整の目安。','ハンドドリップは18〜24を目安。']];
+let data=JSON.parse(localStorage.getItem('coffeeLabMap')||'{"coffee":[],"cafes":[]}');
+function save(){localStorage.setItem('coffeeLabMap',JSON.stringify(data));renderAll();}
+function showSec(id){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');renderAll();}
+function makeForm(id,fields){document.getElementById(id).innerHTML=fields.map(f=>{let v=f[3]||'';if(f[2]=='select')return `<label>${f[1]}<select id="${id}_${f[0]}">${v.split(',').map(x=>`<option>${x}</option>`).join('')}</select></label>`;if(f[2]=='textarea')return `<label style="grid-column:1/-1">${f[1]}<textarea id="${id}_${f[0]}"></textarea></label>`;return `<label>${f[1]}<input id="${id}_${f[0]}" type="${f[2]}" value="${v}"></label>`}).join('');}
+function getVals(id,fields){let o={id:Date.now()};fields.forEach(f=>o[f[0]]=document.getElementById(id+'_'+f[0]).value);return o;}
+function saveCoffee(){data.coffee.unshift(getVals('coffeeForm',coffeeFields));save();alert('保存しました');}
+function saveCafe(){data.cafes.unshift(getVals('cafeForm',cafeFields));save();alert('保存しました');}
+function stars(n){n=Number(n)||0;return '<span class="stars">'+'★'.repeat(Math.round(n))+'☆'.repeat(5-Math.round(n))+'</span>';}
+function del(type,id){if(confirm('削除しますか？')){data[type]=data[type].filter(x=>x.id!==id);save();}}
+function renderCoffee(){document.getElementById('coffeeList').innerHTML=data.coffee.map(x=>`<div class="list-item"><b>${x.bean||'豆名なし'}</b> ${stars(x.rating)}<br><span class="muted">${x.date||''} ${x.shop||''} / ${x.roast||''} / C2MAX ${x.clicks||'-'}クリック</span><p>${x.memo||''}</p><button class="btn danger" onclick="del('coffee',${x.id})">削除</button></div>`).join('');}
+function renderCafe(){document.getElementById('cafeList').innerHTML=data.cafes.map(x=>`<div class="list-item"><b>${x.name||'店名なし'}</b> ${stars(x.rating)}<br><span class="muted">${x.status||''} ${x.address||''}</span><p>${x.hint||x.memo||''}</p><button class="btn danger" onclick="del('cafes',${x.id})">削除</button></div>`).join('');}
+function mapUrl(x){return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent((x.name||'')+' '+(x.address||''));}
+function renderMap(){document.getElementById('mapList').innerHTML=data.cafes.map(x=>`<div class="list-item"><b>${x.name||'店名なし'}</b> ${stars(x.rating)}<br><span class="badge">${x.status||'未分類'}</span><p>${x.address||''}</p><a class="btn" target="_blank" href="${mapUrl(x)}">Googleマップで開く</a></div>`).join('');}
+function renderTerms(){let q=(document.getElementById('termSearch')?.value||'').toLowerCase();document.getElementById('termList').innerHTML=terms.filter(t=>t.join('').toLowerCase().includes(q)).map(t=>`<div class="term"><b>${t[0]}</b> <span class="muted">${t[1]}</span><p>${t[2]}</p><p><b>記録での使い方：</b>${t[3]}</p></div>`).join('');}
+function avg(arr,key){let a=arr.map(x=>Number(x[key])).filter(Boolean);return a.length?(a.reduce((p,c)=>p+c,0)/a.length).toFixed(1):'-';}
+function modeRoast(){let c={};data.coffee.forEach(x=>c[x.roast]=(c[x.roast]||0)+1);return Object.entries(c).sort((a,b)=>b[1]-a[1])[0]?.[0]||'-';}
+function renderAnalysis(){let total=data.coffee.length+data.cafes.length;let level=total>=100?100:total>=50?50:total>=30?30:total>=20?20:total>=10?10:total>=5?5:1;let title={1:'豆ひろい',5:'ミル見習い',10:'ドリップ研究員',20:'カフェ探検家',30:'味覚研究員',50:'カフェ設計士',100:'珈琲店主候補'}[level];document.getElementById('levelBox').innerHTML=`Lv${level} ${title}<br>記録数 ${total}件`;let badges=[];if(data.coffee.length)badges.push('初ドリップ');if(data.coffee.filter(x=>x.mill?.includes('C2')).length>=10)badges.push('C2MAX使い');if(data.coffee.filter(x=>x.roast=='浅煎り').length>=5)badges.push('浅煎り研究者');if(data.coffee.filter(x=>x.roast=='深煎り').length>=5)badges.push('深煎り党');if(data.cafes.length>=10)badges.push('カフェ巡り');if(data.cafes.length>=20)badges.push('地図職人');if(total>=50)badges.push('星評価マスター');if(data.cafes.length>=30)badges.push('開業準備中');document.getElementById('badges').innerHTML=badges.map(b=>`<span class="badge">${b}</span>`).join('')||'<span class="muted">まだバッジなし</span>';document.getElementById('analysisBox').innerHTML=`<p>コーヒー記録：${data.coffee.length}件</p><p>カフェ記録：${data.cafes.length}件</p><p>コーヒー平均評価：${avg(data.coffee,'rating')}</p><p>カフェ平均評価：${avg(data.cafes,'rating')}</p><p>多い焙煎度：${modeRoast()}</p><p>酸味平均：${avg(data.coffee,'acid')} / 苦味平均：${avg(data.coffee,'bitter')} / 甘み平均：${avg(data.coffee,'sweet')} / 香り平均：${avg(data.coffee,'aroma')} / コク平均：${avg(data.coffee,'body')}</p>`;}
+function exportData(){let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='coffee-lab-map.json';a.click();}
+function importData(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{data=JSON.parse(r.result);save();};r.readAsText(f);}
+function renderAll(){renderCoffee();renderCafe();renderMap();renderTerms();renderAnalysis();}
+makeForm('coffeeForm',coffeeFields);makeForm('cafeForm',cafeFields);renderAll();
+</script>
+</body>
+</html>

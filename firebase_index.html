@@ -62,158 +62,53 @@
       <button class="dark" onclick="teacherLogin()">先生用</button>
       <p id="connection" class="small"></p>
     </section>
-
     <section id="candidates" class="card hidden">
       <div class="topnav"><button onclick="go('home')">トップ</button><button onclick="go('vote')">投票する</button></div>
       <h2>候補者</h2>
-      <div class="grid">
-        <div class="stat"><div class="small">市民</div><div class="num">100</div><div class="small">人</div></div>
-        <div class="stat"><div class="small">有権者</div><div class="num">80</div><div class="small">人</div></div>
-        <div class="stat"><div class="small">予算</div><div class="num">10</div><div class="small">億円</div></div>
-      </div>
+      <div class="grid"><div class="stat"><div class="small">市民</div><div class="num">100</div><div class="small">人</div></div><div class="stat"><div class="small">有権者</div><div class="num">80</div><div class="small">人</div></div><div class="stat"><div class="small">予算</div><div class="num">10</div><div class="small">億円</div></div></div>
       <div class="question"><b>問い</b><br>中立に見るなら、まず不利な点を探せ。</div>
       <div class="candidate"><h3>A：駅前にぎわい市長</h3><p>駅前に学習スペースとイベント広場を作る。</p><div class="point"><div class="good">良い：居場所が増える</div><div class="bad">心配：有料。使えない人も出る</div><div class="cost">予算：8億円</div></div><details><summary>詳しく見る</summary><p>空き店舗を改修する。駅前は活性化するが、騒音と財政負担を心配する声もある。</p></details></div>
       <div class="candidate"><h3>B：防災・通学安全市長</h3><p>避難所、街灯、防犯カメラ、災害通知を整える。</p><div class="point"><div class="good">良い：安全が増える</div><div class="bad">心配：楽しい施設は増えない</div><div class="cost">予算：7億円</div></div><details><summary>詳しく見る</summary><p>若者にも高齢者にも関係する。効果は大事だが、見えにくい。</p></details></div>
       <div class="candidate"><h3>C：負担を増やさない市長</h3><p>交通費支援と古い事業の見直しを行う。</p><div class="point"><div class="good">良い：負担が減る</div><div class="bad">心配：街は大きく変わらない</div><div class="cost">予算：5億円</div></div><details><summary>詳しく見る</summary><p>借金を増やしにくい。一方で、すぐ大きな支援が必要な人には足りない。</p></details></div>
       <button class="main" onclick="go('vote')">投票する</button>
     </section>
-
     <section id="vote" class="card hidden vote">
       <div class="topnav"><button onclick="go('home')">トップ</button></div>
-      <h2>投票する</h2>
-      <div class="question"><b>問い</b><br>完全に合う候補がいない。それでも選ぶか。</div>
-      <button onclick="vote('A')">A：駅前にぎわい市長</button>
-      <button onclick="vote('B')">B：防災・通学安全市長</button>
-      <button onclick="vote('C')">C：負担を増やさない市長</button>
-      <button class="red" onclick="vote('N')">投票しない</button>
+      <h2>投票する</h2><div class="question"><b>問い</b><br>完全に合う候補がいない。それでも選ぶか。</div>
+      <button onclick="vote('A')">A：駅前にぎわい市長</button><button onclick="vote('B')">B：防災・通学安全市長</button><button onclick="vote('C')">C：負担を増やさない市長</button><button class="red" onclick="vote('N')">投票しない</button>
     </section>
-
-    <section id="thanks" class="card hidden">
-      <h2>投票しました</h2>
-      <p>スマホは伏せて、前を見てください。</p>
-      <button class="soft" onclick="go('home')">トップに戻る</button>
-    </section>
-
-    <section id="lock" class="card hidden">
-      <h2>先生用</h2>
-      <input id="pass" inputmode="numeric" placeholder="パスワード">
-      <button class="dark" onclick="checkPass()">開く</button>
-      <button class="soft" onclick="go('home')">戻る</button>
-    </section>
-
-    <section id="count" class="card hidden">
-      <div class="topnav"><button onclick="go('home')">トップ</button><button onclick="go('vote')">投票する</button></div>
-      <h2>結果</h2>
-      <div id="summary"></div>
-      <div id="result"></div>
-      <button class="dark" onclick="showResult()">結果を見る</button>
-      <button class="main" onclick="showIf()">投票しなかった票を見る</button>
-      <button class="red" onclick="resetVotes()">リセット</button>
-    </section>
+    <section id="thanks" class="card hidden"><h2>投票しました</h2><p>スマホは伏せて、前を見てください。</p><button class="soft" onclick="go('home')">トップに戻る</button></section>
+    <section id="lock" class="card hidden"><h2>先生用</h2><input id="pass" inputmode="numeric" placeholder="パスワード"><button class="dark" onclick="checkPass()">開く</button><button class="soft" onclick="go('home')">戻る</button></section>
+    <section id="count" class="card hidden"><div class="topnav"><button onclick="go('home')">トップ</button><button onclick="go('vote')">投票する</button></div><h2>結果</h2><div id="summary"></div><div id="result"></div><button class="dark" onclick="showResult()">結果を見る</button><button class="main" onclick="showIf()">投票しなかった票を見る</button><button class="red" onclick="resetVotes()">リセット</button></section>
   </div>
-
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script>
-    // ここをFirebase Consoleの設定に差し替えてください
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT.firebaseapp.com",
-      databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-      projectId: "YOUR_PROJECT",
-      storageBucket: "YOUR_PROJECT.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyBXRVlcx-eZKrF6NpboKl8Z87w2sIkrOq4",
+      authDomain: "kakuduke-fe62d.firebaseapp.com",
+      databaseURL: "https://kakuduke-fe62d-default-rtdb.firebaseio.com",
+      projectId: "kakuduke-fe62d",
+      storageBucket: "kakuduke-fe62d.firebasestorage.app",
+      messagingSenderId: "224688087057",
+      appId: "1:224688087057:web:b5f1ffaf1901c306e9d1b0",
+      measurementId: "G-HTFXLNJMFF"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const roomId = "default";
     const votesRef = db.ref("electionRooms/" + roomId + "/votes");
     let votes = {A:0,B:0,C:0,N:0};
-
-    votesRef.on("value", function(snapshot){
-      const data = snapshot.val();
-      votes = data || {A:0,B:0,C:0,N:0};
-      if(document.getElementById("count") && !document.getElementById("count").classList.contains("hidden")){
-        renderSummary();
-      }
-      document.getElementById("connection").textContent = "接続中：リアルタイム集計";
-    }, function(error){
-      document.getElementById("connection").textContent = "Firebase接続を確認してください";
-      console.error(error);
-    });
-
-    function go(id){
-      ['home','candidates','vote','thanks','lock','count'].forEach(function(x){document.getElementById(x).classList.add('hidden')});
-      document.getElementById(id).classList.remove('hidden');
-      if(id==='count') renderSummary();
-    }
-
-    function teacherLogin(){
-      go('lock');
-      setTimeout(function(){var p=document.getElementById('pass'); p.value=''; p.focus();},50);
-    }
-
-    function checkPass(){
-      if(document.getElementById('pass').value === '0122'){
-        go('count');
-      }else{
-        alert('パスワードが違います');
-      }
-    }
-
-    function vote(x){
-      votesRef.child(x).transaction(function(current){
-        return (current || 0) + 1;
-      }).then(function(){
-        go('thanks');
-      }).catch(function(error){
-        alert('送信できませんでした');
-        console.error(error);
-      });
-    }
-
-    function valid(){return (votes.A||0)+(votes.B||0)+(votes.C||0)}
-    function total(){return valid()+(votes.N||0)}
-    function pct(n,d){return d ? Math.round(n/d*100) : 0}
-    function nameOf(x){return x==='A'?'駅前にぎわい市長':x==='B'?'防災・通学安全市長':x==='C'?'負担を増やさない市長':'投票しない'}
-    function winner(){let w='A'; if((votes.B||0)>(votes[w]||0)) w='B'; if((votes.C||0)>(votes[w]||0)) w='C'; return w}
-    function bar(label,n,d){return '<div class="barbox"><div class="barlabel"><span>'+label+'</span><span>'+n+'票</span></div><div class="bar"><div class="fill" style="width:'+pct(n,d)+'%"></div></div></div>'}
-
-    function renderSummary(){
-      document.getElementById('summary').innerHTML = '<div class="grid"><div class="stat"><div class="small">市民</div><div class="num">100</div><div class="small">人</div></div><div class="stat"><div class="small">投票した人</div><div class="num">'+valid()+'</div><div class="small">人</div></div><div class="stat"><div class="small">投票しなかった人</div><div class="num">'+(votes.N||0)+'</div><div class="small">人</div></div></div><p class="notice">投票率：'+pct(valid(),Math.max(total(),1))+'％</p>';
-    }
-
-    function showResult(){
-      renderSummary();
-      const d = Math.max(valid(),1);
-      const w = winner();
-      document.getElementById('result').innerHTML = bar('A：駅前にぎわい市長',votes.A||0,d) + bar('B：防災・通学安全市長',votes.B||0,d) + bar('C：負担を増やさない市長',votes.C||0,d) + '<div class="winner">当選：'+nameOf(w)+'</div><div class="question"><b>問い</b><br>これは市民100人の総意か。</div><p class="notice">決めたのは、投票した'+valid()+'人です。</p>';
-    }
-
-    function showIf(){
-      const arr=['A','B','C'];
-      const best=winner();
-      const second=arr.filter(function(x){return x!==best}).sort(function(a,b){return (votes[b]||0)-(votes[a]||0)})[0];
-      const need=(votes[best]||0)-(votes[second]||0)+1;
-      let msg='';
-      if((votes.N||0)>=need && need>0){
-        msg='投票しなかった'+(votes.N||0)+'人のうち、'+need+'人が'+nameOf(second)+'に投票していたら、結果は変わっていました。';
-      }else if((votes.N||0)>0){
-        msg='投票しなかった人が動いても、今回は結果は変わりません。ただし票差は縮まります。';
-      }else{
-        msg='投票しなかった人は0人でした。';
-      }
-      document.getElementById('result').innerHTML += '<p class="notice">'+msg+'</p><p class="notice">投票しないことは、投票した人に決定を任せることです。</p>';
-    }
-
-    function resetVotes(){
-      if(confirm('投票をリセットしますか？')){
-        votesRef.set({A:0,B:0,C:0,N:0});
-        document.getElementById('result').innerHTML='';
-      }
-    }
+    votesRef.on("value",function(snapshot){votes=snapshot.val()||{A:0,B:0,C:0,N:0};if(!document.getElementById("count").classList.contains("hidden")){renderSummary();}document.getElementById("connection").textContent="接続中：リアルタイム集計";},function(error){document.getElementById("connection").textContent="Firebase接続を確認してください";console.error(error);});
+    function go(id){['home','candidates','vote','thanks','lock','count'].forEach(function(x){document.getElementById(x).classList.add('hidden')});document.getElementById(id).classList.remove('hidden');if(id==='count')renderSummary()}
+    function teacherLogin(){go('lock');setTimeout(function(){var p=document.getElementById('pass');p.value='';p.focus()},50)}
+    function checkPass(){if(document.getElementById('pass').value==='0122'){go('count')}else{alert('パスワードが違います')}}
+    function vote(x){votesRef.child(x).transaction(function(current){return(current||0)+1}).then(function(){go('thanks')}).catch(function(error){alert('送信できませんでした');console.error(error)})}
+    function valid(){return(votes.A||0)+(votes.B||0)+(votes.C||0)}function total(){return valid()+(votes.N||0)}function pct(n,d){return d?Math.round(n/d*100):0}function nameOf(x){return x==='A'?'駅前にぎわい市長':x==='B'?'防災・通学安全市長':x==='C'?'負担を増やさない市長':'投票しない'}function winner(){let w='A';if((votes.B||0)>(votes[w]||0))w='B';if((votes.C||0)>(votes[w]||0))w='C';return w}function bar(label,n,d){return '<div class="barbox"><div class="barlabel"><span>'+label+'</span><span>'+n+'票</span></div><div class="bar"><div class="fill" style="width:'+pct(n,d)+'%"></div></div></div>'}
+    function renderSummary(){document.getElementById('summary').innerHTML='<div class="grid"><div class="stat"><div class="small">市民</div><div class="num">100</div><div class="small">人</div></div><div class="stat"><div class="small">投票した人</div><div class="num">'+valid()+'</div><div class="small">人</div></div><div class="stat"><div class="small">投票しなかった人</div><div class="num">'+(votes.N||0)+'</div><div class="small">人</div></div></div><p class="notice">投票率：'+pct(valid(),Math.max(total(),1))+'％</p>'}
+    function showResult(){renderSummary();const d=Math.max(valid(),1);const w=winner();document.getElementById('result').innerHTML=bar('A：駅前にぎわい市長',votes.A||0,d)+bar('B：防災・通学安全市長',votes.B||0,d)+bar('C：負担を増やさない市長',votes.C||0,d)+'<div class="winner">当選：'+nameOf(w)+'</div><div class="question"><b>問い</b><br>これは市民100人の総意か。</div><p class="notice">決めたのは、投票した'+valid()+'人です。</p>'}
+    function showIf(){const arr=['A','B','C'];const best=winner();const second=arr.filter(function(x){return x!==best}).sort(function(a,b){return(votes[b]||0)-(votes[a]||0)})[0];const need=(votes[best]||0)-(votes[second]||0)+1;let msg='';if((votes.N||0)>=need&&need>0){msg='投票しなかった'+(votes.N||0)+'人のうち、'+need+'人が'+nameOf(second)+'に投票していたら、結果は変わっていました。'}else if((votes.N||0)>0){msg='投票しなかった人が動いても、今回は結果は変わりません。ただし票差は縮まります。'}else{msg='投票しなかった人は0人でした。'}document.getElementById('result').innerHTML+='<p class="notice">'+msg+'</p><p class="notice">投票しないことは、投票した人に決定を任せることです。</p>'}
+    function resetVotes(){if(confirm('投票をリセットしますか？')){votesRef.set({A:0,B:0,C:0,N:0});document.getElementById('result').innerHTML=''}}
   </script>
 </body>
 </html>

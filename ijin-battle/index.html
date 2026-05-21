@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>偉人バトル 入口</title>
 <style>
-*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:system-ui,'Hiragino Sans','Yu Gothic',sans-serif;color:#151515;background:radial-gradient(circle at 10% 12%,#ffb5dc 0 8%,transparent 9%),radial-gradient(circle at 90% 10%,#a9bdff 0 9%,transparent 10%),linear-gradient(135deg,#fff3a6,#ffeaf6 48%,#eaf0ff)}.wrap{max-width:980px;margin:auto;padding:28px 14px 80px}.hero,.panel{border:5px solid #111;border-radius:32px;background:#fffdf4f5;box-shadow:0 10px 0 #0003,0 18px 28px #0002;padding:22px;margin:18px 0}h1{font-size:clamp(44px,8vw,82px);line-height:.95;margin:8px 0 16px;font-weight:1000}.blue{color:#5278ff}.note{font-weight:900;line-height:1.8;border:4px solid #111;border-radius:22px;background:#fff;padding:14px;margin:12px 0}.toolbar{display:flex;gap:12px;flex-wrap:wrap}button,select,input{border:4px solid #111;border-radius:18px;background:#fff;padding:14px 16px;font:inherit;font-weight:1000;box-shadow:0 7px 0 #0004}button{cursor:pointer}button:active{transform:translateY(5px);box-shadow:0 2px 0 #0004}.yellow{background:linear-gradient(135deg,#ffd83d,#fff4a6)}.bluebtn{background:linear-gradient(135deg,#9bb4ff,#f1f5ff)}.red{background:linear-gradient(135deg,#ff7777,#ffe4e4)}.green{background:linear-gradient(135deg,#72e8b0,#effff6)}.hide{display:none!important}.choice{display:grid;grid-template-columns:1fr 1fr;gap:14px}.big{width:100%;font-size:22px;padding:22px}.badge{display:inline-block;border:4px solid #111;border-radius:999px;background:#111;color:#fff;padding:8px 12px;font-weight:1000}.mini{font-size:13px;color:#555;font-weight:800}@media(max-width:700px){.choice{grid-template-columns:1fr}}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:system-ui,'Hiragino Sans','Yu Gothic',sans-serif;color:#151515;background:radial-gradient(circle at 10% 12%,#ffb5dc 0 8%,transparent 9%),radial-gradient(circle at 90% 10%,#a9bdff 0 9%,transparent 10%),linear-gradient(135deg,#fff3a6,#ffeaf6 48%,#eaf0ff)}.wrap{max-width:980px;margin:auto;padding:28px 14px 80px}.hero,.panel{border:5px solid #111;border-radius:32px;background:#fffdf4f5;box-shadow:0 10px 0 #0003,0 18px 28px #0002;padding:22px;margin:18px 0}h1{font-size:clamp(44px,8vw,82px);line-height:.95;margin:8px 0 16px;font-weight:1000}.blue{color:#5278ff}.note{font-weight:900;line-height:1.8;border:4px solid #111;border-radius:22px;background:#fff;padding:14px;margin:12px 0}.toolbar{display:flex;gap:12px;flex-wrap:wrap}button,input{border:4px solid #111;border-radius:18px;background:#fff;padding:14px 16px;font:inherit;font-weight:1000;box-shadow:0 7px 0 #0004}button{cursor:pointer}button:active{transform:translateY(5px);box-shadow:0 2px 0 #0004}.yellow{background:linear-gradient(135deg,#ffd83d,#fff4a6)}.bluebtn{background:linear-gradient(135deg,#9bb4ff,#f1f5ff)}.red{background:linear-gradient(135deg,#ff7777,#ffe4e4)}.green{background:linear-gradient(135deg,#72e8b0,#effff6)}.hide{display:none!important}.choice{display:grid;grid-template-columns:1fr 1fr;gap:14px}.big{width:100%;font-size:22px;padding:22px}.badge{display:inline-block;border:4px solid #111;border-radius:999px;background:#111;color:#fff;padding:8px 12px;font-weight:1000}.mini{font-size:13px;color:#555;font-weight:800}@media(max-width:700px){.choice{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -18,38 +18,19 @@
 <button class="yellow" onclick="showTeacher()">教師用</button>
 <button class="bluebtn" onclick="goStudent()">生徒用で入る</button>
 </div>
-<p class="mini">教師用で世界史版・日本史版を設定してから、生徒用で入ります。</p>
+<p class="mini">切り替えは教師用だけで行います。生徒用には切り替えボタンを表示しません。</p>
 </section>
-
 <section class="panel hide" id="teacherLogin">
 <h2>教師用パスワード</h2>
-<div class="toolbar">
-<input id="pass" type="password" inputmode="numeric" placeholder="パスワード">
-<button class="yellow" onclick="checkPass()">入る</button>
-</div>
-<div class="note" id="passMsg">パスワード：0122</div>
+<div class="toolbar"><input id="pass" type="password" inputmode="numeric" placeholder="パスワード"><button class="yellow" onclick="checkPass()">入る</button></div>
+<div id="passMsg" class="note">教師用画面に入るにはパスワードが必要です。</div>
 </section>
-
 <section class="panel hide" id="teacherPanel">
 <h2>教師用：授業バージョン設定</h2>
 <div class="note">ここで選んだ版が、生徒用ボタンの行き先になります。</div>
-<div class="choice">
-<button class="big bluebtn" onclick="setMode('world')">世界史版に設定</button>
-<button class="big yellow" onclick="setMode('japan')">日本史版に設定</button>
-</div>
-<div class="toolbar" style="margin-top:16px">
-<button class="green" onclick="openTeacherPage()">設定した版の教師用へ進む</button>
-<button class="red" onclick="clearData()">設定をリセット</button>
-</div>
+<div class="choice"><button class="big bluebtn" onclick="setMode('world')">世界史版に設定</button><button class="big yellow" onclick="setMode('japan')">日本史版に設定</button></div>
+<div class="toolbar" style="margin-top:16px"><button class="green" onclick="openTeacherPage()">設定した版の教師用へ進む</button><button class="red" onclick="clearData()">設定をリセット</button></div>
 <div class="note" id="teacherStatus"></div>
-</section>
-
-<section class="panel">
-<h2>直接開く場合</h2>
-<div class="toolbar">
-<a href="world.html"><button>世界史版を開く</button></a>
-<a href="japan.html"><button>日本史版を開く</button></a>
-</div>
 </section>
 </main>
 <script>

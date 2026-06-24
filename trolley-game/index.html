@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>トロッコ問題ゲーム</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#fffdf7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="トロッコ問題">
+<link rel="apple-touch-icon" href="icon.svg">
+<style>
+  :root{--ink:#252525;--paper:#fffdf7;--accent:#f1c64b;--danger:#f06a63;--blue:#67a8dc}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:#eee;font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:var(--ink);display:grid;place-items:start center;padding:20px;overflow-x:auto}
+  .game{width:375px;min-width:375px;background:var(--paper);border:3px solid var(--ink);border-radius:18px;overflow:hidden;box-shadow:8px 8px 0 #cfc9bd}
+  header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:3px solid var(--ink)}
+  h1{font-size:clamp(20px,3vw,30px);margin:0;letter-spacing:.03em}.level{font-weight:700;font-size:14px;background:#fff;border:2px solid var(--ink);padding:7px 10px;border-radius:999px}
+  .stage{position:relative;height:420px;overflow:hidden;background:repeating-linear-gradient(0deg,#fffdf7 0 31px,#f8f4eb 32px 33px)}
+  .caption{position:absolute;z-index:4;left:22px;top:18px;max-width:310px;font-weight:800;font-size:clamp(17px,2.3vw,23px);line-height:1.55}
+  svg{width:100%;height:100%;display:block}.track{fill:none;stroke:#222;stroke-width:20;stroke-linecap:round;stroke-linejoin:round}.rail-inner{fill:none;stroke:#fffdf7;stroke-width:8;stroke-linecap:round;stroke-linejoin:round}
+  .person circle,.person path{stroke:#222;stroke-width:4;fill:#fffdf7;stroke-linecap:round;stroke-linejoin:round}.person .shirt{fill:#fff}.group-label{font-size:16px;font-weight:800;fill:#222}
+  .train{position:absolute;left:-160px;top:173px;width:145px;height:84px;z-index:5;transition:left 1.8s cubic-bezier(.22,.61,.36,1),top 1.8s cubic-bezier(.22,.61,.36,1),transform 1.8s cubic-bezier(.22,.61,.36,1);will-change:left,top,transform}.train .body{position:absolute;inset:13px 0 0 0;background:#f8e3a5;border:4px solid #222;border-radius:10px 14px 8px 8px}.train .roof{position:absolute;left:3px;top:0;width:126px;height:28px;border:4px solid #222;border-bottom:none;border-radius:52% 52% 0 0;background:#fffdf7}.window{position:absolute;top:31px;width:21px;height:19px;border:3px solid #222;border-radius:4px;background:#fff}.w1{left:22px}.w2{left:54px}.w3{left:86px}.light{position:absolute;right:8px;top:43px;width:12px;height:12px;border:3px solid #222;border-radius:50%;background:#ffe96a}.wheel{position:absolute;bottom:-11px;width:22px;height:22px;border:4px solid #222;border-radius:50%;background:#fffdf7}.wh1{left:26px}.wh2{right:23px}
+  .choices{padding:18px 20px 22px;border-top:3px solid var(--ink);display:grid;gap:12px}.history-board{border:3px solid var(--ink);border-radius:12px;padding:14px;background:#fff;font-weight:900}.history-board.is-hidden,.history-note.is-hidden{display:none}.majority{margin:0 0 10px;font-size:14px;font-weight:900;line-height:1.5}.majority strong{font-size:16px}.history-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:12px}.history-head span{font-size:15px}.history-head strong{font-size:21px;white-space:nowrap}.history-row{display:grid;grid-template-columns:130px 1fr 54px;gap:10px;align-items:center;margin:9px 0;font-size:14px}.history-bar{height:15px;border:2px solid #222;border-radius:999px;overflow:hidden;background:#fffdf7}.history-fill{height:100%;transition:width .35s ease}.history-fill.one{background:#8ec5ee}.history-fill.five{background:#f5a79f}.history-note{margin:0;font-size:13px;font-weight:700;color:#555}.connection{font-size:13px;font-weight:800;min-height:20px}.question{margin:0;font-weight:800;font-size:17px;line-height:1.6}.buttons{display:grid;grid-template-columns:1fr 1fr;gap:12px}button{appearance:none;border:3px solid var(--ink);border-radius:12px;padding:14px 16px;font-weight:900;font-size:16px;cursor:pointer;box-shadow:4px 4px 0 #222;transition:transform .12s,box-shadow .12s;background:#fff}button:hover{transform:translate(2px,2px);box-shadow:2px 2px 0 #222}button:disabled{cursor:not-allowed;opacity:.55}.leftBtn{background:#cfe8ff}.rightBtn{background:#ffd6d2}.result{min-height:28px;margin:0;font-weight:800;font-size:15px}
+  @media(max-width:600px){body{padding:12px;place-items:start center}.stage{height:380px}.caption{max-width:220px;left:16px;top:14px;font-size:15px}.buttons{grid-template-columns:1fr}.train{transform:scale(.78);transform-origin:left top}.track{stroke-width:16}.rail-inner{stroke-width:6}header{padding:13px 14px}h1{font-size:21px}.level{font-size:12px;padding:6px 8px}.choices{padding:15px 14px 18px}.history-row{grid-template-columns:102px 1fr 40px;gap:7px;font-size:12px}.history-head strong{font-size:18px}}
+</style>
+</head>
+<body>
+<main class="game">
+  <header><h1>トロッコ問題ゲーム</h1><div class="level">Level 1</div></header>
+  <section class="stage" aria-label="分岐する線路">
+    <p class="caption">あなたが選んだ方の線路に、電車が走ります。</p>
+    <svg viewBox="0 0 940 420" preserveAspectRatio="none" aria-hidden="true">
+      <path class="track" d="M0 215 C190 215 285 220 430 215 C520 210 580 175 705 110 C800 60 870 55 940 55"/><path class="rail-inner" d="M0 215 C190 215 285 220 430 215 C520 210 580 175 705 110 C800 60 870 55 940 55"/>
+      <path class="track" d="M0 215 C190 215 285 220 430 215 C520 220 595 260 705 314 C800 362 875 365 940 365"/><path class="rail-inner" d="M0 215 C190 215 285 220 430 215 C520 220 595 260 705 314 C800 362 875 365 940 365"/>
+      <line x1="444" y1="165" x2="468" y2="219" stroke="#222" stroke-width="7" stroke-linecap="round"/><circle cx="444" cy="165" r="10" fill="#f06a63" stroke="#222" stroke-width="4"/><circle cx="468" cy="219" r="8" fill="#fff" stroke="#222" stroke-width="4"/><text x="385" y="153" class="group-label">レバー</text>
+      <g class="person" transform="translate(760 18) translate(20 0) scale(2.3 1) translate(-20 0)"><circle cx="20" cy="16" r="10"/><path class="shirt" d="M20 26 L9 55 L20 74 L31 55 Z"/><path d="M14 68 L5 90 M26 68 L35 90 M10 42 L0 51 M30 42 L40 51"/></g><text x="882" y="36" class="group-label">1人</text>
+      <g class="person" transform="translate(600 255) translate(20 0) scale(2.3 1) translate(-20 0)"><circle cx="20" cy="16" r="10"/><path class="shirt" d="M20 26 L9 55 L20 74 L31 55 Z"/><path d="M14 68 L5 90 M26 68 L35 90 M10 42 L0 51 M30 42 L40 51"/></g>
+      <g class="person" transform="translate(705 255) translate(20 0) scale(2.3 1) translate(-20 0)"><circle cx="20" cy="16" r="10"/><path class="shirt" d="M20 26 L9 55 L20 74 L31 55 Z"/><path d="M14 68 L5 90 M26 68 L35 90 M10 42 L0 51 M30 42 L40 51"/></g>
+      <g class="person" transform="translate(810 255) translate(20 0) scale(2.3 1) translate(-20 0)"><circle cx="20" cy="16" r="10"/><path class="shirt" d="M20 26 L9 55 L20 74 L31 55 Z"/><path d="M14 68 L5 90 M26 68 L35 90 M10 42 L0 51 M30 42 L40 51"/></g>
+      <g class="person" transform="translate(652 320) translate(20 0) scale(2.3 1) translate(-20 0)"><circle cx="20" cy="16" r="10"/><path class="shirt" d="M20 26 L9 55 L20 74 L31 55 Z"/><path d="M14 68 L5 90 M26 68 L35 90 M10 42 L0 51 M30 42 L40 51"/></g>
+      <g class="person" transform="translate(757 320) translate(20 0) scale(2.3 1) translate(-20 0)"><circle cx="20" cy="16" r="10"/><path class="shirt" d="M20 26 L9 55 L20 74 L31 55 Z"/><path d="M14 68 L5 90 M26 68 L35 90 M10 42 L0 51 M30 42 L40 51"/></g><text x="886" y="245" class="group-label">5人</text>
+    </svg>
+    <div class="train" id="train" aria-label="電車"><div class="roof"></div><div class="body"></div><span class="window w1"></span><span class="window w2"></span><span class="window w3"></span><span class="light"></span><span class="wheel wh1"></span><span class="wheel wh2"></span></div>
+  </section>
+  <section class="choices">
+    <p class="question">どちらの線路に電車を走らせますか？</p>
+    <div class="buttons"><button class="leftBtn" id="oneBtn">上の線路へ（1人）</button><button class="rightBtn" id="fiveBtn">下の線路へ（5人）</button></div>
+    <section class="history-board is-hidden" id="historyBoard" aria-label="過去の選択結果"><p class="majority" id="majorityMessage"></p><div class="history-head"><span>過去の選択</span><strong>累計 <span id="historyTotal">0</span>人</strong></div><div class="history-row"><span>上の線路（1人）</span><div class="history-bar"><div class="history-fill one" id="oneBar" style="width:50%"></div></div><strong id="onePercent">--%</strong></div><div class="history-row"><span>下の線路（5人）</span><div class="history-bar"><div class="history-fill five" id="fiveBar" style="width:50%"></div></div><strong id="fivePercent">--%</strong></div></section>
+    <p class="history-note is-hidden" id="historyNote">※過去にこの問題へ回答した人の累計です。現在この場にいる人数ではありません。</p><p class="connection" id="connection" aria-live="polite">過去の記録を読み込んでいます…</p><p class="result" id="result" aria-live="polite"></p>
+  </section>
+</main>
+<script type="module">
+const firebaseConfig={apiKey:"",authDomain:"",databaseURL:"",projectId:"",storageBucket:"",messagingSenderId:"",appId:""};
+const train=document.getElementById('train'),oneBtn=document.getElementById('oneBtn'),fiveBtn=document.getElementById('fiveBtn'),result=document.getElementById('result'),historyTotal=document.getElementById('historyTotal'),onePercent=document.getElementById('onePercent'),fivePercent=document.getElementById('fivePercent'),oneBar=document.getElementById('oneBar'),fiveBar=document.getElementById('fiveBar'),connection=document.getElementById('connection'),historyBoard=document.getElementById('historyBoard'),historyNote=document.getElementById('historyNote'),majorityMessage=document.getElementById('majorityMessage');
+const GAME_ID='trolley-level-1',voterKey=`trolley-voter-${GAME_ID}`;let voterId=localStorage.getItem(voterKey);if(!voterId){voterId=crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random()}`;localStorage.setItem(voterKey,voterId)}let saveVote=null;
+function updateHistory(totals={}){const one=Number(totals.one||0),five=Number(totals.five||0),total=one+five,oneRate=total?Math.round(one/total*100):50,fiveRate=total?100-oneRate:50;historyTotal.textContent=total.toLocaleString('ja-JP');onePercent.textContent=total?`${oneRate}%`:'--%';fivePercent.textContent=total?`${fiveRate}%`:'--%';oneBar.style.width=`${oneRate}%`;fiveBar.style.width=`${fiveRate}%`;if(!total){majorityMessage.textContent='まだ過去の回答はありません。あなたが最初の回答者です。'}else if(oneRate===fiveRate){majorityMessage.textContent='過去の回答は、どちらも同じ割合です。'}else{const route=oneRate>fiveRate?'上の線路（1人）':'下の線路（5人）',rate=Math.max(oneRate,fiveRate);majorityMessage.innerHTML=`過去の回答では、<strong>${route}</strong>を選んだ人が多いです（${rate}%）。`}}
+function revealHistory(){historyBoard.classList.remove('is-hidden');historyNote.classList.remove('is-hidden')}
+function animateTrain(route){oneBtn.disabled=true;fiveBtn.disabled=true;if(route==='one'){train.style.left='calc(100% - 150px)';train.style.top='42px';train.style.transform='rotate(-18deg)';result.textContent='上の線路を選びました。電車が1人のいる方へ走ります。'}else{train.style.left='calc(100% - 155px)';train.style.top='300px';train.style.transform='rotate(17deg)';result.textContent='下の線路を選びました。電車が5人のいる方へ走ります。'}}
+async function choose(route){if(oneBtn.disabled||fiveBtn.disabled)return;oneBtn.disabled=true;fiveBtn.disabled=true;try{if(!saveVote)throw new Error('集計の設定が未完了です');const saved=await saveVote(route);revealHistory();animateTrain(route);if(!saved.added)result.textContent+='（この端末の回答はすでに集計済みです）'}catch(error){oneBtn.disabled=false;fiveBtn.disabled=false;result.textContent='投票を記録できませんでした。Firebaseの設定を確認してください。';console.error(error)}}
+oneBtn.addEventListener('click',()=>choose('one'));fiveBtn.addEventListener('click',()=>choose('five'));const configured=Boolean(firebaseConfig.apiKey&&firebaseConfig.databaseURL&&firebaseConfig.projectId);if(!configured){connection.textContent='選択後に、過去の回答結果が表示されます。'}else{try{const{initializeApp}=await import('https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js');const{getDatabase,ref,onValue,runTransaction}=await import('https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js');const app=initializeApp(firebaseConfig),db=getDatabase(app),gameRef=ref(db,`games/${GAME_ID}`);saveVote=async route=>{let added=false;await runTransaction(gameRef,game=>{game=game||{};game.voters=game.voters||{};game.totals=game.totals||{one:0,five:0};if(game.voters[voterId])return game;game.voters[voterId]=route;game.totals[route]=Number(game.totals[route]||0)+1;added=true;return game});return{added}};onValue(gameRef,snapshot=>{const game=snapshot.val()||{};updateHistory(game.totals||{});connection.textContent='選択後に、過去の回答結果を表示します。'},error=>{connection.textContent='過去の記録を読み込めませんでした。Firebaseの設定とルールを確認してください。';console.error(error)})}catch(error){connection.textContent='集計の読み込みに失敗しました。';console.error(error)}}
+</script>
+<script>if('serviceWorker'in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker.js'))}</script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Justice Divider</title>
+</head>
+<body>
+<script>
+fetch('app.html')
+  .then(r => r.text())
+  .then(html => {
+    html = html.replaceAll('あなたは操作の前にいる', 'あなたはレバーの前にいる');
+    html = html.replace('</style>', `
+      .chapter{min-height:112px!important;padding:18px 54px 18px 18px!important;margin:0 0 12px!important;border-radius:18px!important;touch-action:manipulation!important}
+      .chapter .n{font-size:11px!important;margin-bottom:3px!important}
+      .chapter b{font-size:18px!important;line-height:1.45!important}
+      .chapter span{font-size:13px!important;line-height:1.55!important;margin-top:3px!important}
+      .chapter i{right:19px!important;top:40px!important;font-size:26px!important}
+      .chapter:active{transform:scale(.985)!important;background:#f3f7ff!important}
+      </style>`);
+    document.open();
+    document.write(html);
+    document.close();
+  })
+  .catch(() => { document.body.textContent = '読み込みに失敗しました。再読み込みしてください。'; });
+</script>
+</body>
+</html>

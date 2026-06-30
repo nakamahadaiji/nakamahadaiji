@@ -2,26 +2,26 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>TACTIC POP!</title>
   <style>
-    *{box-sizing:border-box}
-    html,body{margin:0;min-height:100%;font-family:"Hiragino Sans","Yu Gothic","Meiryo",sans-serif;background:#fff7e8;color:#243044}
-    body{overflow:hidden}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;font-family:"Hiragino Sans","Yu Gothic","Meiryo",sans-serif;background:#fff7e8;color:#243044;touch-action:none}
+    body{position:fixed;inset:0}
     button,select,input{font:inherit}
-    .app{height:100dvh;display:grid;grid-template-rows:auto 1fr auto;gap:8px;padding:10px;max-width:1500px;margin:0 auto}
-    .top{display:flex;gap:8px;align-items:center;justify-content:space-between}
+    .app{height:100svh;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:8px;padding:10px;max-width:1500px;margin:0 auto;overflow:hidden}
+    .top{display:flex;gap:8px;align-items:center;justify-content:space-between;min-height:0}
     .title{display:flex;align-items:center;gap:8px;font-weight:900;font-size:22px;letter-spacing:.03em;white-space:nowrap}
     .ball{width:32px;height:32px;border-radius:50%;background:#fff;border:3px solid #1e293b;display:grid;place-items:center;box-shadow:0 4px 0 #d7c9a8}
     .ball:before{content:"⚽";font-size:18px}
-    .controls{display:flex;gap:7px;align-items:center;overflow:auto;padding-bottom:2px}
-    .chip,.select{height:40px;border:3px solid #243044;border-radius:999px;background:#fff;color:#243044;font-weight:900;padding:0 12px;box-shadow:0 4px 0 #243044;white-space:nowrap}
+    .controls{display:flex;gap:7px;align-items:center;overflow-x:auto;overflow-y:hidden;padding-bottom:4px;touch-action:pan-x;-webkit-overflow-scrolling:touch;max-width:100%}
+    .chip,.select{height:40px;border:3px solid #243044;border-radius:999px;background:#fff;color:#243044;font-weight:900;padding:0 12px;box-shadow:0 4px 0 #243044;white-space:nowrap;flex:0 0 auto}
     .select{min-width:126px}
     .chip.active{background:#ffd166}
-    .main{min-height:0;position:relative}
+    .main{min-height:0;position:relative;overflow:hidden}
     .boardWrap{height:100%;min-height:0;background:#fff;border:4px solid #243044;border-radius:28px;box-shadow:0 8px 0 #243044;padding:8px;position:relative;overflow:hidden}
-    #board{width:100%;height:100%;min-height:520px;touch-action:none;display:block;border-radius:18px;background:#9ed56f}
-    .side{position:absolute;right:16px;top:16px;width:min(520px,calc(100% - 32px));display:none;grid-template-columns:1fr 1fr;gap:10px;z-index:5}
+    #board{width:100%;height:100%;min-height:0;touch-action:none;display:block;border-radius:18px;background:#9ed56f}
+    .side{position:absolute;right:16px;top:16px;width:min(520px,calc(100% - 32px));display:none;grid-template-columns:1fr 1fr;gap:10px;z-index:5;max-height:calc(100% - 32px);overflow:auto;touch-action:pan-y}
     .side.open{display:grid}
     .panel{background:#fff;border:4px solid #243044;border-radius:24px;box-shadow:0 6px 0 #243044;padding:12px}
     .panel h2{font-size:16px;margin:0 0 8px;font-weight:900}
@@ -29,29 +29,28 @@
     .legend{display:grid;gap:7px;font-size:12px;font-weight:800}
     .legend-row{display:flex;align-items:center;gap:8px}
     .lineIcon{width:42px;height:14px;flex:0 0 auto}
-    .bottom{display:flex;gap:7px;overflow:auto;padding:2px 0 4px}
-    .btn{height:44px;border:3px solid #243044;border-radius:16px;background:#fff;font-weight:900;padding:0 12px;box-shadow:0 4px 0 #243044;white-space:nowrap}
+    .bottom{display:flex;gap:7px;overflow-x:auto;overflow-y:hidden;padding:2px 0 4px;touch-action:pan-x;-webkit-overflow-scrolling:touch;min-height:50px}
+    .btn{height:44px;border:3px solid #243044;border-radius:16px;background:#fff;font-weight:900;padding:0 12px;box-shadow:0 4px 0 #243044;white-space:nowrap;flex:0 0 auto}
     .btn.primary{background:#06b6d4;color:white}
     .btn.warn{background:#ff6b6b;color:white}
     .toast{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);background:#243044;color:white;border-radius:999px;padding:10px 16px;font-weight:900;opacity:0;pointer-events:none;transition:.2s;z-index:6}
     .toast.show{opacity:1}
     @media (max-width:900px){
-      body{overflow:auto}
-      .app{height:auto;min-height:100dvh}
-      #board{height:74dvh;min-height:470px}
-      .side{grid-template-columns:1fr;max-height:70dvh;overflow:auto}
-    }
-    @media (max-width:560px){
-      .app{padding:7px;gap:7px}
-      .top{align-items:flex-start;flex-direction:column}
-      .title{font-size:19px}
-      .controls{width:100%}
-      .chip,.select{height:38px;font-size:14px;padding:0 9px;border-width:2px;box-shadow:0 3px 0 #243044}
+      .app{height:100svh;min-height:0;padding:8px;gap:6px}
+      .top{gap:6px}
+      .title{font-size:18px}
+      .ball{width:28px;height:28px}
+      .chip,.select{height:36px;font-size:13px;padding:0 9px;border-width:2px;box-shadow:0 3px 0 #243044}
       .boardWrap{border-radius:22px;padding:5px;border-width:3px;box-shadow:0 5px 0 #243044}
-      #board{height:76dvh;min-height:430px}
+      .side{grid-template-columns:1fr;right:10px;top:10px;width:min(360px,calc(100% - 20px));max-height:calc(100% - 20px)}
       .panel{border-width:3px;box-shadow:0 4px 0 #243044}
-      .bottom{position:sticky;bottom:0;background:#fff7e8;padding:6px 0}
-      .btn{height:42px;font-size:13px;border-width:2px;box-shadow:0 3px 0 #243044;padding:0 10px}
+      .bottom{min-height:44px;padding-bottom:2px}
+      .btn{height:38px;font-size:12px;border-width:2px;box-shadow:0 3px 0 #243044;padding:0 9px;border-radius:14px}
+    }
+    @media (orientation:portrait) and (max-width:560px){
+      .top{flex-direction:column;align-items:flex-start}
+      .controls{width:100%}
+      .app{grid-template-rows:auto minmax(0,1fr) auto}
     }
   </style>
 </head>
@@ -127,6 +126,11 @@ let players = [];
 let lines = [];
 let ball = {x: 500, y: 320};
 
+document.addEventListener('touchmove', function(e){
+  if (!e.target.closest('.controls,.bottom,.side')) e.preventDefault();
+}, {passive:false});
+document.addEventListener('gesturestart', function(e){e.preventDefault();});
+
 const formations = {
   '4-2-3-1': [
     ['GK',7,50], ['SB',22,18], ['CB',22,39], ['CB',22,61], ['SB',22,82],
@@ -186,10 +190,11 @@ function svgPoint(evt){const pt=svg.createSVGPoint();pt.x=evt.clientX;pt.y=evt.c
 function findPlayer(id){return players.find(p=>p.id===id)}
 function setName(){const p=findPlayer(selectedPlayerId);if(!p){showToast('選手を選択');return}const value=prompt('名前を入力（空欄で非表示）',p.name||'');if(value===null)return;p.name=value.trim();render()}
 
-svg.addEventListener('pointerdown',e=>{const pt=svgPoint(e);const playerEl=e.target.closest&&e.target.closest('.player');const ballEl=e.target.closest&&e.target.closest('#ball');if(activeTool==='select'){if(playerEl){const p=findPlayer(playerEl.dataset.id);if(p){selectedPlayerId=p.id;if(p.team===activeTeam){dragging={kind:'player',item:p,dx:pt.x-p.x,dy:pt.y-p.y}}render()}}else if(ballEl){dragging={kind:'ball',dx:pt.x-ball.x,dy:pt.y-ball.y}}}else if(activeTool==='ball'){ball={x:pt.x,y:pt.y};render()}else{drawing={type:activeTool,x1:pt.x,y1:pt.y,x2:pt.x,y2:pt.y}}svg.setPointerCapture(e.pointerId)});
+svg.addEventListener('pointerdown',e=>{e.preventDefault();const pt=svgPoint(e);const playerEl=e.target.closest&&e.target.closest('.player');const ballEl=e.target.closest&&e.target.closest('#ball');if(activeTool==='select'){if(playerEl){const p=findPlayer(playerEl.dataset.id);if(p){selectedPlayerId=p.id;if(p.team===activeTeam){dragging={kind:'player',item:p,dx:pt.x-p.x,dy:pt.y-p.y}}render()}}else if(ballEl){dragging={kind:'ball',dx:pt.x-ball.x,dy:pt.y-ball.y}}}else if(activeTool==='ball'){ball={x:pt.x,y:pt.y};render()}else{drawing={type:activeTool,x1:pt.x,y1:pt.y,x2:pt.x,y2:pt.y}}svg.setPointerCapture(e.pointerId)});
 svg.addEventListener('dblclick',e=>{const playerEl=e.target.closest&&e.target.closest('.player');if(playerEl){selectedPlayerId=playerEl.dataset.id;setName()}});
-svg.addEventListener('pointermove',e=>{const pt=svgPoint(e);if(dragging){const x=Math.max(24,Math.min(976,pt.x-dragging.dx));const y=Math.max(24,Math.min(616,pt.y-dragging.dy));if(dragging.kind==='player'){dragging.item.x=x;dragging.item.y=y}if(dragging.kind==='ball'){ball.x=x;ball.y=y}render()}if(drawing){drawing.x2=pt.x;drawing.y2=pt.y;const temp=lines.concat([drawing]);svg.innerHTML=drawPitch()+temp.map(lineSvg).join('')+`<g id="ball" transform="translate(${ball.x} ${ball.y})"><circle r="17" fill="#fff" stroke="#243044" stroke-width="4"/><text y="7" text-anchor="middle" font-size="19">⚽</text></g>`+players.map(playerSvg).join('')}});
-svg.addEventListener('pointerup',e=>{if(drawing){if(Math.abs(drawing.x2-drawing.x1)+Math.abs(drawing.y2-drawing.y1)>20){lines.push(drawing)}drawing=null;render()}dragging=null});
+svg.addEventListener('pointermove',e=>{if(!dragging&&!drawing)return;e.preventDefault();const pt=svgPoint(e);if(dragging){const x=Math.max(24,Math.min(976,pt.x-dragging.dx));const y=Math.max(24,Math.min(616,pt.y-dragging.dy));if(dragging.kind==='player'){dragging.item.x=x;dragging.item.y=y}if(dragging.kind==='ball'){ball.x=x;ball.y=y}render()}if(drawing){drawing.x2=pt.x;drawing.y2=pt.y;const temp=lines.concat([drawing]);svg.innerHTML=drawPitch()+temp.map(lineSvg).join('')+`<g id="ball" transform="translate(${ball.x} ${ball.y})"><circle r="17" fill="#fff" stroke="#243044" stroke-width="4"/><text y="7" text-anchor="middle" font-size="19">⚽</text></g>`+players.map(playerSvg).join('')}});
+svg.addEventListener('pointerup',e=>{e.preventDefault();if(drawing){if(Math.abs(drawing.x2-drawing.x1)+Math.abs(drawing.y2-drawing.y1)>20){lines.push(drawing)}drawing=null;render()}dragging=null});
+svg.addEventListener('pointercancel',()=>{drawing=null;dragging=null;render()});
 document.querySelectorAll('[data-team]').forEach(btn=>{btn.addEventListener('click',()=>{activeTeam=btn.dataset.team;document.querySelectorAll('[data-team]').forEach(b=>b.classList.toggle('active',b===btn));render()})});
 document.querySelectorAll('[data-tool]').forEach(btn=>{btn.addEventListener('click',()=>{activeTool=btn.dataset.tool;document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('primary',b===btn))})});
 formationSelect.addEventListener('change',()=>{setFormation(formationSelect.value);showToast(formationSelect.value)});

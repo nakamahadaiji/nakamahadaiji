@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+<rect width="800" height="800" rx="96" fill="#fff7e8"/>
+<rect x="76" y="118" width="648" height="440" rx="32" fill="#9ed56f" stroke="#243044" stroke-width="20"/>
+<path d="M400 118v440M76 338h648" stroke="#fff" stroke-width="10"/>
+<circle cx="400" cy="338" r="72" fill="none" stroke="#fff" stroke-width="10"/>
+<rect x="76" y="250" width="90" height="176" fill="none" stroke="#fff" stroke-width="10"/>
+<rect x="634" y="250" width="90" height="176" fill="none" stroke="#fff" stroke-width="10"/>
+<g font-family="Arial, sans-serif" font-weight="900" font-size="32" text-anchor="middle">
+<circle cx="196" cy="220" r="34" fill="#16a3ff" stroke="#243044" stroke-width="8"/><text x="196" y="232" fill="#fff">SB</text>
+<circle cx="250" cy="338" r="34" fill="#16a3ff" stroke="#243044" stroke-width="8"/><text x="250" y="350" fill="#fff">DM</text>
+<circle cx="472" cy="338" r="34" fill="#ff4fa3" stroke="#243044" stroke-width="8"/><text x="472" y="350" fill="#fff">AM</text>
+<circle cx="604" cy="338" r="34" fill="#ff4fa3" stroke="#243044" stroke-width="8"/><text x="604" y="350" fill="#fff">FW</text>
+</g>
+<path d="M286 338H432" stroke="#111827" stroke-width="12" marker-end="url(#a)"/>
+<defs><marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0 0l10 5-10 5z" fill="#111827"/></marker></defs>
+<text x="400" y="660" font-family="Arial, sans-serif" font-size="58" font-weight="900" fill="#243044" text-anchor="middle">TACTIC POP!</text>
+</svg>

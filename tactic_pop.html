@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>TACTIC POP!</title>
+  <style>
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;font-family:"Hiragino Sans","Yu Gothic","Meiryo",sans-serif;background:#fff7e8;color:#243044}
+    body{overflow:hidden}
+    button,select,input{font:inherit}
+    .app{height:100dvh;display:grid;grid-template-rows:auto 1fr auto;gap:10px;padding:12px;max-width:1180px;margin:0 auto}
+    .top{display:flex;gap:10px;align-items:center;justify-content:space-between}
+    .title{display:flex;align-items:center;gap:8px;font-weight:900;font-size:22px;letter-spacing:.03em}
+    .ball{width:32px;height:32px;border-radius:50%;background:#fff;border:3px solid #1e293b;display:grid;place-items:center;box-shadow:0 4px 0 #d7c9a8}
+    .ball:before{content:"⚽";font-size:18px}
+    .controls{display:flex;gap:8px;align-items:center;overflow:auto;padding-bottom:2px}
+    .chip,.select{height:42px;border:3px solid #243044;border-radius:999px;background:#fff;color:#243044;font-weight:900;padding:0 12px;box-shadow:0 4px 0 #243044;white-space:nowrap}
+    .select{min-width:126px}
+    .chip.active{background:#ffd166}
+    .main{min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:10px}
+    .boardWrap{min-height:0;background:#fff;border:4px solid #243044;border-radius:28px;box-shadow:0 8px 0 #243044;padding:10px;position:relative;overflow:hidden}
+    #board{width:100%;height:100%;min-height:430px;touch-action:none;display:block;border-radius:18px;background:#9ed56f}
+    .side{display:flex;flex-direction:column;gap:10px;min-height:0}
+    .panel{background:#fff;border:4px solid #243044;border-radius:24px;box-shadow:0 6px 0 #243044;padding:12px}
+    .panel h2{font-size:16px;margin:0 0 8px;font-weight:900}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;font-weight:800}
+    .legend{display:grid;gap:7px;font-size:12px;font-weight:800}
+    .legend-row{display:flex;align-items:center;gap:8px}
+    .lineIcon{width:42px;height:14px}
+    .bottom{display:flex;gap:8px;overflow:auto;padding-bottom:2px}
+    .btn{height:46px;border:3px solid #243044;border-radius:16px;background:#fff;font-weight:900;padding:0 12px;box-shadow:0 4px 0 #243044;white-space:nowrap}
+    .btn.primary{background:#06b6d4;color:white}
+    .btn.warn{background:#ff6b6b;color:white}
+    .toast{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);background:#243044;color:white;border-radius:999px;padding:10px 16px;font-weight:900;opacity:0;pointer-events:none;transition:.2s}
+    .toast.show{opacity:1}
+    @media (max-width:900px){
+      body{overflow:auto}
+      .app{height:auto;min-height:100dvh}
+      .main{grid-template-columns:1fr}
+      .side{display:grid;grid-template-columns:1fr 1fr}
+      #board{height:64dvh;min-height:420px}
+    }
+    @media (max-width:560px){
+      .app{padding:8px;gap:8px}
+      .top{align-items:flex-start;flex-direction:column}
+      .title{font-size:20px}
+      .controls{width:100%}
+      .chip,.select{height:40px;font-size:14px;padding:0 10px}
+      .boardWrap{border-radius:22px;padding:7px;border-width:3px;box-shadow:0 5px 0 #243044}
+      #board{height:66dvh;min-height:390px}
+      .side{grid-template-columns:1fr}
+      .panel{border-width:3px;box-shadow:0 4px 0 #243044}
+      .bottom{position:sticky;bottom:0;background:#fff7e8;padding:6px 0}
+      .btn{height:44px;font-size:14px}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="top">
+      <div class="title"><span class="ball"></span><span>TACTIC POP!</span></div>
+      <div class="controls">
+        <select id="formationSelect" class="select" aria-label="フォーメーション"></select>
+        <button class="chip active" data-team="home">自チーム</button>
+        <button class="chip" data-team="away">相手</button>
+        <button id="flipBtn" class="chip">左右反転</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="boardWrap">
+        <svg id="board" viewBox="0 0 1000 640" aria-label="サッカー戦術ボード"></svg>
+        <div id="toast" class="toast"></div>
+      </section>
+
+      <aside class="side">
+        <div class="panel">
+          <h2>ポジション</h2>
+          <div class="grid">
+            <span>GK ゴールキーパー</span><span>SH サイドハーフ</span>
+            <span>SB サイドバック</span><span>CH センターハーフ</span>
+            <span>CB センターバック</span><span>IH インサイドハーフ</span>
+            <span>WB ウイングバック</span><span>WG ウイング</span>
+            <span>DM ディフェンシブミッドフィルダー</span><span>AM アタッキングミッドフィルダー</span>
+            <span>P ピボーテ</span><span>FW フォワード</span>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>戦術ボード</h2>
+          <div class="legend">
+            <div class="legend-row"><svg class="lineIcon" viewBox="0 0 50 14"><path d="M2 7H43" stroke="#111" stroke-width="3"/><path d="M43 7l-8-5v10z"/></svg>ボールの移動</div>
+            <div class="legend-row"><svg class="lineIcon" viewBox="0 0 50 14"><path d="M2 7H43" stroke="#111" stroke-width="3" stroke-dasharray="7 6"/><path d="M43 7l-8-5v10z"/></svg>選手の移動</div>
+            <div class="legend-row"><svg class="lineIcon" viewBox="0 0 50 14"><path d="M2 7c8-8 16 8 24 0s13-6 19 0" fill="none" stroke="#111" stroke-width="3"/><path d="M45 7l-8-5v10z"/></svg>ドリブルでの移動</div>
+            <div class="legend-row"><svg class="lineIcon" viewBox="0 0 50 14"><path d="M2 7H43" stroke="#666" stroke-width="5"/><path d="M43 7l-8-5v10z" fill="#666"/></svg>ゴールに向かうコース</div>
+            <div class="legend-row"><svg class="lineIcon" viewBox="0 0 50 14"><path d="M2 7H48" stroke="#ff4fa3" stroke-width="4" stroke-dasharray="2 2"/></svg>ゲート</div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <nav class="bottom">
+      <button class="btn primary" data-tool="select">動かす</button>
+      <button class="btn" data-tool="ball">ボール</button>
+      <button class="btn" data-tool="pass">ボールの移動</button>
+      <button class="btn" data-tool="run">選手の移動</button>
+      <button class="btn" data-tool="dribble">ドリブル</button>
+      <button class="btn" data-tool="course">コース</button>
+      <button class="btn" data-tool="gate">ゲート</button>
+      <button id="clearLines" class="btn warn">線を消す</button>
+      <button id="resetBtn" class="btn">リセット</button>
+    </nav>
+  </div>
+
+<script>
+const svg = document.getElementById('board');
+const formationSelect = document.getElementById('formationSelect');
+const toast = document.getElementById('toast');
+let activeTeam = 'home';
+let activeTool = 'select';
+let dragging = null;
+let drawing = null;
+let players = [];
+let lines = [];
+let ball = {x: 500, y: 320};
+
+const formations = {
+  '4-2-3-1': [
+    ['GK',7,50], ['SB',22,18], ['CB',22,39], ['CB',22,61], ['SB',22,82],
+    ['DM',39,38], ['DM',39,62], ['WG',58,20], ['AM',59,50], ['WG',58,80], ['FW',77,50]
+  ],
+  '4-3-3': [
+    ['GK',7,50], ['SB',22,18], ['CB',22,39], ['CB',22,61], ['SB',22,82],
+    ['IH',43,30], ['DM',37,50], ['IH',43,70], ['WG',68,20], ['FW',78,50], ['WG',68,80]
+  ],
+  '4-4-2': [
+    ['GK',7,50], ['SB',22,18], ['CB',22,39], ['CB',22,61], ['SB',22,82],
+    ['SH',47,18], ['CH',43,39], ['CH',43,61], ['SH',47,82], ['FW',73,38], ['FW',73,62]
+  ],
+  '4-4-2ダイヤ': [
+    ['GK',7,50], ['SB',22,18], ['CB',22,39], ['CB',22,61], ['SB',22,82],
+    ['P',36,50], ['SH',47,25], ['SH',47,75], ['AM',59,50], ['FW',74,38], ['FW',74,62]
+  ],
+  '3-4-3': [
+    ['GK',7,50], ['CB',22,28], ['CB',20,50], ['CB',22,72],
+    ['WB',44,15], ['CH',42,40], ['CH',42,60], ['WB',44,85], ['WG',69,20], ['FW',78,50], ['WG',69,80]
+  ],
+  '3-4-3ダイヤ': [
+    ['GK',7,50], ['CB',22,28], ['CB',20,50], ['CB',22,72],
+    ['P',36,50], ['SH',47,24], ['SH',47,76], ['AM',58,50], ['WG',69,20], ['FW',78,50], ['WG',69,80]
+  ],
+  '3-4-1-2': [
+    ['GK',7,50], ['CB',22,28], ['CB',20,50], ['CB',22,72],
+    ['WB',44,15], ['CH',42,40], ['CH',42,60], ['WB',44,85], ['AM',61,50], ['FW',76,38], ['FW',76,62]
+  ],
+  '3-1-4-2': [
+    ['GK',7,50], ['CB',22,28], ['CB',20,50], ['CB',22,72],
+    ['P',36,50], ['SH',51,18], ['CH',49,39], ['CH',49,61], ['SH',51,82], ['FW',76,38], ['FW',76,62]
+  ]
+};
+
+const awayBase = [
+  ['GK',93,50], ['SB',78,18], ['CB',78,39], ['CB',78,61], ['SB',78,82],
+  ['SH',55,18], ['CH',57,39], ['CH',57,61], ['SH',55,82], ['FW',30,38], ['FW',30,62]
+];
+
+function px(x){return x*10}
+function py(y){return y*6.4}
+function showToast(text){toast.textContent=text;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),900)}
+function makePlayer(team,label,x,y,i){return {id:team+'-'+i,team,label,x:px(x),y:py(y)}}
+function setFormation(name){const home=formations[name].map((p,i)=>makePlayer('home',p[0],p[1],p[2],i+1));const away=awayBase.map((p,i)=>makePlayer('away',p[0],p[1],p[2],i+1));players=home.concat(away);ball={x:500,y:320};lines=[];render()}
+function initFormationSelect(){Object.keys(formations).forEach(name=>{const option=document.createElement('option');option.value=name;option.textContent=name;formationSelect.appendChild(option)});formationSelect.value='4-2-3-1'}
+
+function drawPitch(){
+  const defs=`<defs><marker id="arrowBlack" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#111827"></path></marker><marker id="arrowGray" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#64748b"></path></marker><pattern id="stripe" width="120" height="640" patternUnits="userSpaceOnUse"><rect width="60" height="640" fill="#a8db78"></rect><rect x="60" width="60" height="640" fill="#94cf69"></rect></pattern></defs>`;
+  return defs+`<rect x="24" y="24" width="952" height="592" rx="12" fill="url(#stripe)" stroke="#fff" stroke-width="5"/><line x1="500" y1="24" x2="500" y2="616" stroke="#fff" stroke-width="4"/><circle cx="500" cy="320" r="74" fill="none" stroke="#fff" stroke-width="4"/><circle cx="500" cy="320" r="5" fill="#fff"/><rect x="24" y="186" width="132" height="268" fill="none" stroke="#fff" stroke-width="4"/><rect x="844" y="186" width="132" height="268" fill="none" stroke="#fff" stroke-width="4"/><rect x="24" y="254" width="48" height="132" fill="none" stroke="#fff" stroke-width="4"/><rect x="928" y="254" width="48" height="132" fill="none" stroke="#fff" stroke-width="4"/><path d="M156 246a88 88 0 0 1 0 148" fill="none" stroke="#fff" stroke-width="4"/><path d="M844 246a88 88 0 0 0 0 148" fill="none" stroke="#fff" stroke-width="4"/><line x1="24" y1="286" x2="6" y2="286" stroke="#243044" stroke-width="8"/><line x1="24" y1="354" x2="6" y2="354" stroke="#243044" stroke-width="8"/><line x1="976" y1="286" x2="994" y2="286" stroke="#243044" stroke-width="8"/><line x1="976" y1="354" x2="994" y2="354" stroke="#243044" stroke-width="8"/><text x="142" y="578" font-size="20" font-weight="900" fill="#243044">DFライン</text><text x="362" y="578" font-size="20" font-weight="900" fill="#243044">MFライン</text><text x="676" y="578" font-size="20" font-weight="900" fill="#243044">FWライン</text>`;
+}
+function lineSvg(l){const marker=l.type==='course'?'url(#arrowGray)':'url(#arrowBlack)';if(l.type==='gate'){return `<line x1="${l.x1}" y1="${l.y1}" x2="${l.x2}" y2="${l.y2}" stroke="#ff4fa3" stroke-width="8" stroke-dasharray="3 5" stroke-linecap="round"/>`}if(l.type==='dribble'){const mx=(l.x1+l.x2)/2,my=(l.y1+l.y2)/2;return `<path d="M${l.x1} ${l.y1} Q ${mx-50} ${my-50} ${mx} ${my} T ${l.x2} ${l.y2}" fill="none" stroke="#111827" stroke-width="5" stroke-linecap="round" marker-end="${marker}"/>`}const dash=l.type==='run'?'12 10':'';const color=l.type==='course'?'#64748b':'#111827';const width=l.type==='course'?8:5;return `<line x1="${l.x1}" y1="${l.y1}" x2="${l.x2}" y2="${l.y2}" stroke="${color}" stroke-width="${width}" stroke-dasharray="${dash}" stroke-linecap="round" marker-end="${marker}"/>`}
+function playerSvg(p){const fill=p.team==='home'?'#16a3ff':'#ff4fa3';const stroke=p.team===activeTeam?'#ffd166':'#243044';const text=p.label.length>2?p.label.slice(0,2):p.label;return `<g class="player" data-id="${p.id}" transform="translate(${p.x} ${p.y})"><circle r="22" fill="${fill}" stroke="${stroke}" stroke-width="6"/><circle r="14" fill="#fff" opacity=".92"/><text y="6" text-anchor="middle" font-size="15" font-weight="900" fill="#243044">${text}</text></g>`}
+function render(){svg.innerHTML=drawPitch()+lines.map(lineSvg).join('')+`<g id="ball" transform="translate(${ball.x} ${ball.y})"><circle r="17" fill="#fff" stroke="#243044" stroke-width="4"/><text y="7" text-anchor="middle" font-size="19">⚽</text></g>`+players.map(playerSvg).join('')}
+function svgPoint(evt){const pt=svg.createSVGPoint();pt.x=evt.clientX;pt.y=evt.clientY;return pt.matrixTransform(svg.getScreenCTM().inverse())}
+function findPlayer(id){return players.find(p=>p.id===id)}
+
+svg.addEventListener('pointerdown',e=>{const pt=svgPoint(e);const playerEl=e.target.closest&&e.target.closest('.player');const ballEl=e.target.closest&&e.target.closest('#ball');if(activeTool==='select'){if(playerEl){const p=findPlayer(playerEl.dataset.id);if(p&&p.team===activeTeam){dragging={kind:'player',item:p,dx:pt.x-p.x,dy:pt.y-p.y}}}else if(ballEl){dragging={kind:'ball',dx:pt.x-ball.x,dy:pt.y-ball.y}}}else if(activeTool==='ball'){ball={x:pt.x,y:pt.y};render()}else{drawing={type:activeTool,x1:pt.x,y1:pt.y,x2:pt.x,y2:pt.y}}svg.setPointerCapture(e.pointerId)});
+svg.addEventListener('pointermove',e=>{const pt=svgPoint(e);if(dragging){const x=Math.max(24,Math.min(976,pt.x-dragging.dx));const y=Math.max(24,Math.min(616,pt.y-dragging.dy));if(dragging.kind==='player'){dragging.item.x=x;dragging.item.y=y}if(dragging.kind==='ball'){ball.x=x;ball.y=y}render()}if(drawing){drawing.x2=pt.x;drawing.y2=pt.y;const temp=lines.concat([drawing]);svg.innerHTML=drawPitch()+temp.map(lineSvg).join('')+`<g id="ball" transform="translate(${ball.x} ${ball.y})"><circle r="17" fill="#fff" stroke="#243044" stroke-width="4"/><text y="7" text-anchor="middle" font-size="19">⚽</text></g>`+players.map(playerSvg).join('')}});
+svg.addEventListener('pointerup',e=>{if(drawing){if(Math.abs(drawing.x2-drawing.x1)+Math.abs(drawing.y2-drawing.y1)>20){lines.push(drawing)}drawing=null;render()}dragging=null});
+document.querySelectorAll('[data-team]').forEach(btn=>{btn.addEventListener('click',()=>{activeTeam=btn.dataset.team;document.querySelectorAll('[data-team]').forEach(b=>b.classList.toggle('active',b===btn));render()})});
+document.querySelectorAll('[data-tool]').forEach(btn=>{btn.addEventListener('click',()=>{activeTool=btn.dataset.tool;document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('primary',b===btn))})});
+formationSelect.addEventListener('change',()=>{setFormation(formationSelect.value);showToast(formationSelect.value)});
+document.getElementById('clearLines').addEventListener('click',()=>{lines=[];render()});
+document.getElementById('resetBtn').addEventListener('click',()=>setFormation(formationSelect.value));
+document.getElementById('flipBtn').addEventListener('click',()=>{players.forEach(p=>p.x=1000-p.x);ball.x=1000-ball.x;lines.forEach(l=>{l.x1=1000-l.x1;l.x2=1000-l.x2});render()});
+initFormationSelect();
+setFormation('4-2-3-1');
+</script>
+</body>
+</html>

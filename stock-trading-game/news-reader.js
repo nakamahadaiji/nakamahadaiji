@@ -4,6 +4,7 @@
     '商品': '商品市場', '業種': '業界ニュース', '為替': '為替市場', '政策': '政策ニュース',
     '債券': '債券市場', '電力': 'エネルギー', '消費': '消費ニュース', '観測': 'マーケット観測', '引け前': '引け前情報'
   };
+  const openItems = window.__stockNewsOpenItems || (window.__stockNewsOpenItems = new Set());
   const summary = (title) => {
     if (/上方修正|上積み|受注|拡大/.test(title)) return '需要の強さを示す材料として受け止められています。関連企業にも買いが広がるか、市場の反応が注目されます。';
     if (/上昇|急伸|高まで|買い/.test(title)) return '市場では関連銘柄への資金流入が意識されています。どの企業まで買いが波及するかを確認します。';
@@ -19,14 +20,14 @@
     const style = document.createElement('style');
     style.id = 'newsReaderStyle';
     style.textContent = `
-      .news-item{padding:14px 15px!important;cursor:pointer}
+      .news-item{padding:14px 15px!important}
       .news-item p{font-size:15px!important;line-height:1.58!important;letter-spacing:.01em}
       .news-source{font-size:11px;font-weight:800;color:#64748b;margin-right:auto;padding-left:8px}
-      .news-summary{display:block;margin-top:8px;color:#59687b;font-size:12px;line-height:1.68;font-weight:500}
-      .news-open{display:block;margin-top:9px;color:#1d5cab;font-size:11px;font-weight:800}
+      .news-summary{display:none;margin-top:8px;color:#59687b;font-size:12px;line-height:1.68;font-weight:500}
+      .news-item.is-open .news-summary{display:block}
+      .news-open{display:block;margin-top:9px;padding:0;border:0;background:transparent;color:#1d5cab;font:inherit;font-size:11px;font-weight:800;cursor:pointer}
       .news-item.is-open{background:#f6f9ff}
-      .news-item:not(.is-open) .news-summary{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-      @media(max-width:760px){.news-item{padding:13px 14px!important}.news-item p{font-size:14px!important}.news-summary{font-size:12px!important}}
+      @media(max-width:760px){.news-item{padding:13px 14px!important}.news-item p{font-size:14px!important}.news-summary{font-size:12px!important}.news-open{font-size:12px!important}}
     `;
     document.head.appendChild(style);
   };
@@ -35,9 +36,10 @@
     if (!feed) return;
     addStyle();
     feed.querySelectorAll('.news-item').forEach((item) => {
+      const title = item.querySelector('p')?.textContent?.trim() || '';
+      if (openItems.has(title)) item.classList.add('is-open');
       if (item.dataset.newsReader === '1') return;
       item.dataset.newsReader = '1';
-      const title = item.querySelector('p')?.textContent?.trim() || '';
       const tag = item.querySelector('.news-tag')?.textContent?.trim() || '';
       const meta = item.querySelector('div');
       if (meta) {
@@ -50,14 +52,18 @@
       const lead = document.createElement('span');
       lead.className = 'news-summary';
       lead.textContent = summary(title);
-      const button = document.createElement('span');
+      const button = document.createElement('button');
+      button.type = 'button';
       button.className = 'news-open';
-      button.textContent = '詳細を読む';
-      item.append(lead, button);
-      item.addEventListener('click', () => {
-        item.classList.toggle('is-open');
-        button.textContent = item.classList.contains('is-open') ? '閉じる' : '詳細を読む';
+      button.textContent = openItems.has(title) ? '閉じる' : '詳細を読む';
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const isOpen = item.classList.toggle('is-open');
+        if (isOpen) openItems.add(title); else openItems.delete(title);
+        button.textContent = isOpen ? '閉じる' : '詳細を読む';
       });
+      item.append(lead, button);
     });
   };
   const watch = () => {

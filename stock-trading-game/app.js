@@ -5,32 +5,207 @@ const PRACTICE=[
   {id:'BTA',code:'BTA',name:'バンクタス',sector:'金融',price:1520,vol:.016},
   {id:'KRT',code:'KRT',name:'キラテック',sector:'製造業',price:980,vol:.024}
 ];
-let mode='practice',duration=180,stocks=[],selectedId='',cash=1000000,seconds=180,tick=0,gameTimer=null,transactions=[],search='';
+
+let mode='practice';
+let startingCash=1000000;
+let duration=180;
+let stocks=[];
+let selectedId='';
+let cash=0;
+let seconds=0;
+let tick=0;
+let timerId=null;
+let transactions=[];
+let searchText='';
+
 const $=id=>document.getElementById(id);
-const el={start:$('startScreen'),loading:$('loadingScreen'),game:$('gameScreen'),result:$('resultScreen'),practice:$('practiceStart'),main:$('mainStart'),loadingText:$('loadingText'),loadingBar:$('loadingBar'),modeLabel:$('gameModeLabel'),hint:$('hintText'),chartTitle:$('chartTitle'),timer:$('timer'),tick:$('marketTick'),list:$('stockList'),search:$('stockSearch'),sector:$('selectedSector'),name:$('selectedName'),code:$('selectedCode'),price:$('selectedPrice'),change:$('selectedChange'),chart:$('chart'),holding:$('holdingLabel'),qty:$('quantityInput'),buy:$('buyButton'),sell:$('sellButton'),message:$('orderMessage'),cash:$('cash'),holdings:$('holdingCount'),stockValue:$('stockValue'),total:$('totalAsset'),profit:$('profit'),rate:$('profitRate'),profitCard:$('profitCard'),history:$('history'),resultAsset:$('resultAsset'),resultProfit:$('resultProfit'),resultStats:$('resultStats'),restart:$('restartButton')};
-const yen=v=>new Intl.NumberFormat('ja-JP',{style:'currency',currency:'JPY',maximumFractionDigits:0}).format(Math.round(v));
-const percent=(a,b)=>b?100*a/b:0;
+const el={
+ start:$('startScreen'),loading:$('loadingScreen'),game:$('gameScreen'),result:$('resultScreen'),
+ practice:$('practiceStart'),main:$('mainStart'),loadingText:$('loadingText'),loadingBar:$('loadingBar'),
+ modeLabel:$('gameModeLabel'),timer:$('timer'),tick:$('marketTick'),search:$('stockSearch'),list:$('stockList'),
+ hint:$('hintText'),chartTitle:$('chartTitle'),sector:$('selectedSector'),name:$('selectedName'),code:$('selectedCode'),price:$('selectedPrice'),change:$('selectedChange'),chart:$('chart'),holding:$('holdingLabel'),qty:$('quantityInput'),buy:$('buyButton'),sell:$('sellButton'),message:$('orderMessage'),
+ cash:$('cash'),holdings:$('holdingCount'),stockValue:$('stockValue'),total:$('totalAsset'),profit:$('profit'),rate:$('profitRate'),profitCard:$('profitCard'),history:$('history'),
+ resultAsset:$('resultAsset'),resultProfit:$('resultProfit'),resultStats:$('resultStats'),restart:$('restartButton')
+};
+
+const money=v=>new Intl.NumberFormat('ja-JP',{style:'currency',currency:'JPY',maximumFractionDigits:0}).format(Math.round(v));
 const timeText=s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
-const current=()=>stocks.find(s=>s.id===selectedId);
-const stockTotal=()=>stocks.reduce((sum,s)=>sum+s.price*s.holdings,0);
-const asset=()=>cash+stockTotal();
-const gain=()=>asset()-1000000;
-function clonePractice(){return PRACTICE.map(s=>({...s,open:s.price,holdings:0,history:Array(40).fill(s.price),replay:null}))}
-function reset(){stocks.forEach(s=>{s.price=s.open;s.holdings=0;s.history=Array(40).fill(s.open)});selectedId=stocks[0]?.id||'';cash=1000000;seconds=duration;tick=0;transactions=[];search='';el.search.value=''}
-function visible(){const q=search.toLowerCase().trim();return q?stocks.filter(s=>`${s.name} ${s.code} ${s.sector}`.toLowerCase().includes(q)):stocks}
-function drawList(){el.list.innerHTML=visible().map(s=>{const d=s.price-s.open,up=d>=0;return `<button type="button" class="stock-row ${selectedId===s.id?'active':''}" data-id="${s.id}"><span><b class="stock-name">${s.name}</b><small class="stock-sector">${s.code} / ${s.sector}</small></span><span><b class="stock-price">${yen(s.price)}</b><small class="stock-move ${up?'price-up':'price-down'}">${up?'+':''}${percent(d,s.open).toFixed(2)}%</small></span></button>`}).join('')||'<p class="empty-history">該当する銘柄がありません。</p>';el.list.querySelectorAll('[data-id]').forEach(b=>b.addEventListener('click',()=>{selectedId=b.dataset.id;render()}))}
-function drawChart(s){if(!s)return;const d=s.history,W=640,H=250,p={l:14,r:14,t:12,b:26};const mn=Math.min(...d),mx=Math.max(...d),range=Math.max(mx-mn,1),low=mn-range*.15,high=mx+range*.15,x=i=>p.l+i*(W-p.l-p.r)/(d.length-1),y=v=>p.t+(high-v)*(H-p.t-p.b)/(high-low);const line=d.map((v,i)=>`${i?'L':'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');const up=d.at(-1)>=d[0],c=up?'#c43d3b':'#2871b7';el.chart.innerHTML=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><path d="M${p.l},${H-p.b} H${W-p.r}" stroke="#e2e8f0"/><path d="${line}" fill="none" stroke="${c}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${x(d.length-1)}" cy="${y(d.at(-1))}" r="4" fill="${c}"/><text x="${p.l}" y="${H-6}" fill="#8b97a8" font-size="11">40秒前</text><text x="${W-p.r-28}" y="${H-6}" fill="#8b97a8" font-size="11">現在</text></svg>`}
-function drawQuote(){const s=current();if(!s)return;const d=s.price-s.open,up=d>=0;el.sector.textContent=s.sector;el.name.textContent=s.name;el.code.textContent=s.code;el.price.textContent=yen(s.price);el.change.textContent=`${d>=0?'+':''}${yen(d)} (${up?'+':''}${percent(d,s.open).toFixed(2)}%)`;el.change.className=up?'price-up':'price-down';el.holding.textContent=`保有 ${s.holdings}株`;drawChart(s)}
-function drawPortfolio(){const v=stockTotal(),a=asset(),g=gain(),r=percent(g,1000000),count=stocks.filter(s=>s.holdings).length;el.cash.textContent=yen(cash);el.holdings.textContent=`${count}銘柄`;el.stockValue.textContent=yen(v);el.total.textContent=yen(a);el.profit.textContent=`${g>0?'+':g<0?'-':'±'}${yen(Math.abs(g))}`;el.rate.textContent=`${r>=0?'+':''}${r.toFixed(2)}%`;el.profitCard.className=`profit-card ${g>0?'positive':g<0?'negative':'neutral'}`}
-function drawHistory(){el.history.innerHTML=transactions.length?transactions.slice(0,12).map(t=>`<div class="history-item ${t.kind}"><div class="history-main"><span>${t.kind==='buy'?'購入':'売却'} ${t.name}</span><span>${yen(t.sum)}</span></div><div class="history-sub">${t.qty}株 × ${yen(t.price)} / TICK ${t.tick}</div></div>`).join(''):'<p class="empty-history">まだ取引はありません。</p>'}
-function render(){el.timer.textContent=timeText(seconds);el.tick.textContent=`TICK ${tick}`;drawList();drawQuote();drawPortfolio();drawHistory()}
-function trade(kind){const s=current(),q=Math.max(1,Math.floor(Number(el.qty.value)||0)),sum=s.price*q;if(kind==='buy'){if(sum>cash){el.message.textContent='現金残高が足りません。株数を減らしてください。';el.message.style.color='#bc3430';return}cash-=sum;s.holdings+=q}else{if(q>s.holdings){el.message.textContent=`売却できるのは${s.holdings}株までです。`;el.message.style.color='#bc3430';return}cash+=sum;s.holdings-=q}transactions.unshift({kind,name:s.name,qty:q,price:s.price,sum,tick});el.message.textContent=`${s.name}を${q}株${kind==='buy'?'購入':'売却'}しました。`;el.message.style.color='#287b57';render()}
-function next(){tick++;stocks.forEach(s=>{if(mode==='main'&&s.replay){s.price=s.replay[Math.min(tick,s.replay.length-1)]}else{s.price=Math.max(30,Math.round(s.price*(1+(Math.random()-.5)*2*s.vol+(Math.random()-.5)*.004)))}s.history.push(s.price);if(s.history.length>40)s.history.shift()});seconds--;render();if(seconds<=0)finish()}
-function play(){reset();el.start.classList.add('hidden');el.loading.classList.add('hidden');el.result.classList.add('hidden');el.game.classList.remove('hidden');el.modeLabel.textContent=mode==='main'?'本番用 / 実在企業・2024年8月5日':'練習用 / 架空企業5社';el.chartTitle.textContent=mode==='main'?'授業用1秒リプレイ（実際の日足を基準）':'1秒足チャート';el.hint.innerHTML=mode==='main'?'2024年8月5日の実在企業の価格を基準にした授業用再現です。<br><strong>途中の1秒ごとの動きは予測できません。</strong>':'表示されるのは短期の価格変動だけです。<br><strong>次の1秒を当てる材料はありません。</strong>';render();gameTimer=setInterval(next,1000)}
-function finish(){clearInterval(gameTimer);el.game.classList.add('hidden');el.result.classList.remove('hidden');const a=asset(),g=gain(),r=percent(g,1000000);el.resultAsset.textContent=yen(a);el.resultProfit.textContent=`${g>0?'+':g<0?'-':'±'}${yen(Math.abs(g))}（${r>=0?'+':''}${r.toFixed(2)}%）`;el.resultProfit.className=`result-profit ${g>0?'positive':g<0?'negative':'neutral'}`;el.resultStats.innerHTML=`<div><span>売買回数</span><strong>${transactions.length}回</strong></div><div><span>保有銘柄数</span><strong>${stocks.filter(s=>s.holdings).length}銘柄</strong></div><div><span>プレイ時間</span><strong>${Math.floor(duration/60)}分</strong></div>`}
-function intraday(points,len){const out=[];for(let i=0;i<=len;i++){const t=i/len;let a=points[0],b=points.at(-1);for(let j=0;j<points.length-1;j++){if(t>=points[j].t&&t<=points[j+1].t){a=points[j];b=points[j+1];break}}const base=a.v+(b.v-a.v)*(t-a.t)/(b.t-a.t);out.push(Math.max(1,Math.round(base+Math.sin(i*1.7)*base*.0025)))}return out}
-function ymd(ts){const p=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(ts*1000)),g=t=>p.find(x=>x.type===t)?.value;return `${g('year')}-${g('month')}-${g('day')}`}
-async function quote(c){const from=Date.UTC(2024,7,1)/1000,to=Date.UTC(2024,7,7)/1000;const r=await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${c.ticker}?period1=${from}&period2=${to}&interval=1d&events=history`);if(!r.ok)throw Error();const j=await r.json(),x=j.chart.result[0],q=x.indicators.quote[0],rows=x.timestamp.map((t,i)=>({d:ymd(t),o:q.open[i],h:q.high[i],l:q.low[i],c:q.close[i]}));const pre=rows.find(x=>x.d==='2024-08-02'),day=rows.find(x=>x.d==='2024-08-05');if(!pre||!day||!pre.c||!day.c)throw Error();return{pre,day}}
-async function mainMode(){mode='main';duration=300;el.start.classList.add('hidden');el.loading.classList.remove('hidden');const all=[...(window.REAL_COMPANIES||[])],queue=[...all],made=[];let done=0;const worker=async()=>{while(queue.length){const c=queue.shift();try{const {pre,day}=await quote(c);const lowFirst=Number(c.code)%2===0;const path=intraday([{t:0,v:pre.c},{t:.08,v:day.o},{t:.35,v:lowFirst?day.l:day.h},{t:.67,v:lowFirst?day.h:day.l},{t:1,v:day.c}],duration);made.push({id:c.code,code:c.code,name:c.name,sector:c.sector,price:Math.round(pre.c),open:Math.round(pre.c),holdings:0,history:Array(40).fill(Math.round(pre.c)),replay:path})}catch(e){}done++;if(done%5===0){el.loadingText.textContent=`実在企業の価格を読み込み中… ${made.length}社準備済み`;el.loadingBar.style.width=`${Math.min(96,5+done/all.length*91)}%`}}};await Promise.all(Array.from({length:12},worker));if(made.length<100){el.loadingText.textContent='100社分のデータを取得できませんでした。学校の通信環境を確認してください。';setTimeout(()=>{el.loading.classList.add('hidden');el.start.classList.remove('hidden')},2500);return}stocks=made.sort((a,b)=>a.code.localeCompare(b.code));el.loadingBar.style.width='100%';play()}
-function practiceMode(){mode='practice';duration=180;stocks=clonePractice();play()}
-el.practice.addEventListener('click',practiceMode);el.main.addEventListener('click',mainMode);el.buy.addEventListener('click',()=>trade('buy'));el.sell.addEventListener('click',()=>trade('sell'));el.restart.addEventListener('click',()=>{el.result.classList.add('hidden');el.start.classList.remove('hidden')});document.querySelectorAll('[data-qty]').forEach(b=>b.addEventListener('click',()=>el.qty.value=b.dataset.qty));el.search.addEventListener('input',e=>{search=e.target.value;drawList()});stocks=clonePractice();render();
+const pct=(a,b)=>b?100*a/b:0;
+const selected=()=>stocks.find(s=>s.id===selectedId);
+const stockValue=()=>stocks.reduce((sum,s)=>sum+s.price*s.holdings,0);
+const totalAsset=()=>cash+stockValue();
+const profit=()=>totalAsset()-startingCash;
+
+function seedNumber(text){
+ let n=0;
+ for(const ch of String(text)) n=(n*31+ch.charCodeAt(0))>>>0;
+ return n;
+}
+
+function createPracticeStocks(){
+ return PRACTICE.map(s=>({...s,open:s.price,holdings:0,history:Array(40).fill(s.price),replay:null}));
+}
+
+function createMainStocks(){
+ const companies=window.REAL_COMPANIES||[];
+ return companies.map((c,index)=>{
+   const seed=seedNumber(c.code);
+   const price=Math.max(120,Math.round(260+(seed%7300)));
+   const drop=.035+((seed>>>3)%110)/1000;
+   const rebound=.008+((seed>>>7)%45)/1000;
+   const path=[];
+   for(let i=0;i<=300;i++){
+     const t=i/300;
+     let factor;
+     if(t<.16){factor=1-(drop*.35)*(t/.16)}
+     else if(t<.58){factor=1-drop*(.35+.65*((t-.16)/.42))}
+     else{factor=1-drop+rebound*((t-.58)/.42)}
+     const wobble=Math.sin(i*1.7+(seed%10))*0.004+Math.sin(i*.31)*0.002;
+     path.push(Math.max(10,Math.round(price*(factor+wobble))));
+   }
+   path[0]=price;
+   return {id:c.code,code:c.code,name:c.name,sector:c.sector,price,open:price,holdings:0,history:Array(40).fill(price),replay:path,vol:.02};
+ });
+}
+
+function begin(modeName){
+ clearInterval(timerId);
+ mode=modeName;
+ duration=mode==='practice'?180:300;
+ startingCash=mode==='practice'?1000000:100000;
+ stocks=mode==='practice'?createPracticeStocks():createMainStocks();
+ cash=startingCash;
+ seconds=duration;
+ tick=0;
+ transactions=[];
+ searchText='';
+ selectedId=stocks[0]?.id||'';
+ el.search.value='';
+ el.start.classList.add('hidden');
+ el.loading.classList.add('hidden');
+ el.result.classList.add('hidden');
+ el.game.classList.remove('hidden');
+ el.modeLabel.textContent=mode==='practice'?'練習用 / 架空企業5社 / 3分':'本番用 / 実在企業130社以上 / 5分';
+ el.chartTitle.textContent=mode==='practice'?'1秒足チャート':'急落シナリオ・1秒チャート';
+ el.hint.innerHTML=mode==='practice'
+  ?'表示されるのは短期の価格変動だけです。<br><strong>次の1秒を当てる材料はありません。</strong>'
+  :'実在企業名を使った授業用の急落シナリオです。<br><strong>短期の値動きは読みにくく、結果は偶然にも左右されます。</strong>';
+ render();
+ timerId=setInterval(nextTick,1000);
+}
+
+function visibleStocks(){
+ const q=searchText.trim().toLowerCase();
+ return q?stocks.filter(s=>`${s.name} ${s.code} ${s.sector}`.toLowerCase().includes(q)):stocks;
+}
+
+function renderList(){
+ const list=visibleStocks();
+ el.list.innerHTML=list.length?list.map(s=>{
+  const diff=s.price-s.open;
+  const up=diff>=0;
+  return `<button type="button" class="stock-row ${s.id===selectedId?'active':''}" data-stock="${s.id}"><span><b class="stock-name">${s.name}</b><small class="stock-sector">${s.code} / ${s.sector}</small></span><span><b class="stock-price">${money(s.price)}</b><small class="stock-move ${up?'price-up':'price-down'}">${up?'+':''}${pct(diff,s.open).toFixed(2)}%</small></span></button>`;
+ }).join(''):'<p class="empty-history">該当する銘柄がありません。</p>';
+ el.list.querySelectorAll('[data-stock]').forEach(b=>b.addEventListener('click',()=>{selectedId=b.dataset.stock;render();}));
+}
+
+function renderChart(s){
+ const d=s.history,W=640,H=250,p={l:14,r:14,t:12,b:26};
+ const min=Math.min(...d),max=Math.max(...d),range=Math.max(max-min,1),low=min-range*.15,high=max+range*.15;
+ const x=i=>p.l+i*(W-p.l-p.r)/(d.length-1);
+ const y=v=>p.t+(high-v)*(H-p.t-p.b)/(high-low);
+ const line=d.map((v,i)=>`${i?'L':'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+ const up=d.at(-1)>=d[0];
+ const color=up?'#c43d3b':'#2871b7';
+ el.chart.innerHTML=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><path d="M${p.l},${H-p.b} H${W-p.r}" stroke="#e2e8f0"/><path d="${line}" fill="none" stroke="${color}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${x(d.length-1)}" cy="${y(d.at(-1))}" r="4" fill="${color}"/><text x="${p.l}" y="${H-6}" fill="#8b97a8" font-size="11">40秒前</text><text x="${W-p.r-28}" y="${H-6}" fill="#8b97a8" font-size="11">現在</text></svg>`;
+}
+
+function renderQuote(){
+ const s=selected();
+ if(!s)return;
+ const diff=s.price-s.open;
+ const up=diff>=0;
+ el.sector.textContent=s.sector;
+ el.name.textContent=s.name;
+ el.code.textContent=s.code;
+ el.price.textContent=money(s.price);
+ el.change.textContent=`${diff>=0?'+':''}${money(diff)} (${up?'+':''}${pct(diff,s.open).toFixed(2)}%)`;
+ el.change.className=up?'price-up':'price-down';
+ el.holding.textContent=`保有 ${s.holdings}株`;
+ renderChart(s);
+}
+
+function renderAssets(){
+ const value=stockValue();
+ const total=totalAsset();
+ const gain=profit();
+ const rate=pct(gain,startingCash);
+ el.cash.textContent=money(cash);
+ el.holdings.textContent=`${stocks.filter(s=>s.holdings>0).length}銘柄`;
+ el.stockValue.textContent=money(value);
+ el.total.textContent=money(total);
+ el.profit.textContent=`${gain>0?'+':gain<0?'-':'±'}${money(Math.abs(gain))}`;
+ el.rate.textContent=`${rate>=0?'+':''}${rate.toFixed(2)}%`;
+ el.profitCard.className=`profit-card ${gain>0?'positive':gain<0?'negative':'neutral'}`;
+}
+
+function renderHistory(){
+ el.history.innerHTML=transactions.length?transactions.slice(0,12).map(t=>`<div class="history-item ${t.kind}"><div class="history-main"><span>${t.kind==='buy'?'購入':'売却'} ${t.name}</span><span>${money(t.total)}</span></div><div class="history-sub">${t.qty}株 × ${money(t.price)} / TICK ${t.tick}</div></div>`).join(''):'<p class="empty-history">まだ取引はありません。</p>';
+}
+
+function render(){
+ el.timer.textContent=timeText(seconds);
+ el.tick.textContent=`TICK ${tick}`;
+ renderList();renderQuote();renderAssets();renderHistory();
+}
+
+function nextTick(){
+ tick++;
+ stocks.forEach(s=>{
+  if(mode==='main') s.price=s.replay[Math.min(tick,s.replay.length-1)];
+  else s.price=Math.max(30,Math.round(s.price*(1+(Math.random()-.5)*2*s.vol+(Math.random()-.5)*.004)));
+  s.history.push(s.price);
+  if(s.history.length>40)s.history.shift();
+ });
+ seconds--;
+ render();
+ if(seconds<=0)finish();
+}
+
+function trade(kind){
+ const s=selected();
+ const qty=Math.max(1,Math.floor(Number(el.qty.value)||0));
+ const total=s.price*qty;
+ if(kind==='buy'){
+  if(total>cash){el.message.textContent='現金残高が足りません。株数を減らしてください。';el.message.style.color='#bc3430';return;}
+  cash-=total;s.holdings+=qty;
+ }else{
+  if(qty>s.holdings){el.message.textContent=`売却できるのは${s.holdings}株までです。`;el.message.style.color='#bc3430';return;}
+  cash+=total;s.holdings-=qty;
+ }
+ transactions.unshift({kind,name:s.name,qty,price:s.price,total,tick});
+ el.message.textContent=`${s.name}を${qty}株${kind==='buy'?'購入':'売却'}しました。`;
+ el.message.style.color='#287b57';
+ render();
+}
+
+function finish(){
+ clearInterval(timerId);
+ el.game.classList.add('hidden');
+ el.result.classList.remove('hidden');
+ const total=totalAsset();
+ const gain=profit();
+ const rate=pct(gain,startingCash);
+ el.resultAsset.textContent=money(total);
+ el.resultProfit.textContent=`${gain>0?'+':gain<0?'-':'±'}${money(Math.abs(gain))}（${rate>=0?'+':''}${rate.toFixed(2)}%）`;
+ el.resultProfit.className=`result-profit ${gain>0?'positive':gain<0?'negative':'neutral'}`;
+ el.resultStats.innerHTML=`<div><span>売買回数</span><strong>${transactions.length}回</strong></div><div><span>保有銘柄数</span><strong>${stocks.filter(s=>s.holdings>0).length}銘柄</strong></div><div><span>開始資金</span><strong>${money(startingCash)}</strong></div>`;
+}
+
+el.practice.addEventListener('click',()=>begin('practice'));
+el.main.addEventListener('click',()=>begin('main'));
+el.buy.addEventListener('click',()=>trade('buy'));
+el.sell.addEventListener('click',()=>trade('sell'));
+el.restart.addEventListener('click',()=>{el.result.classList.add('hidden');el.start.classList.remove('hidden');});
+el.search.addEventListener('input',e=>{searchText=e.target.value;renderList();});
+document.querySelectorAll('[data-qty]').forEach(b=>b.addEventListener('click',()=>{el.qty.value=b.dataset.qty;}));

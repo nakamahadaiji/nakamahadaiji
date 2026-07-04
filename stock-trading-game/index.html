@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>株式売買ゲーム</title>
-  <link rel="stylesheet" href="style.css?v=20260704e">
-  <link rel="stylesheet" href="mode.css?v=20260704e">
+  <link rel="stylesheet" href="style.css?v=20260704f">
+  <link rel="stylesheet" href="mode.css?v=20260704f">
 </head>
 <body>
 <main class="app-shell">
@@ -25,22 +25,18 @@
   <section id="gameScreen" class="game-screen hidden">
     <header class="topbar"><div class="brand"><span class="brand-mark">S</span><span>株式売買ゲーム</span></div><div id="gameModeLabel" class="game-mode-label"></div><div class="market-status"><span class="pulse"></span>市場オープン</div><div class="timer-wrap"><span>残り時間</span><strong id="timer">03:00</strong></div></header>
     <div class="dashboard-grid">
-      <aside class="left-column">
-        <section class="panel market-panel"><div class="panel-heading"><div><p class="section-kicker">MARKET</p><h2>銘柄一覧</h2></div><span id="marketTick" class="tick-label">TICK 0</span></div><div class="search-wrap"><input id="stockSearch" type="search" placeholder="会社名・証券コードで検索"></div><div id="stockList" class="stock-list"></div></section>
-      </aside>
+      <aside class="left-column"><section class="panel market-panel"><div class="panel-heading"><div><p class="section-kicker">MARKET</p><h2>銘柄一覧</h2></div><span id="marketTick" class="tick-label">TICK 0</span></div><div class="search-wrap"><input id="stockSearch" type="search" placeholder="会社名・証券コードで検索"></div><div id="stockList" class="stock-list"></div></section></aside>
       <section class="center-column">
         <section class="panel quote-panel"><div class="quote-topline"><div><p id="selectedSector" class="section-kicker"></p><h2 id="selectedName"></h2><p id="selectedCode" class="stock-code"></p></div><div class="quote-price"><span>現在価格</span><strong id="selectedPrice"></strong><b id="selectedChange"></b></div></div><div class="chart-meta"><span>株価チャート</span><span>直近40秒</span></div><div id="chart" class="chart"></div></section>
         <section class="panel news-panel"><div class="panel-heading"><div><p class="section-kicker">MARKET NEWS</p><h2 id="scenarioTitle">ニュース</h2><p id="scenarioMeta" class="scenario-meta"></p></div><span id="newsCount" class="tick-label"></span></div><div id="newsFeed" class="news-feed"></div></section>
         <section class="panel order-panel"><div class="panel-heading"><div><p class="section-kicker">ORDER</p><h2>注文</h2></div><span id="holdingLabel" class="holding-label">保有 0株</span></div><div class="order-main"><label class="quantity-field">購入・売却株数<input id="quantityInput" type="number" min="1" value="10" inputmode="numeric"></label><div class="quick-qty"><button type="button" data-qty="1">1株</button><button type="button" data-qty="10">10株</button><button type="button" data-qty="100">100株</button></div><button id="buyButton" class="buy-button" type="button">買う</button><button id="sellButton" class="sell-button" type="button">売る</button></div><p id="orderMessage" class="order-message">銘柄を選び、株数を入力して注文してください。</p></section>
       </section>
-      <aside class="right-column">
-        <section class="panel asset-panel"><div class="panel-heading"><div><p class="section-kicker">PORTFOLIO</p><h2>資産状況</h2></div></div><div class="asset-grid"><div><span>現金残高</span><strong id="cash"></strong></div><div><span>保有銘柄数</span><strong id="holdingCount"></strong></div><div><span>株式評価額</span><strong id="stockValue"></strong></div><div><span>総資産</span><strong id="totalAsset"></strong></div></div><div id="profitCard" class="profit-card neutral"><span>損益</span><strong id="profit"></strong><small id="profitRate"></small></div></section>
-        <section class="panel history-panel"><div class="panel-heading"><div><p class="section-kicker">HISTORY</p><h2>取引履歴</h2></div></div><div id="history" class="history-list"></div></section>
-      </aside>
+      <aside class="right-column"><section class="panel asset-panel"><div class="panel-heading"><div><p class="section-kicker">PORTFOLIO</p><h2>資産状況</h2></div></div><div class="asset-grid"><div><span>現金残高</span><strong id="cash"></strong></div><div><span>保有銘柄数</span><strong id="holdingCount"></strong></div><div><span>株式評価額</span><strong id="stockValue"></strong></div><div><span>総資産</span><strong id="totalAsset"></strong></div></div><div id="profitCard" class="profit-card neutral"><span>損益</span><strong id="profit"></strong><small id="profitRate"></small></div></section><section class="panel history-panel"><div class="panel-heading"><div><p class="section-kicker">HISTORY</p><h2>取引履歴</h2></div></div><div id="history" class="history-list"></div></section></aside>
     </div>
   </section>
   <section id="resultScreen" class="result-screen hidden"><div class="result-card"><p class="eyebrow">GAME OVER</p><h1>今回の結果</h1><div class="result-number"><span>最終総資産</span><strong id="resultAsset"></strong></div><div id="resultProfit" class="result-profit neutral"></div><div class="lesson-box"><p class="lesson-label">RESULT</p><h2>ニュースを読んで、判断できた？</h2><p>情報が出ても、短期の相場は一方向には動きません。<br><strong>材料・業種・タイミングを分けて考えよう。</strong></p></div><div id="resultStats" class="result-stats"></div><button id="restartButton" class="primary-button" type="button">最初に戻る　↻</button></div></section>
 </main>
-<script src="main-data.js?v=20260704e"></script><script src="app.js?v=20260704e"></script>
+<script src="main-data.js?v=20260704f"></script>
+<script src="app-final.js?v=20260704f"></script>
 </body>
 </html>

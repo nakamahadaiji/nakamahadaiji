@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>株式売買ゲーム</title>
-  <link rel="stylesheet" href="style.css?v=20260704f">
-  <link rel="stylesheet" href="mode.css?v=20260704f">
+  <link rel="stylesheet" href="style.css?v=20260704g">
+  <link rel="stylesheet" href="mode.css?v=20260704g">
 </head>
 <body>
 <main class="app-shell">
@@ -16,7 +16,7 @@
       <p class="lead">ニュースを読み、企業と業種を選ぶ。<br>情報が出るたびに、相場は動きます。</p>
       <div class="mode-buttons">
         <button id="practiceStart" class="mode-button practice-mode" type="button"><span class="mode-top"><span>練習用</span><small>架空企業 5社</small></span><strong>3分タイマー</strong><span class="mode-description">ニュースなし。短期売買の操作を覚えよう。</span><span class="mode-action">練習用を開始　→</span></button>
-        <button id="mainStart" class="mode-button main-mode" type="button"><span class="mode-top"><span>本番用</span><small>実在企業 130社以上</small></span><strong>5分タイマー</strong><span class="mode-description">ニュースは時刻ごとに配信。情報を先に読んだ人が有利。</span><span class="mode-action">本番用を開始　→</span></button>
+        <button id="mainStart" class="mode-button main-mode" type="button"><span class="mode-top"><span>本番用</span><small>実在企業 130社以上</small></span><strong>5分タイマー</strong><span class="mode-description">上昇材料・下落材料を読み、勝てる銘柄を見つけよう。</span><span class="mode-action">本番用を開始　→</span></button>
       </div>
       <div class="rule-box compact-rule"><div class="rule-label">共通ルール</div><ul><li>練習用の開始資金は100万円、本番用は10万円です。</li><li>手数料・借金・空売りはありません。</li><li>終了時の総資産で結果を確認します。</li></ul></div>
       <p class="disclaimer">※実在企業名を用いた教育用シミュレーションです。実際の投資を勧めるものではありません。</p>
@@ -36,7 +36,7 @@
   </section>
   <section id="resultScreen" class="result-screen hidden"><div class="result-card"><p class="eyebrow">GAME OVER</p><h1>今回の結果</h1><div class="result-number"><span>最終総資産</span><strong id="resultAsset"></strong></div><div id="resultProfit" class="result-profit neutral"></div><div class="lesson-box"><p class="lesson-label">RESULT</p><h2>ニュースを読んで、判断できた？</h2><p>情報が出ても、短期の相場は一方向には動きません。<br><strong>材料・業種・タイミングを分けて考えよう。</strong></p></div><div id="resultStats" class="result-stats"></div><button id="restartButton" class="primary-button" type="button">最初に戻る　↻</button></div></section>
 </main>
-<script src="main-data.js?v=20260704f"></script>
-<script src="app-final.js?v=20260704f"></script>
+<script src="main-data.js?v=20260704g"></script>
+<script src="app-fun.js?v=20260704g"></script>
 </body>
 </html>

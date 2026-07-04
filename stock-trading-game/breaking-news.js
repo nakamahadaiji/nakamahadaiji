@@ -24,16 +24,36 @@
     const titleEl = toast.querySelector('.breaking-news-title');
     const card = toast.querySelector('.breaking-news-card');
     let timer = null;
+    let practiceNoticeShown = false;
+    const isPractice = () => (document.getElementById('gameModeLabel')?.textContent || '').includes('練習用');
     const close = () => { toast.classList.remove('show'); clearTimeout(timer); };
     toast.querySelector('.breaking-news-close').addEventListener('click', (event) => { event.preventDefault(); event.stopPropagation(); close(); });
     let startX = 0;
     card.addEventListener('pointerdown', (event) => { startX = event.clientX; });
     card.addEventListener('pointerup', (event) => { if (Math.abs(event.clientX - startX) > 35) close(); else if (!event.target.closest('.breaking-news-close')) close(); });
-    const show = (headline) => { if (!headline) return; titleEl.textContent = headline; toast.classList.add('show'); clearTimeout(timer); timer = setTimeout(close, 4200); };
+    const show = (headline) => {
+      if (!headline) return;
+      if (isPractice()) {
+        if (practiceNoticeShown) return;
+        practiceNoticeShown = true;
+      }
+      titleEl.textContent = headline;
+      toast.classList.add('show');
+      clearTimeout(timer);
+      timer = setTimeout(close, 4200);
+    };
     window.__showBreakingNews = show;
     let armed = false;
     setTimeout(() => { armed = true; }, 700);
-    new MutationObserver((records) => { if (!armed) return; records.forEach((record) => record.addedNodes.forEach((node) => { if (!(node instanceof HTMLElement)) return; const item = node.matches?.('.news-item') ? node : node.querySelector?.('.news-item'); const headline = item?.querySelector('p')?.textContent?.trim(); if (headline) show(headline); })); }).observe(feed, {childList:true,subtree:false});
+    new MutationObserver((records) => {
+      if (!armed) return;
+      records.forEach((record) => record.addedNodes.forEach((node) => {
+        if (!(node instanceof HTMLElement)) return;
+        const item = node.matches?.('.news-item') ? node : node.querySelector?.('.news-item');
+        const headline = item?.querySelector('p')?.textContent?.trim();
+        if (headline) show(headline);
+      }));
+    }).observe(feed, {childList:true,subtree:false});
   };
   const wait = () => document.getElementById('newsFeed') && document.getElementById('gameScreen') ? boot() : setTimeout(wait, 120);
   wait();

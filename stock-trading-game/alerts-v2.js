@@ -1,6 +1,6 @@
 (() => {
   const PRACTICE_HEADLINE = '新型スマート家電の販売好調、テクノロジー株に買い';
-  const state = { mode: '', lastHeadline: '', practiceInserted: false, practiceAlerted: false, dismissed: new Set(), timer: null };
+  const state = { mode: '', lastHeadline: '', practiceAlerted: false, dismissed: new Set(), timer: null };
 
   const mode = () => (document.getElementById('gameModeLabel')?.textContent || '').includes('練習用') ? 'practice' : 'main';
   const isPlaying = () => !document.getElementById('gameScreen')?.classList.contains('hidden');
@@ -42,12 +42,13 @@
     };
 
     const renderPractice = () => {
-      if (!state.practiceInserted) {
+      if (!feed.querySelector('[data-practice-news="1"]')) {
         feed.innerHTML = `<article class="news-item is-latest" data-practice-news="1"><div><span class="news-tag">速報</span><time>09:05</time></div><p>${PRACTICE_HEADLINE}</p></article>`;
-        document.getElementById('scenarioTitle').textContent = '練習ニュース';
-        document.getElementById('newsCount').textContent = '1件';
-        state.practiceInserted = true;
       }
+      const scenario = document.getElementById('scenarioTitle');
+      const count = document.getElementById('newsCount');
+      if (scenario) scenario.textContent = '練習ニュース';
+      if (count) count.textContent = '1件';
       if (!state.practiceAlerted) {
         state.practiceAlerted = true;
         show(PRACTICE_HEADLINE);
@@ -55,12 +56,16 @@
     };
 
     const tick = () => {
-      if (!isPlaying()) { state.mode = ''; state.lastHeadline = ''; state.practiceInserted = false; state.practiceAlerted = false; return; }
+      if (!isPlaying()) {
+        state.mode = '';
+        state.lastHeadline = '';
+        state.practiceAlerted = false;
+        return;
+      }
       const nextMode = mode();
       if (state.mode !== nextMode) {
         state.mode = nextMode;
         state.lastHeadline = '';
-        state.practiceInserted = false;
         state.practiceAlerted = false;
       }
       if (nextMode === 'practice') {
@@ -82,7 +87,7 @@
       }
     }, true);
 
-    setInterval(tick, 180);
+    setInterval(tick, 80);
   };
   install();
 })();

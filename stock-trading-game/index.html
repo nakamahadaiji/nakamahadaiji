@@ -1,57 +1,94 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>株式売買ゲーム</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="mode.css" />
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="mode.css">
 </head>
 <body>
-  <main id="app" class="app-shell">
-    <section id="startScreen" class="start-screen" aria-labelledby="gameTitle">
-      <div class="start-card wide-start phone-start">
-        <p class="eyebrow">POLITICS &amp; ECONOMICS / CLASS GAME</p>
-        <h1 id="gameTitle">株式売買ゲーム</h1>
-        <p class="lead">短い時間で株価は読めるのか。<br>毎秒動く相場で、買う・売る・待つを体験しよう。</p>
+<main class="app-shell">
+  <section id="startScreen" class="start-screen">
+    <div class="start-card phone-start">
+      <p class="eyebrow">POLITICS &amp; ECONOMICS / CLASS GAME</p>
+      <h1>株式売買ゲーム</h1>
+      <p class="lead">短い時間で株価は読めるのか。<br>毎秒動く相場で、買う・売る・待つを体験しよう。</p>
 
-        <div class="game-choice-grid" aria-label="ゲームモードを選択">
-          <button class="game-choice selected" id="practiceStart" data-start-mode="practice" type="button">
-            <span class="choice-head"><span class="choice-number">01</span><span class="choice-tag">架空企業 5社</span></span>
-            <span class="choice-title">練習用</span>
-            <span class="choice-copy">株価が毎秒ランダムに動く、短期売買の入門モード。</span>
-            <span class="choice-timer">3分タイマー</span>
-          </button>
+      <div class="mode-buttons">
+        <button id="practiceStart" class="mode-button practice-mode" type="button">
+          <span class="mode-top"><span>練習用</span><small>架空企業 5社</small></span>
+          <strong>3分タイマー</strong>
+          <span class="mode-description">株価が毎秒ランダムに変動。<br>短期売買の感覚をつかもう。</span>
+          <span class="mode-action">練習用を開始　→</span>
+        </button>
 
-          <button class="game-choice" id="mainStart" data-start-mode="main" type="button">
-            <span class="choice-head"><span class="choice-number">02</span><span class="choice-tag">実在企業 130社以上</span></span>
-            <span class="choice-title">本番用</span>
-            <span class="choice-copy">2024年8月5日の急落局面をもとにした、実在企業の授業用再現モード。</span>
-            <span class="choice-timer">5分タイマー</span>
-          </button>
-        </div>
-
-        <div class="rule-box compact-rule">
-          <div class="rule-label">共通ルール</div>
-          <ul><li>初期資金は100万円。手数料・借金・空売りはありません。</li><li>終了時の総資産で結果を確認します。</li></ul>
-        </div>
-        <p class="disclaimer">※教育用ゲームです。実際の投資を勧めるものではありません。</p>
+        <button id="mainStart" class="mode-button main-mode" type="button">
+          <span class="mode-top"><span>本番用</span><small>実在企業 130社以上</small></span>
+          <strong>5分タイマー</strong>
+          <span class="mode-description">2024年8月5日の急落局面を題材にした、<br>実在企業の授業用再現モード。</span>
+          <span class="mode-action">本番用を開始　→</span>
+        </button>
       </div>
-    </section>
 
-    <section id="loadingScreen" class="start-screen hidden" aria-live="polite"><div class="start-card loading-card"><p class="eyebrow">MAIN MODE</p><h1>本番用データを準備中</h1><p id="loadingText" class="lead">実在企業の過去価格を読み込んでいます。</p><div class="loading-bar"><span id="loadingBar"></span></div><p class="disclaimer">2024年8月5日の実際の日足データをもとに、授業用の1秒チャートを作成しています。</p></div></section>
-
-    <section id="gameScreen" class="game-screen hidden" aria-label="株式売買ゲーム画面">
-      <header class="topbar"><div class="brand"><span class="brand-mark">S</span><span>株式売買ゲーム</span></div><div id="gameModeLabel" class="game-mode-label">練習用 / 架空企業5社</div><div class="market-status"><span class="pulse"></span>市場オープン</div><div class="timer-wrap"><span>残り時間</span><strong id="timer">03:00</strong></div></header>
-      <div class="dashboard-grid">
-        <aside class="left-column"><section class="panel market-panel"><div class="panel-heading"><div><p class="section-kicker">MARKET</p><h2>銘柄一覧</h2></div><span id="marketTick" class="tick-label">TICK 0</span></div><div class="search-wrap"><input id="stockSearch" type="search" placeholder="会社名・証券コードで検索" /></div><div id="stockList" class="stock-list"></div></section><section class="panel note-panel"><p class="section-kicker">HINT</p><p id="hintText">表示されるのは短期の価格変動だけです。<br><strong>次の1秒を当てる材料はありません。</strong></p></section></aside>
-        <section class="center-column"><section class="panel quote-panel"><div class="quote-topline"><div><p id="selectedSector" class="section-kicker">テクノロジー</p><h2 id="selectedName">ネオリンク</h2><p id="selectedCode" class="stock-code">NLC</p></div><div class="quote-price"><span>現在価格</span><strong id="selectedPrice">¥1,240</strong><b id="selectedChange" class="price-up">+¥0 (+0.00%)</b></div></div><div class="chart-meta"><span id="chartTitle">1秒足チャート</span><span id="rangeLabel">直近40秒</span></div><div id="chart" class="chart" aria-label="株価チャート"></div></section><section class="panel order-panel"><div class="panel-heading"><div><p class="section-kicker">ORDER</p><h2>注文</h2></div><span id="holdingLabel" class="holding-label">保有 0株</span></div><div class="order-main"><label class="quantity-field">購入・売却株数<input id="quantityInput" type="number" min="1" value="10" inputmode="numeric" /></label><div class="quick-qty"><button type="button" data-qty="1">1株</button><button type="button" data-qty="10">10株</button><button type="button" data-qty="100">100株</button></div><button id="buyButton" class="buy-button" type="button">買う</button><button id="sellButton" class="sell-button" type="button">売る</button></div><p id="orderMessage" class="order-message" aria-live="polite">銘柄を選び、株数を入力して注文してください。</p></section></section>
-        <aside class="right-column"><section class="panel asset-panel"><div class="panel-heading"><div><p class="section-kicker">PORTFOLIO</p><h2>資産状況</h2></div></div><div class="asset-grid"><div><span>現金残高</span><strong id="cash">¥1,000,000</strong></div><div><span>保有銘柄数</span><strong id="holdingCount">0銘柄</strong></div><div><span>株式評価額</span><strong id="stockValue">¥0</strong></div><div><span>総資産</span><strong id="totalAsset">¥1,000,000</strong></div></div><div id="profitCard" class="profit-card neutral"><span>損益</span><strong id="profit">±¥0</strong><small id="profitRate">0.00%</small></div></section><section class="panel history-panel"><div class="panel-heading"><div><p class="section-kicker">HISTORY</p><h2>取引履歴</h2></div></div><div id="history" class="history-list"><p class="empty-history">まだ取引はありません。</p></div></section></aside>
+      <div class="rule-box compact-rule">
+        <div class="rule-label">共通ルール</div>
+        <ul>
+          <li>初期資金は100万円。手数料・借金・空売りはありません。</li>
+          <li>終了時の総資産で結果を確認します。</li>
+        </ul>
       </div>
-    </section>
+      <p class="disclaimer">※教育用ゲームです。実際の投資を勧めるものではありません。</p>
+    </div>
+  </section>
 
-    <section id="resultScreen" class="result-screen hidden" aria-labelledby="resultTitle"><div class="result-card"><p class="eyebrow">GAME OVER</p><h1 id="resultTitle">今回の結果</h1><div class="result-number"><span>最終総資産</span><strong id="resultAsset">¥1,000,000</strong></div><div id="resultProfit" class="result-profit neutral">±¥0（0.00%）</div><div class="lesson-box"><p class="lesson-label">授業で考えること</p><h2>今回の勝ち負けは、実力だけで決まった？</h2><p>このゲームでは、短い時間の価格変動をもとに売買します。<br><strong>短時間で勝ったことは、次も勝てる証拠にはなりません。</strong></p></div><div id="resultStats" class="result-stats"></div><button id="restartButton" class="primary-button" type="button">最初に戻る <span>↻</span></button></div></section>
-  </main>
-  <script src="main-data.js"></script><script src="app.js"></script>
+  <section id="loadingScreen" class="start-screen hidden" aria-live="polite">
+    <div class="start-card loading-card">
+      <p class="eyebrow">MAIN MODE</p>
+      <h1>本番用データを準備中</h1>
+      <p id="loadingText" class="lead">実在企業の過去価格を読み込んでいます。</p>
+      <div class="loading-bar"><span id="loadingBar"></span></div>
+      <p class="disclaimer">2024年8月5日の実際の日足データをもとに、授業用の1秒チャートを作成しています。</p>
+    </div>
+  </section>
+
+  <section id="gameScreen" class="game-screen hidden">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">S</span><span>株式売買ゲーム</span></div>
+      <div id="gameModeLabel" class="game-mode-label"></div>
+      <div class="market-status"><span class="pulse"></span>市場オープン</div>
+      <div class="timer-wrap"><span>残り時間</span><strong id="timer">03:00</strong></div>
+    </header>
+    <div class="dashboard-grid">
+      <aside class="left-column">
+        <section class="panel market-panel">
+          <div class="panel-heading"><div><p class="section-kicker">MARKET</p><h2>銘柄一覧</h2></div><span id="marketTick" class="tick-label">TICK 0</span></div>
+          <div class="search-wrap"><input id="stockSearch" type="search" placeholder="会社名・証券コードで検索"></div>
+          <div id="stockList" class="stock-list"></div>
+        </section>
+        <section class="panel note-panel"><p class="section-kicker">HINT</p><p id="hintText"></p></section>
+      </aside>
+      <section class="center-column">
+        <section class="panel quote-panel">
+          <div class="quote-topline"><div><p id="selectedSector" class="section-kicker"></p><h2 id="selectedName"></h2><p id="selectedCode" class="stock-code"></p></div><div class="quote-price"><span>現在価格</span><strong id="selectedPrice"></strong><b id="selectedChange"></b></div></div>
+          <div class="chart-meta"><span id="chartTitle">1秒足チャート</span><span>直近40秒</span></div><div id="chart" class="chart"></div>
+        </section>
+        <section class="panel order-panel">
+          <div class="panel-heading"><div><p class="section-kicker">ORDER</p><h2>注文</h2></div><span id="holdingLabel" class="holding-label">保有 0株</span></div>
+          <div class="order-main"><label class="quantity-field">購入・売却株数<input id="quantityInput" type="number" min="1" value="10" inputmode="numeric"></label><div class="quick-qty"><button type="button" data-qty="1">1株</button><button type="button" data-qty="10">10株</button><button type="button" data-qty="100">100株</button></div><button id="buyButton" class="buy-button" type="button">買う</button><button id="sellButton" class="sell-button" type="button">売る</button></div>
+          <p id="orderMessage" class="order-message">銘柄を選び、株数を入力して注文してください。</p>
+        </section>
+      </section>
+      <aside class="right-column">
+        <section class="panel asset-panel"><div class="panel-heading"><div><p class="section-kicker">PORTFOLIO</p><h2>資産状況</h2></div></div><div class="asset-grid"><div><span>現金残高</span><strong id="cash"></strong></div><div><span>保有銘柄数</span><strong id="holdingCount"></strong></div><div><span>株式評価額</span><strong id="stockValue"></strong></div><div><span>総資産</span><strong id="totalAsset"></strong></div></div><div id="profitCard" class="profit-card neutral"><span>損益</span><strong id="profit"></strong><small id="profitRate"></small></div></section>
+        <section class="panel history-panel"><div class="panel-heading"><div><p class="section-kicker">HISTORY</p><h2>取引履歴</h2></div></div><div id="history" class="history-list"></div></section>
+      </aside>
+    </div>
+  </section>
+
+  <section id="resultScreen" class="result-screen hidden"><div class="result-card"><p class="eyebrow">GAME OVER</p><h1>今回の結果</h1><div class="result-number"><span>最終総資産</span><strong id="resultAsset"></strong></div><div id="resultProfit" class="result-profit neutral"></div><div class="lesson-box"><p class="lesson-label">授業で考えること</p><h2>今回の勝ち負けは、実力だけで決まった？</h2><p>短時間の価格変動では、偶然が結果を大きく左右します。<br><strong>短時間で勝ったことは、次も勝てる証拠にはなりません。</strong></p></div><div id="resultStats" class="result-stats"></div><button id="restartButton" class="primary-button" type="button">最初に戻る　↻</button></div></section>
+</main>
+<script src="main-data.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

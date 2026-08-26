@@ -13,29 +13,19 @@
 <body>
   <div class="app-shell">
     <header class="topbar">
-      <div>
-        <p class="eyebrow">REAL LIFE RPG</p>
-        <h1>LIFE <span>Lv.</span></h1>
-      </div>
+      <div><p class="eyebrow">REAL LIFE RPG</p><h1>LIFE <span>Lv.</span></h1></div>
       <button id="settingsBtn" class="icon-btn" aria-label="設定">⚙</button>
     </header>
 
     <main>
       <section class="hero-card glass">
         <div class="hero-head">
-          <div>
-            <p id="playerName" class="player-name">PLAYER</p>
-            <p id="playerClass" class="player-class">CLASS / EXPLORER</p>
-          </div>
-          <div class="level-orb">
-            <span>LV</span>
-            <strong id="levelValue">1</strong>
-          </div>
+          <div><p id="playerName" class="player-name">PLAYER</p><p id="playerClass" class="player-class">CLASS / EXPLORER</p><p id="classBonus" class="class-bonus"></p></div>
+          <div class="level-orb"><span>LV</span><strong id="levelValue">1</strong></div>
         </div>
         <div class="xp-block">
           <div class="xp-copy"><span>EXP</span><strong id="xpText">0 / 100</strong></div>
-          <div class="progress"><i id="xpBar"></i></div>
-          <p id="xpNext">あと100 EXPでLEVEL UP</p>
+          <div class="progress"><i id="xpBar"></i></div><p id="xpNext">あと100 EXPでLEVEL UP</p>
         </div>
         <div class="hero-stats">
           <div><span>🔥 STREAK</span><strong id="streakValue">0</strong><small>days</small></div>
@@ -44,20 +34,19 @@
         </div>
       </section>
 
-      <section class="section-head">
-        <div><p class="eyebrow">TODAY</p><h2>今日のクエスト</h2></div>
-        <button id="shuffleBtn" class="text-btn">更新</button>
+      <section class="section-head"><div><p class="eyebrow">WEEKLY</p><h2>今週の成長</h2></div><span id="weekTotal" class="mini-pill">0 EXP</span></section>
+      <section class="weekly-card">
+        <div id="weeklyChart" class="weekly-chart"></div>
+        <div id="weeklySummary" class="weekly-summary"></div>
       </section>
+
+      <section class="section-head"><div><p class="eyebrow">TODAY</p><h2>今日のクエスト</h2></div><div class="head-actions"><button id="addQuestBtn" class="text-btn">＋作成</button><button id="shuffleBtn" class="text-btn muted-action">更新</button></div></section>
       <section id="questList" class="quest-list"></section>
 
-      <section class="section-head">
-        <div><p class="eyebrow">STATUS</p><h2>人生ステータス</h2></div>
-      </section>
+      <section class="section-head"><div><p class="eyebrow">STATUS</p><h2>人生ステータス</h2></div></section>
       <section id="statusGrid" class="status-grid"></section>
 
-      <section class="section-head">
-        <div><p class="eyebrow">ACHIEVEMENTS</p><h2>実績</h2></div>
-      </section>
+      <section class="section-head"><div><p class="eyebrow">ACHIEVEMENTS</p><h2>実績</h2></div></section>
       <section id="achievementList" class="achievement-list"></section>
     </main>
 
@@ -70,26 +59,31 @@
   </div>
 
   <div id="toast" class="toast"></div>
+
   <div id="levelModal" class="modal-wrap hidden" role="dialog" aria-modal="true">
-    <div class="modal-card">
-      <p class="eyebrow">LEVEL UP</p>
-      <div class="level-burst">✦</div>
-      <h3>LEVEL <span id="modalLevel">2</span></h3>
-      <p id="modalMessage">今日の一歩が、ちゃんと積み上がった。</p>
-      <button id="closeModal" class="primary-btn">つづける</button>
+    <div class="modal-card celebration-card"><div class="confetti" aria-hidden="true"></div><p class="eyebrow">LEVEL UP</p><div class="level-burst">✦</div><h3>LEVEL <span id="modalLevel">2</span></h3><p id="modalMessage">今日の一歩が、ちゃんと積み上がった。</p><button id="closeModal" class="primary-btn">つづける</button></div>
+  </div>
+
+  <div id="achievementModal" class="modal-wrap hidden" role="dialog" aria-modal="true">
+    <div class="modal-card celebration-card achievement-modal-card"><div class="confetti" aria-hidden="true"></div><p class="eyebrow">ACHIEVEMENT UNLOCKED</p><div id="achievementBurst" class="achievement-burst">🏆</div><h3 id="achievementTitle">実績解除</h3><p id="achievementDesc"></p><button id="closeAchievementModal" class="primary-btn">受け取る</button></div>
+  </div>
+
+  <div id="questPanel" class="sheet-wrap hidden">
+    <div class="sheet"><div class="sheet-handle"></div><h3>独自クエストを作成</h3>
+      <label>クエスト名<input id="customTitle" maxlength="28" placeholder="例：30分英語を勉強する" /></label>
+      <label>ひとこと<input id="customDesc" maxlength="40" placeholder="例：未来の自分に投資する" /></label>
+      <div class="two-col"><label>カテゴリ<select id="customStat"><option value="work">💼 仕事</option><option value="money">💰 お金</option><option value="knowledge">🧠 知識</option><option value="health">🏃 健康</option><option value="family">🏠 家族</option><option value="hobby">🎨 趣味</option></select></label><label>難易度<select id="customDifficulty"><option value="easy">EASY</option><option value="normal" selected>NORMAL</option><option value="hard">HARD</option></select></label></div>
+      <p class="sheet-note">難易度に応じて EXP とステータス上昇量を自動設定します。</p>
+      <div class="sheet-actions single"><button id="saveCustomQuestBtn" class="primary-btn">今日のクエストに追加</button></div>
     </div>
   </div>
 
   <div id="settingsPanel" class="sheet-wrap hidden">
-    <div class="sheet">
-      <div class="sheet-handle"></div>
-      <h3>プレイヤー設定</h3>
+    <div class="sheet"><div class="sheet-handle"></div><h3>プレイヤー設定</h3>
       <label>名前<input id="nameInput" maxlength="14" placeholder="PLAYER" /></label>
-      <label>クラス<select id="classSelect"><option>EXPLORER</option><option>CREATOR</option><option>GUARDIAN</option><option>CHALLENGER</option><option>SCHOLAR</option></select></label>
-      <div class="sheet-actions">
-        <button id="resetBtn" class="danger-btn">データを初期化</button>
-        <button id="saveSettingsBtn" class="primary-btn">保存</button>
-      </div>
+      <label>クラス<select id="classSelect"><option>EXPLORER</option><option>CREATOR</option><option>GUARDIAN</option><option>CHALLENGER</option><option>SCHOLAR</option><option>MERCHANT</option></select></label>
+      <div id="classPreview" class="class-preview"></div>
+      <div class="sheet-actions"><button id="resetBtn" class="danger-btn">データを初期化</button><button id="saveSettingsBtn" class="primary-btn">保存</button></div>
     </div>
   </div>
 

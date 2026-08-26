@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>5min - 人間に聞いてみよう</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--ink:#16181d;--muted:#777d8a;--line:#e8eaf0;--brand:#18181b;--soft:#f0f1f5;--ok:#16a34a;--danger:#dc2626}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink)}button,input,select,textarea{font:inherit}.app{max-width:520px;margin:0 auto;min-height:100vh;background:#fff;padding-bottom:84px}.top{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.94);backdrop-filter:blur(12px);padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.logo{font-size:26px;font-weight:900;letter-spacing:-1.5px}.badge{font-size:12px;padding:7px 10px;border-radius:999px;background:#eefbf2;color:#15803d;font-weight:700}.content{padding:18px}.hero{background:linear-gradient(145deg,#171717,#303036);color:white;border-radius:24px;padding:24px;margin-bottom:20px}.hero h1{font-size:30px;line-height:1.15;margin:0 0 10px;letter-spacing:-1.2px}.hero p{color:#d5d5da;margin:0 0 18px;line-height:1.6}.btn{border:0;border-radius:14px;padding:14px 16px;font-weight:800;cursor:pointer}.btn-primary{background:white;color:#111;width:100%}.btn-dark{background:#18181b;color:white}.btn-soft{background:var(--soft);color:#222}.section-title{display:flex;justify-content:space-between;align-items:end;margin:22px 0 12px}.section-title h2{font-size:18px;margin:0}.section-title span{font-size:12px;color:var(--muted)}.filters{display:flex;gap:8px;overflow:auto;padding-bottom:4px;margin-bottom:12px}.chip{white-space:nowrap;border:1px solid var(--line);background:#fff;padding:9px 12px;border-radius:999px;font-size:13px}.chip.active{background:#18181b;color:white;border-color:#18181b}.job{border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px;background:white}.job-top{display:flex;justify-content:space-between;gap:12px}.job h3{margin:0 0 8px;font-size:17px}.money{font-weight:900;font-size:18px;white-space:nowrap}.meta{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.tag{font-size:12px;background:#f4f5f7;border-radius:8px;padding:6px 8px;color:#4a4f59}.progress{height:7px;background:#eceef2;border-radius:999px;overflow:hidden}.progress>span{display:block;height:100%;background:#18181b}.job-footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px}.muted{color:var(--muted);font-size:13px}.small-btn{border:0;background:#18181b;color:#fff;padding:10px 13px;border-radius:11px;font-weight:800}.nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(520px,100%);display:grid;grid-template-columns:repeat(5,1fr);background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:8px 6px calc(8px + env(safe-area-inset-bottom));z-index:30}.nav button{border:0;background:none;padding:7px 4px;color:#8a8f99;font-size:11px}.nav button b{display:block;font-size:20px;margin-bottom:2px}.nav button.active{color:#111}.page{display:none}.page.active{display:block}.panel{border:1px solid var(--line);border-radius:18px;padding:16px;background:#fff;margin-bottom:14px}.field{margin-bottom:14px}.field label{display:block;font-size:13px;font-weight:800;margin-bottom:7px}.field input,.field select,.field textarea{width:100%;border:1px solid #dfe2e8;border-radius:12px;padding:13px;background:#fff}.field textarea{min-height:100px;resize:vertical}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.summary{background:#f7f8fa;border-radius:14px;padding:14px;margin:14px 0}.summary strong{font-size:22px}.profile{display:flex;gap:14px;align-items:center}.avatar{width:56px;height:56px;border-radius:50%;background:#18181b;color:#fff;display:grid;place-items:center;font-weight:900}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}.stat{background:#f6f7f9;border-radius:14px;padding:12px;text-align:center}.stat b{display:block;font-size:18px}.notice{border-left:4px solid #18181b;background:#f6f7f9;padding:12px 14px;border-radius:10px;font-size:13px;line-height:1.6}.empty{padding:32px 12px;text-align:center;color:var(--muted)}.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:#18181b;color:#fff;padding:12px 16px;border-radius:12px;opacity:0;pointer-events:none;transition:.25s;z-index:50;white-space:nowrap}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top"><div class="logo">5min</div><div class="badge">● 128人オンライン</div></header>
+<main class="content">
+<section id="home" class="page active">
+  <div class="hero"><h1>AIのあとに、<br>人間に聞こう。</h1><p>実在する人の意見・反応・使い心地を、5分から集める。</p><button class="btn btn-primary" data-go="create">＋ 意見を募集する</button></div>
+  <div class="section-title"><h2>募集中</h2><span>新着順</span></div>
+  <div class="filters"><button class="chip active" data-filter="all">すべて</button><button class="chip" data-filter="opinion">意見</button><button class="chip" data-filter="test">テスト</button><button class="chip" data-filter="review">レビュー</button></div>
+  <div id="jobList"></div>
+</section>
+<section id="search" class="page">
+  <div class="section-title"><h2>仕事を探す</h2><span>短時間で完了</span></div>
+  <div class="field"><input id="searchInput" placeholder="例：ロゴ、アプリ、動画" /></div>
+  <div id="searchList"></div>
+</section>
+<section id="create" class="page">
+  <div class="section-title"><h2>依頼を作る</h2><span>約1分</span></div>
+  <div class="panel">
+    <div class="field"><label>依頼タイプ</label><select id="type"><option value="opinion">意見を聞く</option><option value="test">実際に試してもらう</option><option value="review">人間レビュー</option></select></div>
+    <div class="field"><label>タイトル</label><input id="title" placeholder="例：このロゴ、A/Bどちらが良い？" /></div>
+    <div class="field"><label>依頼内容</label><textarea id="desc" placeholder="判断してほしいポイントや条件を書いてください"></textarea></div>
+    <div class="grid2"><div class="field"><label>1人あたり報酬</label><select id="reward"><option>100</option><option>200</option><option>300</option><option>500</option><option>800</option><option>1000</option></select></div><div class="field"><label>募集人数</label><select id="slots"><option>3</option><option>5</option><option selected>10</option><option>20</option><option>30</option></select></div></div>
+    <div class="grid2"><div class="field"><label>目安時間</label><select id="minutes"><option>1</option><option>3</option><option selected>5</option><option>10</option><option>15</option></select></div><div class="field"><label>対象</label><select id="target"><option>指定なし</option><option>10〜19歳</option><option>20〜29歳</option><option>30〜39歳</option><option>40歳以上</option></select></div></div>
+    <div class="summary">依頼総額（試算）<br><strong id="total">¥1,000</strong><div class="muted">※MVPでは決済は接続していません</div></div>
+    <button class="btn btn-dark" style="width:100%" id="publishBtn">この内容で募集する</button>
+  </div>
+  <div class="notice">違法行為、なりすまし、不正レビュー、資格が必要な専門業務などの依頼は禁止する想定です。</div>
+</section>
+<section id="trades" class="page"><div class="section-title"><h2>取引</h2><span>進行中</span></div><div id="tradeList"><div class="empty">まだ取引はありません。<br>募集中の仕事から参加できます。</div></div></section>
+<section id="me" class="page">
+  <div class="panel"><div class="profile"><div class="avatar">M</div><div><b>mou</b><div class="muted">本人確認：デモ表示</div><div>★ 4.96</div></div></div><div class="stats"><div class="stat"><b>18</b><span class="muted">回答</span></div><div class="stat"><b>¥3,240</b><span class="muted">売上</span></div><div class="stat"><b>98%</b><span class="muted">高評価</span></div></div></div>
+  <div class="panel"><b>あなたの属性</b><div class="meta"><span class="tag">20代</span><span class="tag">iPhone</span><span class="tag">大阪</span><span class="tag">ファッション</span></div><p class="muted">本番では「本人確認済」「自己申告」「資格確認済」を分けて表示します。</p></div>
+</section>
+</main>
+<nav class="nav">
+<button class="active" data-page="home"><b>⌂</b>ホーム</button><button data-page="search"><b>⌕</b>探す</button><button data-page="create"><b>＋</b>依頼</button><button data-page="trades"><b>▣</b>取引</button><button data-page="me"><b>●</b>マイページ</button>
+</nav>
+</div><div class="toast" id="toast"></div>
+<script>
+const jobs=[
+{id:1,type:'opinion',title:'このロゴ、A/Bどちらが良い？',reward:150,minutes:1,target:'20〜39歳',taken:12,slots:20,desc:'第一印象で良い方と理由を一言ください。'},
+{id:2,type:'test',title:'新しいアプリを5分触ってください',reward:500,minutes:5,target:'iPhoneユーザー',taken:2,slots:5,desc:'迷った場所・分かりにくかった場所を3つ教えてください。'},
+{id:3,type:'review',title:'この広告文、違和感ありますか？',reward:200,minutes:3,target:'指定なし',taken:7,slots:10,desc:'AI生成の広告文を人間目線でレビューしてください。'},
+{id:4,type:'opinion',title:'YouTubeサムネ、どちらを押したい？',reward:100,minutes:1,target:'10〜29歳',taken:21,slots:30,desc:'直感で選び、その理由を短く回答してください。'},
+{id:5,type:'test',title:'申込フォームを初見で操作してください',reward:600,minutes:10,target:'指定なし',taken:1,slots:3,desc:'操作中に詰まった場所を記録してください。'}];
+let trades=[];
+const yen=n=>'¥'+Number(n).toLocaleString('ja-JP');
+function card(j){const pct=Math.min(100,j.taken/j.slots*100);const type={opinion:'意見',test:'テスト',review:'レビュー'}[j.type];return `<article class="job" data-type="${j.type}"><div class="job-top"><div><h3>${j.title}</h3><div class="muted">${j.desc}</div></div><div class="money">${yen(j.reward)}</div></div><div class="meta"><span class="tag">${type}</span><span class="tag">約${j.minutes}分</span><span class="tag">${j.target}</span></div><div class="progress"><span style="width:${pct}%"></span></div><div class="job-footer"><div class="muted">${j.taken}/${j.slots}人 回答済み</div><button class="small-btn" onclick="takeJob(${j.id})">この仕事を取る</button></div></article>`}
+function renderJobs(filter='all'){document.querySelector('#jobList').innerHTML=jobs.filter(j=>filter==='all'||j.type===filter).map(card).join('')}
+function renderSearch(){const q=document.querySelector('#searchInput').value.trim().toLowerCase();document.querySelector('#searchList').innerHTML=jobs.filter(j=>(j.title+j.desc+j.target).toLowerCase().includes(q)).map(card).join('')||'<div class="empty">該当する仕事がありません。</div>'}
+function toast(s){const t=document.querySelector('#toast');t.textContent=s;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1700)}
+function go(page){document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===page));document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page));scrollTo({top:0,behavior:'smooth'})}
+function takeJob(id){const j=jobs.find(x=>x.id===id);if(trades.some(x=>x.id===id))return toast('すでに参加中です');trades.unshift({...j,status:'回答待ち'});renderTrades();toast('仕事を受けました');go('trades')}
+function renderTrades(){const el=document.querySelector('#tradeList');el.innerHTML=trades.length?trades.map(j=>`<div class="job"><div class="job-top"><div><h3>${j.title}</h3><div class="muted">ステータス：${j.status}</div></div><div class="money">${yen(j.reward)}</div></div><div class="field" style="margin-top:12px"><textarea id="answer-${j.id}" placeholder="回答を入力"></textarea></div><button class="small-btn" onclick="submitAnswer(${j.id})">回答を送信</button></div>`).join(''):'<div class="empty">まだ取引はありません。</div>'}
+function submitAnswer(id){const j=trades.find(x=>x.id===id);const v=document.querySelector(`#answer-${id}`).value.trim();if(!v)return toast('回答を入力してください');j.status='提出済み';renderTrades();toast('回答を提出しました')}
+document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.page)));
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.go)));
+document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));c.classList.add('active');renderJobs(c.dataset.filter)}));
+document.querySelector('#searchInput').addEventListener('input',renderSearch);
+function total(){document.querySelector('#total').textContent=yen(+document.querySelector('#reward').value*+document.querySelector('#slots').value)}
+['reward','slots'].forEach(id=>document.querySelector('#'+id).addEventListener('change',total));
+document.querySelector('#publishBtn').addEventListener('click',()=>{const title=document.querySelector('#title').value.trim(),desc=document.querySelector('#desc').value.trim();if(!title||!desc)return toast('タイトルと依頼内容を入力してください');const j={id:Date.now(),type:document.querySelector('#type').value,title,desc,reward:+document.querySelector('#reward').value,slots:+document.querySelector('#slots').value,minutes:+document.querySelector('#minutes').value,target:document.querySelector('#target').value,taken:0};jobs.unshift(j);renderJobs();renderSearch();toast('募集を公開しました');go('home')});
+renderJobs();renderSearch();total();
+</script>
+</body></html>

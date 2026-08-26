@@ -1,10 +1,11 @@
-name: Deploy Justice Divider to GitHub Pages
+name: Deploy GitHub Pages
 
 on:
   push:
     branches: [main]
     paths:
       - 'justice-divider/**'
+      - '5min-mvp/**'
       - '.github/workflows/deploy-justice-divider.yml'
   workflow_dispatch:
 
@@ -14,7 +15,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: justice-divider-pages
+  group: github-pages
   cancel-in-progress: true
 
 jobs:
@@ -26,12 +27,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Build Pages artifact
+        run: |
+          mkdir -p public/5min-mvp
+          cp -R justice-divider/. public/
+          cp -R 5min-mvp/. public/5min-mvp/
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
+
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./justice-divider
+          path: ./public
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

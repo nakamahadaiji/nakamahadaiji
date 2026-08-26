@@ -1,0 +1,9 @@
+{
+  "name":"LIFE Lv. — Real Life RPG",
+  "short_name":"LIFE Lv.",
+  "start_url":"./",
+  "display":"standalone",
+  "background_color":"#070b16",
+  "theme_color":"#0b1020",
+  "description":"現実の行動を経験値に変える、人生RPG。"
+}

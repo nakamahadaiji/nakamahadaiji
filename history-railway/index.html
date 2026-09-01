@@ -84,7 +84,8 @@ button,input,select{font:inherit}button{cursor:pointer}.hidden{display:none!impo
    <div class="kpi-grid">
     <div class="kpi"><span>参加</span><b id="kPlayers">0</b></div><div class="kpi"><span>ターン</span><b id="kTurn">0/5</b></div><div class="kpi"><span>目的地</span><b id="kDest">京都</b></div><div class="kpi"><span>トップ資産</span><b id="kTop">0</b></div>
    </div>
-   <div class="board-head"><span>GAME MAP</span><span id="boardLegend">Q 問題　＋ 収入　− 支出　P 投資　D 判断</span></div><div id="turnStrip" class="turn-strip"></div><div id="gameBoard" class="game-board"><div class="zone z1">POLITICS</div><div class="zone z2">ECONOMY</div><div class="zone z3">LOCAL</div><div class="zone z4">SOCIAL</div></div><div id="map" class="map hidden"></div>
+   <div class="board-head"><span>GAME MAP</span><span id="boardLegend">マスの効果は盤面上に表示</span></div>
+<div id="playerLane" class="player-lane"></div><div id="turnStrip" class="turn-strip"></div><div id="gameBoard" class="game-board"><div class="zone z1">POLITICS</div><div class="zone z2">ECONOMY</div><div class="zone z3">LOCAL</div><div class="zone z4">SOCIAL</div></div><div id="map" class="map hidden"></div>
    <div id="finalQuestion" class="event hidden" style="color:#201a12;margin-top:18px"></div>
    <div id="awards" class="awards hidden"></div>
   </div>
@@ -106,7 +107,10 @@ button,input,select{font:inherit}button{cursor:pointer}.hidden{display:none!impo
   </div>
   <div id="plague" class="pill red hidden">疫病神が取り憑いています</div>
   <div id="routeInfo" class="route-info"><span>目的地</span><b id="routeDest">--</b><span id="routeDistance">あと -- マス</span></div>
-  <div class="student-map-title">MAP <span>● 現在地　◎ 目的地</span></div><div id="miniBoard" class="student-board"></div>
+  <div class="student-map-title">MAP <span>トロッコ＝あなたの位置</span></div>
+<div class="effect-legend">
+ <span class="lg gain">＋ 収入</span><span class="lg loss">− 支出</span><span class="lg quiz">Q 問題</span><span class="lg property">P 投資</span><span class="lg decision">D 判断</span>
+</div><div id="miniBoard" class="student-board"></div>
   <div id="studentBody"></div>
  </div>
 </section>
@@ -148,8 +152,12 @@ function routeOptions(from,dice,dest){
  return unique.slice(0,3);
 }
 const spaceInfo={
- start:{icon:'S',label:'出発'},gain:{icon:'＋',label:'収入'},loss:{icon:'−',label:'支出'},
- quiz:{icon:'Q',label:'問題'},decision:{icon:'D',label:'判断'},property:{icon:'P',label:'投資'}
+ start:{icon:'S',label:'出発',desc:'スタート地点',color:'#7c8792'},
+ gain:{icon:'＋',label:'収入',desc:'お金が増える',color:'#4b8d72'},
+ loss:{icon:'−',label:'支出',desc:'お金が減る',color:'#b55b5b'},
+ quiz:{icon:'Q',label:'問題',desc:'公共クイズに挑戦',color:'#5a78b8'},
+ decision:{icon:'D',label:'判断',desc:'政策を選ぶ',color:'#b18a3d'},
+ property:{icon:'P',label:'投資',desc:'資産を買う',color:'#7b63a8'}
 };
 function distanceToDestination(pos,dest){return (dest-pos+stations.length)%stations.length}
 function eventForPosition(pos){
@@ -255,8 +263,23 @@ function sortedPlayers(){
  return ps.sort((a,b)=>b.total-a.total);
 }
 function trolleyHTML(p,idx=0){
- const offsets=[[-16,-38],[8,-38],[-16,-15],[8,-15],[0,-58]],o=offsets[idx]||[0,-38];
- return `<span class="trolley" style="--pc:${p.color||'#fff'};--pt:${p.textColor||'#111'};transform:translate(${o[0]}px,${o[1]}px)"><span class="trolley-body"><span class="trolley-num">${p.slot||''}</span></span><span class="trolley-wheel w1"></span><span class="trolley-wheel w2"></span></span>`;
+ const offsets=[[-28,-44],[2,-44],[-28,-16],[2,-16],[-13,-70]],o=offsets[idx]||[-13,-44];
+ const color=p.color||'#fff',text=p.textColor||'#111',num=p.slot||'';
+ return `<span class="trolley trolley-${idx}" style="transform:translate(${o[0]}px,${o[1]}px)">
+   <svg viewBox="0 0 64 44" aria-label="${esc(p.name||'player')}">
+     <defs><filter id="shadow-${p.id||idx}" x="-30%" y="-30%" width="160%" height="180%"><feDropShadow dx="0" dy="3" stdDeviation="2" flood-opacity=".45"/></filter></defs>
+     <g filter="url(#shadow-${p.id||idx})">
+       <path d="M10 10h40l5 21H7z" fill="${color}" stroke="#fff" stroke-width="2.5"/>
+       <path d="M18 4h24l6 7H13z" fill="#dce6ed" stroke="#fff" stroke-width="2"/>
+       <path d="M19 7h9v7h-11zM36 7h9l3 7H36z" fill="#16222b" opacity=".9"/>
+       <rect x="17" y="17" width="30" height="10" rx="4" fill="#ffffff22"/>
+       <circle cx="17" cy="34" r="6" fill="#111" stroke="#fff" stroke-width="2"/>
+       <circle cx="45" cy="34" r="6" fill="#111" stroke="#fff" stroke-width="2"/>
+       <circle cx="17" cy="34" r="2" fill="#88939d"/><circle cx="45" cy="34" r="2" fill="#88939d"/>
+       <text x="32" y="26" text-anchor="middle" font-size="14" font-weight="900" fill="${text}">${num}</text>
+     </g>
+   </svg>
+ </span>`;
 }
 function boardHTML(ps,dest,studentId=null,reachable=[]){
  let lines='<div class="zone z1">POLITICS</div><div class="zone z2">ECONOMY</div><div class="zone z3">LOCAL</div><div class="zone z4">SOCIAL</div>';
@@ -273,7 +296,12 @@ function boardHTML(ps,dest,studentId=null,reachable=[]){
    const me=studentId&&here.some(p=>p.id===studentId);
    const reach=reachable.includes(i);
    const trolleys=here.map((p,idx)=>trolleyHTML(p,idx)).join('');
-   return `<div class="board-node ${i===dest?'dest':''} ${me?'me':''} ${reach?'reachable':''}" style="left:${routeXY[i][0]}%;top:${routeXY[i][1]}%"><div class="circle">${inf.icon}</div><div class="label">${esc(st)}</div>${i===dest?'<span class="destination-flag">◆</span>':''}${trolleys}</div>`;
+   return `<div class="board-node ${i===dest?'dest':''} ${me?'me':''} ${reach?'reachable':''}" style="left:${routeXY[i][0]}%;top:${routeXY[i][1]}%;--space:${inf.color}">
+   <div class="circle">${inf.icon}</div>
+   <div class="label">${esc(st)}</div>
+   <div class="effect-chip">${inf.label}</div>
+   ${i===dest?'<span class="destination-flag">◆</span>':''}${trolleys}
+ </div>`;
  }).join('');
  return lines+nodes;
 }
@@ -286,7 +314,9 @@ function renderHost(){
  const l=labels[phase]||labels.lobby;$('stageLabel').textContent=l[0];$('stageMain').textContent=l[1];
  $('players').innerHTML=ps.map((p,i)=>`<div class="player"><span class="rank">${i+1}</span><span class="player-badge" style="background:${p.color||'#777'};color:${p.textColor||'#fff'}">${p.slot||'?'}</span><span style="flex:1"><b>${esc(p.name)}</b>${p.plague?' <span class="pill red">疫病神</span>':''}</span><span class="money">${money(p.total)}</span></div>`).join('')||'<div class="muted">参加者を待っています</div>';
  const feed=Object.values(room.feed||{}).sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,10);$('feed').innerHTML=feed.map(f=>`<div class="feed-item">${esc(f.text)}</div>`).join('');
- $('turnStrip').innerHTML=[1,2,3,4,5].map(n=>`<span class="turn-dot ${n<=(s.turn||0)?'on':''}"></span>`).join('');$('gameBoard').innerHTML=boardHTML(ps,s.destination);
+$('turnStrip').innerHTML=[1,2,3,4,5].map(n=>`<span class="turn-dot ${n<=(s.turn||0)?'on':''}"></span>`).join('');
+ $('playerLane').innerHTML=ps.map(p=>`<div class="lane-player"><span class="lane-trolley">${trolleyHTML(p,0)}</span><span><b>${esc(p.name)}</b><small>${stations[p.position||0]}</small></span></div>`).join('');
+ $('gameBoard').innerHTML=boardHTML(ps,s.destination);
  const arrivals=Object.values(room.feed||{}).filter(f=>String(f.text||'').includes('に到着')).sort((a,b)=>(b.at||0)-(a.at||0));
  if(arrivals[0]&&arrivals[0].at>lastFeedArrivalAt){lastFeedArrivalAt=arrivals[0].at;showArrival(arrivals[0].text)}
  $('finalQuestion').classList.toggle('hidden',phase!=='final'); if(phase==='final')$('finalQuestion').innerHTML='<h3>最終問題</h3><div style="font-size:24px;font-weight:900">日本国憲法で、法律をつくる国の機関はどこ？</div>';
@@ -348,7 +378,7 @@ function renderStudent(){
  if(phase==='turn'){
    if(p.pendingRoll&&p.pendingRoll.turn===room.state.turn){
      const opts=routeOptions(p.pendingRoll.from,p.pendingRoll.dice,room.state.destination),best=Math.min(...opts.map(o=>o.distance));
-     body.innerHTML=`<div style="text-align:center"><div class="dice">${p.pendingRoll.dice}</div><h3>進むルートを選ぶ</h3><div class="muted tiny">止まるマスの効果を見て選べます。</div></div><div class="route-choice">${opts.map((o,i)=>{const inf=spaceInfo[spaceTypes[o.end]];return `<button class="route-btn ${o.distance===best?'best':''}" onclick="chooseRoute(${i})"><span class="route-tag">${inf.icon} ${inf.label}</span><span><b>${esc(stations[o.end])}</b><div class="route-path">${o.path.map(x=>stations[x]).join(' → ')}</div></span><span>目的地まで<br><b>${o.distance}</b>マス</span></button>`}).join('')}</div>`;return
+     body.innerHTML=`<div style="text-align:center"><div class="dice">${p.pendingRoll.dice}</div><h3>進むルートを選ぶ</h3><div class="muted tiny">止まるマスの効果を見て選べます。</div></div><div class="route-choice">${opts.map((o,i)=>{const inf=spaceInfo[spaceTypes[o.end]];return `<button class="route-btn ${o.distance===best?'best':''}" onclick="chooseRoute(${i})"><span class="route-tag" style="border-color:${inf.color};color:${inf.color}">${inf.icon} ${inf.label}</span><span><b>${esc(stations[o.end])}</b><div class="route-effect">${inf.desc}</div><div class="route-path">${o.path.map(x=>stations[x]).join(' → ')}</div></span><span>目的地まで<br><b>${o.distance}</b>マス</span></button>`}).join('')}</div>`;return
    }
    if(p.pendingEvent&&p.pendingEvent.turn===room.state.turn){renderPendingEvent(body,p.pendingEvent);return}
    if(p.lastTurnPlayed===room.state.turn){body.innerHTML='<div class="notice success">このターンの行動は完了しました。</div><p class="muted">次のターンを待ってください。</p>';return}
@@ -510,4 +540,22 @@ linear-gradient(155deg,#0d1822 0 42%,#132635 42% 58%,#10202b 58% 100%)}
 .dice.rolling{animation:diceShake .12s linear infinite}
 @keyframes diceShake{0%{transform:rotate(-7deg) scale(.96)}50%{transform:rotate(7deg) scale(1.04)}100%{transform:rotate(-7deg) scale(.96)}}
 .route-btn{transition:.18s transform,.18s box-shadow}.route-btn:active{transform:scale(.98)}
+</style><style>
+.trolley{width:46px;height:34px;position:absolute;left:50%;top:50%;z-index:8;pointer-events:none}
+.trolley svg{width:46px;height:34px;display:block}
+.board-node{width:64px}
+.board-node .circle{border-color:var(--space,#82909d);background:#12202a}
+.board-node .effect-chip{display:inline-flex;margin-top:2px;padding:2px 6px;border-radius:999px;background:color-mix(in srgb,var(--space,#82909d) 20%,#101820);border:1px solid var(--space,#82909d);color:#fff;font-size:8px;font-weight:900;white-space:nowrap}
+.player-lane{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:8px 0 12px}
+.lane-player{min-height:58px;border:1px solid #2a3946;background:#15222d;border-radius:12px;color:#fff;display:flex;align-items:center;gap:6px;padding:6px 8px}
+.lane-player b{display:block;font-size:12px}.lane-player small{display:block;color:#9dacb8;font-size:9px}
+.lane-trolley{position:relative;width:48px;height:36px;display:block;flex:none}.lane-trolley .trolley{left:0;top:0;transform:none!important}
+.route-effect{font-size:12px;font-weight:900;color:#33424f;margin:3px 0}
+.effect-legend{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:7px}.lg{padding:5px 3px;border-radius:7px;text-align:center;font-size:9px;font-weight:900;color:#fff}.lg.gain{background:#4b8d72}.lg.loss{background:#b55b5b}.lg.quiz{background:#5a78b8}.lg.property{background:#7b63a8}.lg.decision{background:#b18a3d}
+.game-board .board-node:nth-child(n) .trolley:nth-of-type(2){transform:translate(-30px,-48px)}
+@media(max-width:800px){
+ .player-lane{grid-template-columns:repeat(5,1fr);gap:4px}.lane-player{padding:4px;min-height:50px;display:block;text-align:center}.lane-player .lane-trolley{margin:auto}.lane-player small{display:none}
+ .board-node{width:54px}.trolley{width:38px;height:29px}.trolley svg{width:38px;height:29px}
+ .effect-legend{gap:3px}.lg{font-size:8px;padding:4px 2px}
+}
 </style>

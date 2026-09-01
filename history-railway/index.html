@@ -54,7 +54,7 @@ button,input,select{font:inherit}button{cursor:pointer}.hidden{display:none!impo
   <p>公共の知識と判断を使って進む、授業用のリアルタイムすごろく。路線図を進み、資産と目的地ボーナスを競います。</p>
   <div class="mode-grid">
     <div class="mode"><h2>教員として開始</h2><p class="muted">設定なしですぐ部屋を準備し、参加者・ターン・ランキングを管理します。</p><button class="btn red big" onclick="createRoom()">すぐゲームを作る</button></div>
-    <div class="mode"><h2>生徒として参加</h2><p class="muted">参加コードは毎回「186800」で固定です。入室するだけで参加できます。</p><button class="btn green big" onclick="showJoin()">参加する</button></div>
+    <div class="mode"><h2>生徒として参加</h2><p class="muted">参加コードは毎回「186800」で固定です。「参加する」を押すだけで入室できます。</p><button class="btn green big" onclick="joinRoom()">参加する</button></div>
   </div>
 </section>
 
@@ -71,15 +71,7 @@ button,input,select{font:inherit}button{cursor:pointer}.hidden{display:none!impo
  </div>
 </section>
 
-<section id="join" class="card phone hidden">
- <div class="row between"><h2>ゲームに参加</h2><button class="btn ghost" onclick="go('home')">戻る</button></div>
- <div class="form">
-  <div class="field"><label>参加コード（固定）</label><input id="joinCode" inputmode="numeric" maxlength="6" value="186800" readonly style="font-size:28px;text-align:center;letter-spacing:.15em"></div>
-  <div class="notice">名前入力は不要です。入室順に <b>赤1 → 青2 → 緑3 → 黄4 → 黒5</b> を自動で割り当てます。</div>
-  <button class="btn green big" onclick="joinRoom()">入室する</button>
-  <div id="joinMsg"></div>
- </div>
-</section>
+<section id="join" class="card phone hidden"><div id="joinMsg"></div></section>
 
 <section id="host" class="hidden">
  <div class="row between" style="margin-bottom:12px">
@@ -187,7 +179,7 @@ const events=[
 let roomCode=null,playerId=null,isHost=false,roomRef=null,room=null,timerHandle=null;
 const $=id=>document.getElementById(id);
 function go(id){['home','hostSetup','join','host','student'].forEach(x=>$(x).classList.add('hidden'));$(id).classList.remove('hidden')}
-function showHostSetup(){createRoom()} function showJoin(){go('join')}
+function showHostSetup(){createRoom()} function showJoin(){joinRoom()}
 const FIXED_ROOM_CODE='186800';
 const MAX_PLAYERS=5;
 const PLAYER_SLOTS=[
@@ -204,30 +196,55 @@ function now(){return firebase.database.ServerValue.TIMESTAMP}
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 
 async function createRoom(){
- roomCode=FIXED_ROOM_CODE; isHost=true; roomRef=db.ref('historyRailway/rooms/'+roomCode);
- const hostKey=uid(); sessionStorage.setItem('hr_host_'+roomCode,hostKey);
- const data={meta:{theme:'公共',contentPolicy:'公共の学習範囲。中学生でも理解できる言葉のみ使用',grade:'高校生',difficulty:'標準よりやや難しい',hostKey,createdAt:Date.now()},state:{phase:'lobby',turn:0,destination:8,startedAt:null,turnEndsAt:null},players:{},feed:{welcome:{text:'CIVIC LINEへようこそ',at:Date.now()}}};
- await roomRef.set(data); subscribe(); $('hostCode').textContent=roomCode; $('joinCode').value=FIXED_ROOM_CODE; go('host'); history.replaceState(null,'','#host='+roomCode);
+ roomCode=FIXED_ROOM_CODE;isHost=true;roomRef=db.ref('historyRailway/rooms/'+roomCode);
+ const hostKey=uid();sessionStorage.setItem('hr_host_'+roomCode,hostKey);
+ const snap=await roomRef.once('value'),existing=snap.val();
+ const recentLobby=existing&&existing.state?.phase==='lobby'&&(Date.now()-(existing.meta?.createdAt||0)<30*60*1000);
+ if(recentLobby){
+   await roomRef.child('meta').update({theme:'公共',contentPolicy:'公共の学習範囲。中学生でも理解できる言葉のみ使用',grade:'高校生',difficulty:'標準よりやや難しい',hostKey,createdAt:existing.meta?.createdAt||Date.now()});
+   await addFeed('教員がゲームを準備しました');
+ }else{
+   const data={meta:{theme:'公共',contentPolicy:'公共の学習範囲。中学生でも理解できる言葉のみ使用',grade:'高校生',difficulty:'標準よりやや難しい',hostKey,createdAt:Date.now()},state:{phase:'lobby',turn:0,destination:8,startedAt:null,turnEndsAt:null},players:{},feed:{welcome:{text:'CIVIC LINEへようこそ',at:Date.now()}}};
+   await roomRef.set(data);
+ }
+ subscribe();$('hostCode').textContent=roomCode;go('host');history.replaceState(null,'','#host='+roomCode);
 }
 async function joinRoom(){
- const code=$('joinCode').value.trim();
- if(!/^\d{6}$/.test(code)){$('joinMsg').innerHTML='<div class="notice error">参加コードを確認してください。</div>';return}
- const roomPath='historyRailway/rooms/'+code,ref=db.ref(roomPath),snap=await ref.once('value');
- if(!snap.exists()){$('joinMsg').innerHTML='<div class="notice error">部屋が見つかりません。</div>';return}
- if(snap.val().state.phase!=='lobby'){$('joinMsg').innerHTML='<div class="notice error">このゲームは開始済みです。</div>';return}
- const current=Object.entries(snap.val().players||{}).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0));
- if(current.length>=MAX_PLAYERS){$('joinMsg').innerHTML='<div class="notice error">参加人数が5名に達しています。</div>';return}
- const used=new Set(current.map(([,p])=>p.slot));
- const slot=PLAYER_SLOTS.find(s=>!used.has(s.slot))||PLAYER_SLOTS[current.length];
+ try{
+ const code=FIXED_ROOM_CODE,ref=db.ref('historyRailway/rooms/'+code);
+ $('conn').textContent='入室中…';
+ let snap=await ref.once('value');
+ if(!snap.exists()){
+   await ref.set({
+     meta:{theme:'公共',contentPolicy:'公共の学習範囲。中学生でも理解できる言葉のみ使用',grade:'高校生',difficulty:'標準よりやや難しい',hostKey:null,createdAt:Date.now()},
+     state:{phase:'lobby',turn:0,destination:8,startedAt:null,turnEndsAt:null},
+     players:{},feed:{welcome:{text:'CIVIC LINEへようこそ',at:Date.now()}}
+   });
+   snap=await ref.once('value');
+ }
+ if(snap.val()?.state?.phase!=='lobby'){alert('このゲームは開始済みです。先生が新しいゲームを準備してください。');$('conn').textContent='接続中：Firebase';return}
  roomCode=code;playerId=uid();roomRef=ref;
- localStorage.setItem('hr_player_'+code,playerId);
- await roomRef.child('players/'+playerId).set({
-   name:slot.name,slot:slot.slot,colorName:slot.colorName,color:slot.color,textColor:slot.text,
-   money:10000,position:0,properties:0,propertyValue:0,quizCorrect:0,quizTotal:0,
-   diceSum:0,diceCount:0,maxLoss:0,plague:false,lastTurnPlayed:0,joinedAt:Date.now()
+ let assigned=null;
+ const tx=await roomRef.child('players').transaction(players=>{
+   players=players||{};
+   const current=Object.values(players);
+   if(current.length>=MAX_PLAYERS)return;
+   const used=new Set(current.map(p=>p.slot));
+   const slot=PLAYER_SLOTS.find(s=>!used.has(s.slot));
+   if(!slot)return;
+   assigned=slot;
+   players[playerId]={
+     name:slot.name,slot:slot.slot,colorName:slot.colorName,color:slot.color,textColor:slot.text,
+     money:10000,position:0,properties:0,propertyValue:0,quizCorrect:0,quizTotal:0,
+     diceSum:0,diceCount:0,maxLoss:0,plague:false,lastTurnPlayed:0,joinedAt:Date.now()
+   };
+   return players;
  });
- await addFeed(slot.name+' が参加しました');
+ if(!tx.committed||!assigned){alert('参加人数が5名に達しています。');$('conn').textContent='接続中：Firebase';return}
+ localStorage.setItem('hr_player_'+code,playerId);
+ await addFeed(assigned.name+' が参加しました');
  subscribe();go('student');history.replaceState(null,'','#join='+code);
+ }catch(err){console.error(err);$('conn').textContent='接続エラー';alert('入室できませんでした。通信状態を確認して、もう一度「参加する」を押してください。');}
 }
 function subscribe(){
  roomRef.on('value',s=>{room=s.val();$('conn').textContent=room?'接続中：リアルタイム同期':'部屋なし';if(!room)return;if(isHost)renderHost();else renderStudent()});
@@ -398,7 +415,7 @@ function showArrival(text){
 }
 function copyJoinLink(){const u=location.origin+location.pathname+'#join='+FIXED_ROOM_CODE;navigator.clipboard?.writeText(u);alert('参加URLをコピーしました')}
 window.addEventListener('load',async()=>{
- $('conn').textContent='接続中：Firebase';$('joinCode').value=FIXED_ROOM_CODE;
+ $('conn').textContent='接続中：Firebase';
  const hash=location.hash;
  if(hash.startsWith('#host=')){
    const key=sessionStorage.getItem('hr_host_'+FIXED_ROOM_CODE);
@@ -409,7 +426,7 @@ window.addEventListener('load',async()=>{
    const saved=localStorage.getItem('hr_player_'+FIXED_ROOM_CODE);
    const snap=await db.ref('historyRailway/rooms/'+FIXED_ROOM_CODE).once('value');
    if(saved&&snap.exists()&&snap.val()?.players?.[saved]){roomCode=FIXED_ROOM_CODE;playerId=saved;roomRef=db.ref('historyRailway/rooms/'+roomCode);subscribe();go('student');return}
-   showJoin();return
+   await joinRoom();return
  }
 });
 </script>

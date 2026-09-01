@@ -54,7 +54,7 @@ button,input,select{font:inherit}button{cursor:pointer}.hidden{display:none!impo
   <p>公共の知識と判断を使って進む、授業用のリアルタイムすごろく。路線図を進み、資産と目的地ボーナスを競います。</p>
   <div class="mode-grid">
     <div class="mode"><h2>教員として開始</h2><p class="muted">設定なしですぐ部屋を準備し、参加者・ターン・ランキングを管理します。</p><button class="btn red big" onclick="createRoom()">すぐゲームを作る</button></div>
-    <div class="mode"><h2>生徒として参加</h2><p class="muted">参加コードは毎回「186800」で固定です。名前だけ入力して参加できます。</p><button class="btn green big" onclick="showJoin()">参加する</button></div>
+    <div class="mode"><h2>生徒として参加</h2><p class="muted">参加コードは毎回「186800」で固定です。入室するだけで参加できます。</p><button class="btn green big" onclick="showJoin()">参加する</button></div>
   </div>
 </section>
 
@@ -75,7 +75,7 @@ button,input,select{font:inherit}button{cursor:pointer}.hidden{display:none!impo
  <div class="row between"><h2>ゲームに参加</h2><button class="btn ghost" onclick="go('home')">戻る</button></div>
  <div class="form">
   <div class="field"><label>参加コード（固定）</label><input id="joinCode" inputmode="numeric" maxlength="6" value="186800" readonly style="font-size:28px;text-align:center;letter-spacing:.15em"></div>
-  <div class="field"><label>表示名</label><input id="playerName" maxlength="12" placeholder="例：前岡"></div>
+  <div class="notice">名前入力は不要です。入室順に <b>赤1 → 青2 → 緑3 → 黄4 → 黒5</b> を自動で割り当てます。</div>
   <button class="btn green big" onclick="joinRoom()">入室する</button>
   <div id="joinMsg"></div>
  </div>
@@ -131,10 +131,11 @@ const db=firebase.database();
 const stations=['江戸','横浜','小田原','静岡','浜松','名古屋','岐阜','彦根','京都','大阪','神戸','姫路','岡山','広島','下関','福岡','熊本','鹿児島','高知','松山'];
 const spaceTypes=['start','gain','quiz','loss','property','decision','gain','quiz','property','loss','decision','gain','quiz','property','loss','gain','quiz','decision','property','gain'];
 const routeXY=[
-[8,72],[16,82],[27,78],[36,66],[31,50],[18,45],[11,31],[22,20],[37,24],[47,38],
-[57,50],[67,38],[62,22],[74,15],[88,24],[82,40],[91,54],[83,70],[68,76],[53,68]
+[10,78],[22,86],[36,84],[50,78],[64,84],[78,86],[90,76],
+[88,58],[90,40],[84,22],[70,14],[54,16],[40,12],[24,18],[12,30],
+[10,48],[22,58],[36,54],[52,50],[68,56]
 ];
-const branchEdges=[[3,9],[7,12],[10,15],[13,18],[1,6]];
+const branchEdges=[[3,17],[10,18]];
 const adjacency=stations.map((_,i)=>[...new Set([(i-1+stations.length)%stations.length,(i+1)%stations.length,...branchEdges.filter(e=>e.includes(i)).map(e=>e[0]===i?e[1]:e[0])])]);
 function shortestDistance(from,to){
  const q=[[from,0]],seen=new Set([from]);
@@ -188,6 +189,14 @@ const $=id=>document.getElementById(id);
 function go(id){['home','hostSetup','join','host','student'].forEach(x=>$(x).classList.add('hidden'));$(id).classList.remove('hidden')}
 function showHostSetup(){createRoom()} function showJoin(){go('join')}
 const FIXED_ROOM_CODE='186800';
+const MAX_PLAYERS=5;
+const PLAYER_SLOTS=[
+ {slot:1,name:'赤1',colorName:'赤',color:'#d94b45',text:'#fff'},
+ {slot:2,name:'青2',colorName:'青',color:'#3b6edb',text:'#fff'},
+ {slot:3,name:'緑3',colorName:'緑',color:'#3f9a64',text:'#fff'},
+ {slot:4,name:'黄4',colorName:'黄',color:'#e0b93c',text:'#1d2430'},
+ {slot:5,name:'黒5',colorName:'黒',color:'#1f252b',text:'#fff'}
+];
 function randCode(){return FIXED_ROOM_CODE}
 function uid(){return Math.random().toString(36).slice(2)+Date.now().toString(36)}
 function money(n){return '¥'+Math.round(n).toLocaleString()}
@@ -201,16 +210,23 @@ async function createRoom(){
  await roomRef.set(data); subscribe(); $('hostCode').textContent=roomCode; $('joinCode').value=FIXED_ROOM_CODE; go('host'); history.replaceState(null,'','#host='+roomCode);
 }
 async function joinRoom(){
- const code=$('joinCode').value.trim(),name=$('playerName').value.trim();
- if(!/^\d{6}$/.test(code)||!name){$('joinMsg').innerHTML='<div class="notice error">6桁コードと名前を入力してください。</div>';return}
- const snap=await db.ref('historyRailway/rooms/'+code).once('value');
- if(!snap.exists()){ $('joinMsg').innerHTML='<div class="notice error">部屋が見つかりません。</div>';return}
- if(snap.val().state.phase!=='lobby'){ $('joinMsg').innerHTML='<div class="notice error">このゲームは開始済みです。</div>';return}
- const count=Object.keys(snap.val().players||{}).length;if(count>=40){$('joinMsg').innerHTML='<div class="notice error">参加人数が40名に達しています。</div>';return}
- roomCode=code;playerId=uid();roomRef=db.ref('historyRailway/rooms/'+code);
+ const code=$('joinCode').value.trim();
+ if(!/^\d{6}$/.test(code)){$('joinMsg').innerHTML='<div class="notice error">参加コードを確認してください。</div>';return}
+ const roomPath='historyRailway/rooms/'+code,ref=db.ref(roomPath),snap=await ref.once('value');
+ if(!snap.exists()){$('joinMsg').innerHTML='<div class="notice error">部屋が見つかりません。</div>';return}
+ if(snap.val().state.phase!=='lobby'){$('joinMsg').innerHTML='<div class="notice error">このゲームは開始済みです。</div>';return}
+ const current=Object.entries(snap.val().players||{}).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0));
+ if(current.length>=MAX_PLAYERS){$('joinMsg').innerHTML='<div class="notice error">参加人数が5名に達しています。</div>';return}
+ const used=new Set(current.map(([,p])=>p.slot));
+ const slot=PLAYER_SLOTS.find(s=>!used.has(s.slot))||PLAYER_SLOTS[current.length];
+ roomCode=code;playerId=uid();roomRef=ref;
  localStorage.setItem('hr_player_'+code,playerId);
- await roomRef.child('players/'+playerId).set({name:name.slice(0,12),money:10000,position:0,properties:0,propertyValue:0,quizCorrect:0,quizTotal:0,diceSum:0,diceCount:0,maxLoss:0,plague:false,lastTurnPlayed:0,joinedAt:Date.now()});
- await addFeed(name+'さんが参加しました');
+ await roomRef.child('players/'+playerId).set({
+   name:slot.name,slot:slot.slot,colorName:slot.colorName,color:slot.color,textColor:slot.text,
+   money:10000,position:0,properties:0,propertyValue:0,quizCorrect:0,quizTotal:0,
+   diceSum:0,diceCount:0,maxLoss:0,plague:false,lastTurnPlayed:0,joinedAt:Date.now()
+ });
+ await addFeed(slot.name+' が参加しました');
  subscribe();go('student');history.replaceState(null,'','#join='+code);
 }
 function subscribe(){
@@ -224,17 +240,19 @@ function sortedPlayers(){
 function boardHTML(ps,dest,studentId=null){
  const leader=ps[0]?.id;
  let lines='';
- for(const e of branchEdges){const a=routeXY[e[0]],b=routeXY[e[1]],dx=b[0]-a[0],dy=b[1]-a[1],len=Math.sqrt(dx*dx+dy*dy),ang=Math.atan2(dy,dx)*180/Math.PI;lines+=`<div class="route-seg branch" style="left:${a[0]}%;top:${a[1]}%;width:${len}%;transform:rotate(${ang}deg)"></div>`}
+ for(const e of branchEdges){
+   const a=routeXY[e[0]],b=routeXY[e[1]],dx=b[0]-a[0],dy=b[1]-a[1],len=Math.sqrt(dx*dx+dy*dy),ang=Math.atan2(dy,dx)*180/Math.PI;
+   lines+=`<div class="route-seg branch" style="left:${a[0]}%;top:${a[1]}%;width:${len}%;transform:rotate(${ang}deg)"></div>`;
+ }
  for(let i=0;i<routeXY.length;i++){
-   const a=routeXY[i],b=routeXY[(i+1)%routeXY.length],dx=b[0]-a[0],dy=b[1]-a[1];
-   const len=Math.sqrt(dx*dx+dy*dy),ang=Math.atan2(dy,dx)*180/Math.PI;
+   const a=routeXY[i],b=routeXY[(i+1)%routeXY.length],dx=b[0]-a[0],dy=b[1]-a[1],len=Math.sqrt(dx*dx+dy*dy),ang=Math.atan2(dy,dx)*180/Math.PI;
    lines+=`<div class="route-seg" style="left:${a[0]}%;top:${a[1]}%;width:${len}%;transform:rotate(${ang}deg)"></div>`;
  }
  const nodes=stations.map((st,i)=>{
-   const typ=spaceTypes[i],inf=spaceInfo[typ],n=ps.filter(p=>p.position===i).length;
-   const me=studentId&&ps.some(p=>p.id===studentId&&p.position===i);
-   const lead=leader&&ps.some(p=>p.id===leader&&p.position===i);
-   return `<div class="board-node ${i===dest?'dest':''} ${me?'me':''} ${lead?'leader':''}" style="left:${routeXY[i][0]}%;top:${routeXY[i][1]}%"><div class="circle">${inf.icon}</div><div class="label">${esc(st)}</div>${n?`<span class="crowd">${n}</span>`:''}</div>`;
+   const typ=spaceTypes[i],inf=spaceInfo[typ],here=ps.filter(p=>p.position===i);
+   const me=studentId&&here.some(p=>p.id===studentId),lead=leader&&here.some(p=>p.id===leader);
+   const markers=here.map((p,idx)=>`<span class="piece" style="--pc:${p.color||'#fff'};--pt:${p.textColor||'#111'};transform:translate(${(idx%3)*15-15}px,${Math.floor(idx/3)*15-28}px)">${p.slot||''}</span>`).join('');
+   return `<div class="board-node ${i===dest?'dest':''} ${me?'me':''} ${lead?'leader':''}" style="left:${routeXY[i][0]}%;top:${routeXY[i][1]}%"><div class="circle">${inf.icon}</div><div class="label">${esc(st)}</div>${markers}</div>`;
  }).join('');
  return lines+nodes;
 }
@@ -245,7 +263,7 @@ function renderHost(){
  $('startBtn').disabled=phase!=='lobby'||ps.length<1;
  const labels={lobby:['ENTRY','参加受付中'],turn:['TURN '+s.turn,'全員同時進行'],final:['FINAL','最終早押し'],result:['RESULT','天下統一']};
  const l=labels[phase]||labels.lobby;$('stageLabel').textContent=l[0];$('stageMain').textContent=l[1];
- $('players').innerHTML=ps.map((p,i)=>`<div class="player"><span class="rank">${i+1}</span><span style="flex:1"><b>${esc(p.name)}</b>${p.plague?' <span class="pill red">疫病神</span>':''}</span><span class="money">${money(p.total)}</span></div>`).join('')||'<div class="muted">参加者を待っています</div>';
+ $('players').innerHTML=ps.map((p,i)=>`<div class="player"><span class="rank">${i+1}</span><span class="player-badge" style="background:${p.color||'#777'};color:${p.textColor||'#fff'}">${p.slot||'?'}</span><span style="flex:1"><b>${esc(p.name)}</b>${p.plague?' <span class="pill red">疫病神</span>':''}</span><span class="money">${money(p.total)}</span></div>`).join('')||'<div class="muted">参加者を待っています</div>';
  const feed=Object.values(room.feed||{}).sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,10);$('feed').innerHTML=feed.map(f=>`<div class="feed-item">${esc(f.text)}</div>`).join('');
  $('gameBoard').innerHTML=boardHTML(ps,s.destination);
  const arrivals=Object.values(room.feed||{}).filter(f=>String(f.text||'').includes('に到着')).sort((a,b)=>(b.at||0)-(a.at||0));
@@ -299,12 +317,12 @@ async function assignPlague(){
 }
 function renderStudent(){
  const p=room?.players?.[playerId];if(!p){go('home');return}
- $('meName').textContent=p.name;$('meMoney').textContent=money(p.money||0);$('mePos').textContent=stations[p.position||0];$('meProps').textContent=p.properties||0;$('meTurn').textContent=(room.state.turn||0)+'/5';$('plague').classList.toggle('hidden',!p.plague);
+ $('meName').textContent=p.name;$('meName').style.color=p.color||'';$('meMoney').textContent=money(p.money||0);$('mePos').textContent=stations[p.position||0];$('meProps').textContent=p.properties||0;$('meTurn').textContent=(room.state.turn||0)+'/5';$('plague').classList.toggle('hidden',!p.plague);
  const ps=sortedPlayers(),dest=room.state.destination||0,dist=shortestDistance(p.position||0,dest);$('routeDest').textContent=stations[dest];$('routeDistance').textContent=dist===0?'目的地に到着':'あと '+dist+' マス';
  $('miniBoard').innerHTML=boardHTML(ps,dest,playerId);
  const rank=ps.findIndex(x=>x.id===playerId)+1;$('meRank').textContent='順位 '+rank+'/'+ps.length;
  const phase=room.state.phase,body=$('studentBody');
- if(phase==='lobby'){body.innerHTML='<div class="notice success">参加完了。教員の開始を待ってください。</div><p class="muted">開始すると全員同時にサイコロを振ります。</p>';return}
+ if(phase==='lobby'){body.innerHTML='<div class="notice success">参加完了。教員の開始を待ってください。</div><p class="muted">開始すると最大5人で同時にサイコロを振ります。</p>';return}
  if(phase==='turn'){
    if(p.pendingRoll&&p.pendingRoll.turn===room.state.turn){
      const opts=routeOptions(p.pendingRoll.from,p.pendingRoll.dice,room.state.destination),best=Math.min(...opts.map(o=>o.distance));
@@ -436,4 +454,12 @@ linear-gradient(-35deg,transparent 47%,#ffffff06 48%,#ffffff06 50%,transparent 5
 </style><style>
 .route-seg.branch{height:4px;background:#41586b;opacity:.8}
 .route-choice{display:grid;gap:10px;margin-top:12px}.route-btn{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;width:100%;padding:14px;border:1px solid #d9dee5;border-radius:14px;background:#fff;text-align:left}.route-btn b{font-size:16px}.route-btn .route-tag{font-size:11px;padding:5px 8px;border-radius:999px;background:#eef2f5}.route-btn.best{border-color:#6d8ba4;box-shadow:0 0 0 2px #6d8ba422}.route-path{font-size:11px;color:#66727d;margin-top:3px}
+</style><style>
+.player-badge{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:1000;flex:none;border:2px solid #fff;box-shadow:0 0 0 1px #cfd6dd}
+.board-node .piece{position:absolute;left:50%;top:50%;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--pc);color:var(--pt);font-size:11px;font-weight:1000;border:2px solid #fff;box-shadow:0 2px 5px #0008;z-index:5}
+.game-board{height:390px}
+.board-node{width:54px}.board-node .circle{width:32px;height:32px}
+.route-seg{background:#7b8792}.route-seg.branch{background:#55738d;height:5px}
+.student-board{height:280px}
+@media(max-width:800px){.game-board{height:330px}.student-board{height:255px}}
 </style>

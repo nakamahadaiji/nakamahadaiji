@@ -27,6 +27,16 @@ button,input,select{font:inherit}button{cursor:pointer}.hidden{display:none!impo
 .event{border-radius:18px;padding:18px;background:#fff6de;border:2px dashed #d2ae59}.event h3{margin:0 0 6px}.choices{display:grid;gap:10px}.choice{width:100%;text-align:left;padding:14px;border:1px solid var(--line);background:#fff;border-radius:14px;font-weight:800}.choice:hover{border-color:#9f7b31}
 .notice{padding:12px 14px;border-radius:12px;background:#fff4c7;border:1px solid #d7b85e;margin:12px 0}.error{background:#f7d9d5;border-color:#d86b5f;color:#7f2018}.success{background:#dff0e3;border-color:#65a976;color:#225535}
 .awards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:18px}.award{border-radius:14px;padding:14px;background:#ffffff12;border:1px solid #ffffff18}.award b{display:block;font-size:18px;margin-top:5px}
+.rail-wrap{position:relative;margin-top:18px;padding:18px 12px;border-radius:18px;background:linear-gradient(180deg,#222018,#15130f);border:1px solid #ffffff16}
+.rail-line{height:8px;background:repeating-linear-gradient(90deg,#c7a95b 0 18px,#725c2e 18px 26px);border-radius:999px;box-shadow:0 0 0 4px #ffffff0b}
+.train{position:absolute;top:5px;left:8px;font-size:30px;filter:drop-shadow(0 4px 5px #0008);transition:left .8s cubic-bezier(.2,.8,.2,1)}
+.arrival{position:fixed;inset:0;z-index:99;display:grid;place-items:center;background:#15110dd9;backdrop-filter:blur(6px);animation:fadeIn .2s ease}
+.arrival-card{width:min(90vw,680px);text-align:center;background:#fff6df;color:#201a12;border-radius:28px;padding:34px;border:6px solid #d8aa45;box-shadow:0 30px 90px #0008;animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
+.arrival-card .big{font-size:clamp(38px,8vw,80px);font-weight:1000;line-height:1.05;margin:8px 0}
+@keyframes pop{from{transform:scale(.65) rotate(-3deg);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.station{transition:transform .2s,background .2s}.station.dest{animation:pulseDest 1.4s infinite}
+@keyframes pulseDest{50%{transform:translateY(-3px);box-shadow:0 0 22px #d8aa4566}}
 @media(max-width:800px){.mode-grid,.host-grid{grid-template-columns:1fr}.wrap{padding:12px}.screen{min-height:420px}.kpi-grid{grid-template-columns:1fr 1fr}.map{grid-template-columns:repeat(5,1fr)}.awards{grid-template-columns:1fr 1fr}.top{position:static}.code{font-size:34px}}
 </style>
 </head>
@@ -40,7 +50,7 @@ button,input,select{font:inherit}button{cursor:pointer}.hidden{display:none!impo
   <p>全員同時にサイコロを振り、知識・判断・運で資産を増やす教育用すごろく。教員画面を投影し、生徒はスマホから参加します。</p>
   <div class="mode-grid">
     <div class="mode"><h2>教員として開始</h2><p class="muted">部屋を作成し、参加者・ターン・ランキングを管理します。</p><button class="btn red big" onclick="showHostSetup()">ゲームを作る</button></div>
-    <div class="mode"><h2>生徒として参加</h2><p class="muted">教員から伝えられた6桁の参加コードを入力します。</p><button class="btn green big" onclick="showJoin()">参加する</button></div>
+    <div class="mode"><h2>生徒として参加</h2><p class="muted">参加コードは毎回「186800」で固定です。名前だけ入力して参加できます。</p><button class="btn green big" onclick="showJoin()">参加する</button></div>
   </div>
 </section>
 
@@ -52,15 +62,15 @@ button,input,select{font:inherit}button{cursor:pointer}.hidden{display:none!impo
    <div class="field" style="flex:1"><label>対象</label><select id="grade"><option>高校1年</option><option selected>高校2年</option><option>高校3年</option><option>中学生</option></select></div>
    <div class="field" style="flex:1"><label>難易度</label><select id="difficulty"><option>基礎</option><option selected>標準</option><option>発展</option></select></div>
   </div>
-  <div class="notice">現在の試作版は内蔵コンテンツを使います。AI自動生成はAPIキーをブラウザに置かないため、Firebase Functions実装後に有効化します。</div>
-  <button class="btn red big" onclick="createRoom()">部屋を作成</button>
+  <div class="notice">参加コードは <b>186800</b> で固定です。「部屋を準備」を押すと前回の参加者・結果を消して、新しい授業として開始します。</div>
+  <button class="btn red big" onclick="createRoom()">この授業の部屋を準備</button>
  </div>
 </section>
 
 <section id="join" class="card phone hidden">
  <div class="row between"><h2>ゲームに参加</h2><button class="btn ghost" onclick="go('home')">戻る</button></div>
  <div class="form">
-  <div class="field"><label>参加コード</label><input id="joinCode" inputmode="numeric" maxlength="6" placeholder="123456" style="font-size:28px;text-align:center;letter-spacing:.15em"></div>
+  <div class="field"><label>参加コード（固定）</label><input id="joinCode" inputmode="numeric" maxlength="6" value="186800" readonly style="font-size:28px;text-align:center;letter-spacing:.15em"></div>
   <div class="field"><label>表示名</label><input id="playerName" maxlength="12" placeholder="例：前岡"></div>
   <button class="btn green big" onclick="joinRoom()">入室する</button>
   <div id="joinMsg"></div>
@@ -78,7 +88,7 @@ button,input,select{font:inherit}button{cursor:pointer}.hidden{display:none!impo
    <div class="kpi-grid">
     <div class="kpi"><span>参加</span><b id="kPlayers">0</b></div><div class="kpi"><span>ターン</span><b id="kTurn">0/5</b></div><div class="kpi"><span>目的地</span><b id="kDest">京都</b></div><div class="kpi"><span>トップ資産</span><b id="kTop">0</b></div>
    </div>
-   <div id="map" class="map"></div>
+   <div class="rail-wrap"><div class="rail-line"></div><div id="trainIcon" class="train">🚂</div></div><div id="map" class="map"></div>
    <div id="finalQuestion" class="event hidden" style="color:#201a12;margin-top:18px"></div>
    <div id="awards" class="awards hidden"></div>
   </div>
@@ -103,6 +113,7 @@ button,input,select{font:inherit}button{cursor:pointer}.hidden{display:none!impo
  </div>
 </section>
 </main>
+<div id="arrivalOverlay" class="arrival hidden"></div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
@@ -131,17 +142,18 @@ let roomCode=null,playerId=null,isHost=false,roomRef=null,room=null,timerHandle=
 const $=id=>document.getElementById(id);
 function go(id){['home','hostSetup','join','host','student'].forEach(x=>$(x).classList.add('hidden'));$(id).classList.remove('hidden')}
 function showHostSetup(){go('hostSetup')} function showJoin(){go('join')}
-function randCode(){return String(Math.floor(100000+Math.random()*900000))}
+const FIXED_ROOM_CODE='186800';
+function randCode(){return FIXED_ROOM_CODE}
 function uid(){return Math.random().toString(36).slice(2)+Date.now().toString(36)}
 function money(n){return '¥'+Math.round(n).toLocaleString()}
 function now(){return firebase.database.ServerValue.TIMESTAMP}
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 
 async function createRoom(){
- roomCode=randCode(); isHost=true; roomRef=db.ref('historyRailway/rooms/'+roomCode);
+ roomCode=FIXED_ROOM_CODE; isHost=true; roomRef=db.ref('historyRailway/rooms/'+roomCode);
  const hostKey=uid(); sessionStorage.setItem('hr_host_'+roomCode,hostKey);
  const data={meta:{theme:$('theme').value,grade:$('grade').value,difficulty:$('difficulty').value,hostKey,createdAt:Date.now()},state:{phase:'lobby',turn:0,destination:8,startedAt:null,turnEndsAt:null},players:{},feed:{welcome:{text:'歴史鉄道へようこそ',at:Date.now()}}};
- await roomRef.set(data); subscribe(); $('hostCode').textContent=roomCode; go('host'); history.replaceState(null,'','#host='+roomCode);
+ await roomRef.set(data); subscribe(); $('hostCode').textContent=roomCode; $('joinCode').value=FIXED_ROOM_CODE; go('host'); history.replaceState(null,'','#host='+roomCode);
 }
 async function joinRoom(){
  const code=$('joinCode').value.trim(),name=$('playerName').value.trim();
@@ -164,6 +176,7 @@ function sortedPlayers(){
  const ps=Object.entries(room?.players||{}).map(([id,p])=>({id,...p,total:(p.money||0)+(p.propertyValue||0)}));
  return ps.sort((a,b)=>b.total-a.total);
 }
+let lastFeedArrivalAt=0;
 function renderHost(){
  const s=room.state||{},ps=sortedPlayers(),phase=s.phase;
  $('hostCode').textContent=roomCode;$('kPlayers').textContent=ps.length;$('kTurn').textContent=(s.turn||0)+'/5';$('kDest').textContent=stations[s.destination||0];$('kTop').textContent=ps[0]?money(ps[0].total):money(0);
@@ -173,6 +186,9 @@ function renderHost(){
  $('players').innerHTML=ps.map((p,i)=>`<div class="player"><span class="rank">${i+1}</span><span style="flex:1"><b>${esc(p.name)}</b>${p.plague?' <span class="pill red">疫病神</span>':''}</span><span class="money">${money(p.total)}</span></div>`).join('')||'<div class="muted">参加者を待っています</div>';
  const feed=Object.values(room.feed||{}).sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,10);$('feed').innerHTML=feed.map(f=>`<div class="feed-item">${esc(f.text)}</div>`).join('');
  $('map').innerHTML=stations.map((st,i)=>{const n=ps.filter(p=>p.position===i).length;return `<div class="station ${i===s.destination?'dest':''}">${esc(st)}${n?`<span class="pin">${n}</span>`:''}</div>`}).join('');
+ const lead=ps[0]; if(lead&&$('trainIcon')) $('trainIcon').style.left=(8+Math.min(92,(lead.position/(stations.length-1))*92))+'%';
+ const arrivals=Object.values(room.feed||{}).filter(f=>String(f.text||'').includes('に到着')).sort((a,b)=>(b.at||0)-(a.at||0));
+ if(arrivals[0]&&arrivals[0].at>lastFeedArrivalAt){lastFeedArrivalAt=arrivals[0].at;showArrival(arrivals[0].text)}
  $('finalQuestion').classList.toggle('hidden',phase!=='final'); if(phase==='final')$('finalQuestion').innerHTML='<h3>最終問題</h3><div style="font-size:24px;font-weight:900">明治政府が1871年に実施した、藩を廃止して府県を置く改革は？</div>';
  $('awards').classList.toggle('hidden',phase!=='result');if(phase==='result')renderAwards(ps);
  updateTimer();
@@ -253,10 +269,13 @@ function renderAwards(ps){
  const a=[['🏆','総合優勝',ps[0]],['🧠','クイズ王',quiz],['🏯','大地主',land],['🎲','豪運王',luck],['💸','波乱王',drama]];
  $('awards').innerHTML=a.map(x=>`<div class="award"><span>${x[0]} ${x[1]}</span><b>${esc(x[2]?.name||'-')}</b></div>`).join('')
 }
-function copyJoinLink(){const u=location.origin+location.pathname+'#join='+roomCode;navigator.clipboard?.writeText(u);alert('参加URLをコピーしました')}
+function showArrival(text){
+ const o=$('arrivalOverlay');o.innerHTML='<div class="arrival-card"><div>🎉 目的地到着</div><div class="big">'+esc(text.split('に到着')[0])+'さん</div><div style="font-size:24px;font-weight:900">'+esc(text)+'</div></div>';o.classList.remove('hidden');setTimeout(()=>o.classList.add('hidden'),2600)
+}
+function copyJoinLink(){const u=location.origin+location.pathname+'#join='+FIXED_ROOM_CODE;navigator.clipboard?.writeText(u);alert('参加URLをコピーしました')}
 window.addEventListener('load',async()=>{
  $('conn').textContent='接続中：Firebase';
- const hash=location.hash;if(hash.startsWith('#join=')){const c=hash.split('=')[1];$('joinCode').value=c;showJoin()}
+ const hash=location.hash;$('joinCode').value=FIXED_ROOM_CODE;if(hash.startsWith('#join=')){showJoin()}
 });
 </script>
 </body>

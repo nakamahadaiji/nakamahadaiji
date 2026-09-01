@@ -230,7 +230,10 @@ async function joinRoom(){
    });
    snap=await ref.once('value');
  }
- if(snap.val()?.state?.phase!=='lobby'){alert('このゲームは開始済みです。先生が新しいゲームを準備してください。');$('conn').textContent='接続中：Firebase';return}
+ if(snap.val()?.state?.phase!=='lobby'){
+   alert('ゲーム開始後は入室できません。');
+   $('conn').textContent='接続中：Firebase';return
+ }
  roomCode=code;playerId=uid();roomRef=ref;
  let assigned=null;
  const tx=await roomRef.child('players').transaction(players=>{
@@ -267,8 +270,7 @@ function trolleyHTML(p,idx=0){
  const color=p.color||'#fff',text=p.textColor||'#111',num=p.slot||'';
  return `<span class="trolley trolley-${idx}" style="transform:translate(${o[0]}px,${o[1]}px)">
    <svg viewBox="0 0 64 44" aria-label="${esc(p.name||'player')}">
-     <defs><filter id="shadow-${p.id||idx}" x="-30%" y="-30%" width="160%" height="180%"><feDropShadow dx="0" dy="3" stdDeviation="2" flood-opacity=".45"/></filter></defs>
-     <g filter="url(#shadow-${p.id||idx})">
+     <g>
        <path d="M10 10h40l5 21H7z" fill="${color}" stroke="#fff" stroke-width="2.5"/>
        <path d="M18 4h24l6 7H13z" fill="#dce6ed" stroke="#fff" stroke-width="2"/>
        <path d="M19 7h9v7h-11zM36 7h9l3 7H36z" fill="#16222b" opacity=".9"/>
@@ -367,22 +369,22 @@ async function assignPlague(){
  const ps=sortedPlayers();if(!ps.length)return;const updates={};ps.forEach(p=>updates['players/'+p.id+'/plague']=false);updates['players/'+ps[ps.length-1].id+'/plague']=true;await roomRef.update(updates);await addFeed(ps[ps.length-1].name+'さんに疫病神');
 }
 function renderStudent(){
- const p=room?.players?.[playerId];if(!p){go('home');return}
+ const p=room?.players?.[playerId];if(!p){return}
  $('meName').textContent=p.name;$('meName').style.color=p.color||'';$('meMoney').textContent=money(p.money||0);$('mePos').textContent=stations[p.position||0];$('meProps').textContent=p.properties||0;$('meTurn').textContent=(room.state.turn||0)+'/5';$('plague').classList.toggle('hidden',!p.plague);
  const ps=sortedPlayers(),dest=room.state.destination||0,dist=shortestDistance(p.position||0,dest);$('routeDest').textContent=stations[dest];$('routeDistance').textContent=dist===0?'目的地に到着':'あと '+dist+' マス';
  const reachable=(p.pendingRoll&&p.pendingRoll.turn===room.state.turn)?routeOptions(p.pendingRoll.from,p.pendingRoll.dice,dest).map(o=>o.end):[];
  $('miniBoard').innerHTML=boardHTML(ps,dest,playerId,reachable);
  const rank=ps.findIndex(x=>x.id===playerId)+1;$('meRank').textContent='順位 '+rank+'/'+ps.length;
  const phase=room.state.phase,body=$('studentBody');
- if(phase==='lobby'){body.innerHTML='<div class="notice success">参加完了。教員の開始を待ってください。</div><p class="muted">開始すると最大5人。自分の色のトロッコでマップを進みます。</p>';return}
+ if(phase==='lobby'){body.innerHTML='<div class="notice success">参加完了</div>';return}
  if(phase==='turn'){
    if(p.pendingRoll&&p.pendingRoll.turn===room.state.turn){
      const opts=routeOptions(p.pendingRoll.from,p.pendingRoll.dice,room.state.destination),best=Math.min(...opts.map(o=>o.distance));
-     body.innerHTML=`<div style="text-align:center"><div class="dice">${p.pendingRoll.dice}</div><h3>進むルートを選ぶ</h3><div class="muted tiny">止まるマスの効果を見て選べます。</div></div><div class="route-choice">${opts.map((o,i)=>{const inf=spaceInfo[spaceTypes[o.end]];return `<button class="route-btn ${o.distance===best?'best':''}" onclick="chooseRoute(${i})"><span class="route-tag" style="border-color:${inf.color};color:${inf.color}">${inf.icon} ${inf.label}</span><span><b>${esc(stations[o.end])}</b><div class="route-effect">${inf.desc}</div><div class="route-path">${o.path.map(x=>stations[x]).join(' → ')}</div></span><span>目的地まで<br><b>${o.distance}</b>マス</span></button>`}).join('')}</div>`;return
+     body.innerHTML=`<div style="text-align:center"><div class="dice">${p.pendingRoll.dice}</div><h3>進むルートを選ぶ</h3></div><div class="route-choice">${opts.map((o,i)=>{const inf=spaceInfo[spaceTypes[o.end]];return `<button class="route-btn ${o.distance===best?'best':''}" onclick="chooseRoute(${i})"><span class="route-tag" style="border-color:${inf.color};color:${inf.color}">${inf.icon} ${inf.label}</span><span><b>${esc(stations[o.end])}</b><div class="route-effect">${inf.desc}</div><div class="route-path">${o.path.map(x=>stations[x]).join(' → ')}</div></span><span>目的地まで<br><b>${o.distance}</b>マス</span></button>`}).join('')}</div>`;return
    }
    if(p.pendingEvent&&p.pendingEvent.turn===room.state.turn){renderPendingEvent(body,p.pendingEvent);return}
    if(p.lastTurnPlayed===room.state.turn){body.innerHTML='<div class="notice success">このターンの行動は完了しました。</div><p class="muted">次のターンを待ってください。</p>';return}
-   body.innerHTML=`<div style="text-align:center"><div class="pill">TURN ${room.state.turn}</div><div class="dice">?</div><button id="rollBtn" class="btn red big" style="width:100%" onclick="rollDice()">サイコロを振る</button><p class="muted tiny">止まった駅のマス効果が発生します。1ターンにつき1回です。</p></div>`;return
+   body.innerHTML=`<div style="text-align:center"><div class="pill">TURN ${room.state.turn}</div><div class="dice">?</div><button id="rollBtn" class="btn red big" style="width:100%" onclick="rollDice()">サイコロを振る</button></div>`;return
  }
  if(phase==='final'){renderFinal(body,p);return}
  if(phase==='result'){body.innerHTML=`<div class="event"><h3>結果発表</h3><p>あなたの総資産</p><div style="font-size:38px;font-weight:1000">${money((p.money||0)+(p.propertyValue||0))}</div><p>総合 ${rank}位 / ${ps.length}人</p></div>`;return}
@@ -558,4 +560,4 @@ linear-gradient(155deg,#0d1822 0 42%,#132635 42% 58%,#10202b 58% 100%)}
  .board-node{width:54px}.trolley{width:38px;height:29px}.trolley svg{width:38px;height:29px}
  .effect-legend{gap:3px}.lg{font-size:8px;padding:4px 2px}
 }
-</style>
+</style><style>.trolley svg{filter:drop-shadow(0 3px 3px rgba(0,0,0,.45))}</style>

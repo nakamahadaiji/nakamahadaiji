@@ -206,15 +206,9 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&l
 async function createRoom(){
  roomCode=FIXED_ROOM_CODE;isHost=true;roomRef=db.ref('historyRailway/rooms/'+roomCode);
  const hostKey=uid();sessionStorage.setItem('hr_host_'+roomCode,hostKey);
- const snap=await roomRef.once('value'),existing=snap.val();
- const recentLobby=existing&&existing.state?.phase==='lobby'&&(Date.now()-(existing.meta?.createdAt||0)<30*60*1000);
- if(recentLobby){
-   await roomRef.child('meta').update({theme:'公共',contentPolicy:'公共の学習範囲。中学生でも理解できる言葉のみ使用',grade:'高校生',difficulty:'標準よりやや難しい',hostKey,createdAt:existing.meta?.createdAt||Date.now()});
-   await addFeed('教員がゲームを準備しました');
- }else{
-   const data={meta:{theme:'公共',contentPolicy:'公共の学習範囲。中学生でも理解できる言葉のみ使用',grade:'高校生',difficulty:'標準よりやや難しい',hostKey,createdAt:Date.now()},state:{phase:'lobby',turn:0,destination:8,startedAt:null,turnEndsAt:null},players:{},feed:{welcome:{text:'CIVIC LINEへようこそ',at:Date.now()}}};
-   await roomRef.set(data);
- }
+ const data={meta:{theme:'公共',contentPolicy:'公共の学習範囲。中学生でも理解できる言葉のみ使用',grade:'高校生',difficulty:'標準よりやや難しい',hostKey,createdAt:Date.now()},state:{phase:'lobby',turn:0,destination:8,startedAt:null,turnEndsAt:null},players:{},feed:{}};
+ await roomRef.set(data);
+ localStorage.removeItem('hr_player_'+roomCode);
  subscribe();$('hostCode').textContent=roomCode;go('host');history.replaceState(null,'','#host='+roomCode);
 }
 async function joinRoom(){
@@ -234,7 +228,12 @@ async function joinRoom(){
    alert('ゲーム開始後は入室できません。');
    $('conn').textContent='接続中：Firebase';return
  }
- roomCode=code;playerId=uid();roomRef=ref;
+ roomCode=code;roomRef=ref;
+ const savedId=localStorage.getItem('hr_player_'+code);
+ if(savedId&&snap.val()?.players?.[savedId]){
+   playerId=savedId;subscribe();go('student');history.replaceState(null,'','#join='+code);return
+ }
+ playerId=uid();
  let assigned=null;
  const tx=await roomRef.child('players').transaction(players=>{
    players=players||{};
@@ -267,7 +266,8 @@ function sortedPlayers(){
 }
 function trolleyHTML(p,idx=0){
  const offsets=[[-28,-44],[2,-44],[-28,-16],[2,-16],[-13,-70]],o=offsets[idx]||[-13,-44];
- const color=p.color||'#fff',text=p.textColor||'#111',num=p.slot||'';
+ const slotDef=PLAYER_SLOTS.find(s=>s.slot===Number(p.slot));
+ const color=slotDef?.color||p.color||'#fff',text=slotDef?.text||p.textColor||'#111',num=p.slot||'';
  return `<span class="trolley trolley-${idx}" style="transform:translate(${o[0]}px,${o[1]}px)">
    <svg viewBox="0 0 64 44" aria-label="${esc(p.name||'player')}">
      <g>
@@ -314,7 +314,7 @@ function renderHost(){
  $('startBtn').disabled=phase!=='lobby'||ps.length<1;
  const labels={lobby:['ENTRY','参加受付中'],turn:['TURN '+s.turn,'全員同時進行'],final:['FINAL','最終早押し'],result:['RESULT','天下統一']};
  const l=labels[phase]||labels.lobby;$('stageLabel').textContent=l[0];$('stageMain').textContent=l[1];
- $('players').innerHTML=ps.map((p,i)=>`<div class="player"><span class="rank">${i+1}</span><span class="player-badge" style="background:${p.color||'#777'};color:${p.textColor||'#fff'}">${p.slot||'?'}</span><span style="flex:1"><b>${esc(p.name)}</b>${p.plague?' <span class="pill red">疫病神</span>':''}</span><span class="money">${money(p.total)}</span></div>`).join('')||'<div class="muted">参加者を待っています</div>';
+ $('players').innerHTML=ps.map((p,i)=>`<div class="player"><span class="rank">${i+1}</span><span class="player-badge" style="background:${(PLAYER_SLOTS.find(s=>s.slot===Number(p.slot))||{}).color||p.color||'#777'};color:${(PLAYER_SLOTS.find(s=>s.slot===Number(p.slot))||{}).text||p.textColor||'#fff'}">${p.slot||'?'}</span><span style="flex:1"><b>${esc(p.name)}</b>${p.plague?' <span class="pill red">疫病神</span>':''}</span><span class="money">${money(p.total)}</span></div>`).join('')||'<div class="muted">参加者を待っています</div>';
  const feed=Object.values(room.feed||{}).sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,10);$('feed').innerHTML=feed.map(f=>`<div class="feed-item">${esc(f.text)}</div>`).join('');
 $('turnStrip').innerHTML=[1,2,3,4,5].map(n=>`<span class="turn-dot ${n<=(s.turn||0)?'on':''}"></span>`).join('');
  $('playerLane').innerHTML=ps.map(p=>`<div class="lane-player"><span class="lane-trolley">${trolleyHTML(p,0)}</span><span><b>${esc(p.name)}</b><small>${stations[p.position||0]}</small></span></div>`).join('');

@@ -134,6 +134,26 @@ const routeXY=[
 [8,72],[16,82],[27,78],[36,66],[31,50],[18,45],[11,31],[22,20],[37,24],[47,38],
 [57,50],[67,38],[62,22],[74,15],[88,24],[82,40],[91,54],[83,70],[68,76],[53,68]
 ];
+const branchEdges=[[3,9],[7,12],[10,15],[13,18],[1,6]];
+const adjacency=stations.map((_,i)=>[...new Set([(i-1+stations.length)%stations.length,(i+1)%stations.length,...branchEdges.filter(e=>e.includes(i)).map(e=>e[0]===i?e[1]:e[0])])]);
+function shortestDistance(from,to){
+ const q=[[from,0]],seen=new Set([from]);
+ while(q.length){const [n,d]=q.shift();if(n===to)return d;for(const nx of adjacency[n])if(!seen.has(nx)){seen.add(nx);q.push([nx,d+1])}}
+ return 99;
+}
+function routeOptions(from,dice,dest){
+ const opts=adjacency[from].map(first=>{
+   let cur=first,prev=from,path=[first];
+   for(let step=1;step<dice;step++){
+     const nexts=adjacency[cur].filter(n=>n!==prev);
+     const nx=(nexts.length?nexts:[prev]).sort((a,b)=>shortestDistance(a,dest)-shortestDistance(b,dest))[0];
+     prev=cur;cur=nx;path.push(cur);
+   }
+   return {first,end:cur,path,distance:shortestDistance(cur,dest)};
+ });
+ const unique=[];for(const o of opts)if(!unique.some(x=>x.end===o.end))unique.push(o);
+ return unique.slice(0,3);
+}
 const spaceInfo={
  start:{icon:'S',label:'出発'},gain:{icon:'＋',label:'収入'},loss:{icon:'−',label:'支出'},
  quiz:{icon:'Q',label:'問題'},decision:{icon:'D',label:'判断'},property:{icon:'P',label:'投資'}
@@ -204,6 +224,7 @@ function sortedPlayers(){
 function boardHTML(ps,dest,studentId=null){
  const leader=ps[0]?.id;
  let lines='';
+ for(const e of branchEdges){const a=routeXY[e[0]],b=routeXY[e[1]],dx=b[0]-a[0],dy=b[1]-a[1],len=Math.sqrt(dx*dx+dy*dy),ang=Math.atan2(dy,dx)*180/Math.PI;lines+=`<div class="route-seg branch" style="left:${a[0]}%;top:${a[1]}%;width:${len}%;transform:rotate(${ang}deg)"></div>`}
  for(let i=0;i<routeXY.length;i++){
    const a=routeXY[i],b=routeXY[(i+1)%routeXY.length],dx=b[0]-a[0],dy=b[1]-a[1];
    const len=Math.sqrt(dx*dx+dy*dy),ang=Math.atan2(dy,dx)*180/Math.PI;
@@ -251,13 +272,23 @@ async function startGame(){
 async function resolveUnfinishedEvents(turn){
  const snap=await roomRef.child('players').once('value'),players=snap.val()||{},updates={};
  Object.entries(players).forEach(([id,p])=>{
-   const pending=p.pendingEvent;
+   let pending=p.pendingEvent;
+   if(p.pendingRoll&&p.pendingRoll.turn===turn){
+     const opts=routeOptions(p.pendingRoll.from,p.pendingRoll.dice,room.state.destination).sort((a,b)=>a.distance-b.distance),opt=opts[0];
+     if(opt){
+       const ev=eventForPosition(opt.end);
+       updates[id+'/position']=opt.end;updates[id+'/diceSum']=(p.diceSum||0)+p.pendingRoll.dice;updates[id+'/diceCount']=(p.diceCount||0)+1;updates[id+'/lastTurnPlayed']=turn;
+       if(p.plague){updates[id+'/money']=(p.money||0)-1000;updates[id+'/maxLoss']=Math.max(p.maxLoss||0,1000)}
+       pending={type:ev.type,dice:p.pendingRoll.dice,turn,position:opt.end,from:p.pendingRoll.from,path:opt.path};
+       updates[id+'/pendingRoll']=null;
+     }
+   }
    if(!pending||pending.turn!==turn)return;
    const ev=eventForPosition(pending.position);
    if(ev.type==='gain'||ev.type==='loss'){
-     const nextMoney=(p.money||0)+(ev.amount||0);
-     updates[id+'/money']=nextMoney;
-     if((ev.amount||0)<0)updates[id+'/maxLoss']=Math.max(p.maxLoss||0,Math.abs(ev.amount||0));
+     const base=(updates[id+'/money']!==undefined?updates[id+'/money']:(p.money||0));
+     updates[id+'/money']=base+(ev.amount||0);
+     if((ev.amount||0)<0)updates[id+'/maxLoss']=Math.max(updates[id+'/maxLoss']||p.maxLoss||0,Math.abs(ev.amount||0));
    }
    updates[id+'/pendingEvent']=null;
  });
@@ -269,12 +300,16 @@ async function assignPlague(){
 function renderStudent(){
  const p=room?.players?.[playerId];if(!p){go('home');return}
  $('meName').textContent=p.name;$('meMoney').textContent=money(p.money||0);$('mePos').textContent=stations[p.position||0];$('meProps').textContent=p.properties||0;$('meTurn').textContent=(room.state.turn||0)+'/5';$('plague').classList.toggle('hidden',!p.plague);
- const ps=sortedPlayers(),dest=room.state.destination||0,dist=distanceToDestination(p.position||0,dest);$('routeDest').textContent=stations[dest];$('routeDistance').textContent=dist===0?'目的地に到着':'あと '+dist+' マス';
+ const ps=sortedPlayers(),dest=room.state.destination||0,dist=shortestDistance(p.position||0,dest);$('routeDest').textContent=stations[dest];$('routeDistance').textContent=dist===0?'目的地に到着':'あと '+dist+' マス';
  $('miniBoard').innerHTML=boardHTML(ps,dest,playerId);
  const rank=ps.findIndex(x=>x.id===playerId)+1;$('meRank').textContent='順位 '+rank+'/'+ps.length;
  const phase=room.state.phase,body=$('studentBody');
  if(phase==='lobby'){body.innerHTML='<div class="notice success">参加完了。教員の開始を待ってください。</div><p class="muted">開始すると全員同時にサイコロを振ります。</p>';return}
  if(phase==='turn'){
+   if(p.pendingRoll&&p.pendingRoll.turn===room.state.turn){
+     const opts=routeOptions(p.pendingRoll.from,p.pendingRoll.dice,room.state.destination),best=Math.min(...opts.map(o=>o.distance));
+     body.innerHTML=`<div style="text-align:center"><div class="dice">${p.pendingRoll.dice}</div><h3>進むルートを選ぶ</h3><div class="muted tiny">同じ出目でも、ルートによって止まる駅が変わります。</div></div><div class="route-choice">${opts.map((o,i)=>`<button class="route-btn ${o.distance===best?'best':''}" onclick="chooseRoute(${i})"><span class="route-tag">ROUTE ${i+1}</span><span><b>${esc(stations[o.end])}</b><div class="route-path">${o.path.map(x=>stations[x]).join(' → ')}</div></span><span>目的地まで<br><b>${o.distance}</b>マス</span></button>`).join('')}</div>`;return
+   }
    if(p.pendingEvent&&p.pendingEvent.turn===room.state.turn){renderPendingEvent(body,p.pendingEvent);return}
    if(p.lastTurnPlayed===room.state.turn){body.innerHTML='<div class="notice success">このターンの行動は完了しました。</div><p class="muted">次のターンを待ってください。</p>';return}
    body.innerHTML=`<div style="text-align:center"><div class="pill">TURN ${room.state.turn}</div><div class="dice">?</div><button id="rollBtn" class="btn red big" style="width:100%" onclick="rollDice()">サイコロを振る</button><p class="muted tiny">止まった駅のマス効果が発生します。1ターンにつき1回です。</p></div>`;return
@@ -287,16 +322,20 @@ async function rollDice(){
  if(rolling)return;rolling=true;
  const btn=$('rollBtn');if(btn)btn.disabled=true;
  try{
-  const p=room.players[playerId],turn=room.state.turn;if(p.lastTurnPlayed===turn)return;
+  const p=room.players[playerId],turn=room.state.turn;if(p.lastTurnPlayed===turn||p.pendingRoll)return;
   let dice=Math.floor(Math.random()*6)+1;if(p.plague)dice=Math.max(1,dice-1);
-  let pos=(p.position+dice)%stations.length,destinationHit=pos===room.state.destination;
-  const ev=eventForPosition(pos);
-  const updates={position:pos,diceSum:(p.diceSum||0)+dice,diceCount:(p.diceCount||0)+1,lastTurnPlayed:turn,pendingEvent:{type:ev.type,dice,turn,position:pos,from:p.position}};
-  if(p.plague){updates.money=(p.money||0)-1000;updates.maxLoss=Math.max(p.maxLoss||0,1000)}
-  if(destinationHit){updates.money=(updates.money??p.money)+5000}
-  await roomRef.child('players/'+playerId).update(updates);
-  if(destinationHit){await addFeed(p.name+'さんが'+stations[pos]+'に到着。+¥5,000');let next=(room.state.destination+5)%stations.length;await roomRef.child('state/destination').set(next)}
+  await roomRef.child('players/'+playerId).update({pendingRoll:{dice,turn,from:p.position}});
  }finally{rolling=false}
+}
+async function chooseRoute(optionIndex){
+ const p=room.players[playerId],pr=p.pendingRoll;if(!pr||pr.turn!==room.state.turn)return;
+ const opts=routeOptions(pr.from,pr.dice,room.state.destination),opt=opts[optionIndex];if(!opt)return;
+ const pos=opt.end,destinationHit=pos===room.state.destination,ev=eventForPosition(pos);
+ const updates={position:pos,diceSum:(p.diceSum||0)+pr.dice,diceCount:(p.diceCount||0)+1,lastTurnPlayed:pr.turn,pendingRoll:null,pendingEvent:{type:ev.type,dice:pr.dice,turn:pr.turn,position:pos,from:pr.from,path:opt.path}};
+ if(p.plague){updates.money=(p.money||0)-1000;updates.maxLoss=Math.max(p.maxLoss||0,1000)}
+ if(destinationHit)updates.money=(updates.money??p.money)+5000;
+ await roomRef.child('players/'+playerId).update(updates);
+ if(destinationHit){await addFeed(p.name+'さんが'+stations[pos]+'に到着。+¥5,000');let next=(room.state.destination+5)%stations.length;await roomRef.child('state/destination').set(next)}
 }
 function renderPendingEvent(body,pending){
  const ev=eventForPosition(pending.position);
@@ -394,4 +433,7 @@ linear-gradient(-35deg,transparent 47%,#ffffff06 48%,#ffffff06 50%,transparent 5
 .student-board .board-node.me .circle{background:#fff;color:#18202a;border-color:#fff;box-shadow:0 0 0 5px #ffffff22}
 .student-board .board-node.me:after{content:"YOU";position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#fff;color:#18202a;border-radius:5px;padding:1px 4px;font-size:7px;font-weight:1000}
 @media(max-width:800px){.game-board{height:310px}.board-head #boardLegend{display:none}}
+</style><style>
+.route-seg.branch{height:4px;background:#41586b;opacity:.8}
+.route-choice{display:grid;gap:10px;margin-top:12px}.route-btn{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;width:100%;padding:14px;border:1px solid #d9dee5;border-radius:14px;background:#fff;text-align:left}.route-btn b{font-size:16px}.route-btn .route-tag{font-size:11px;padding:5px 8px;border-radius:999px;background:#eef2f5}.route-btn.best{border-color:#6d8ba4;box-shadow:0 0 0 2px #6d8ba422}.route-path{font-size:11px;color:#66727d;margin-top:3px}
 </style>

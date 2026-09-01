@@ -142,15 +142,15 @@ function eventForPosition(pos){
 const quizzes=[
 {q:'日本国憲法で、国の政治のあり方を最終的に決める力を持つのは誰？',a:['国民','内閣','裁判所','都道府県'],correct:0},
 {q:'国会が「国の唯一の立法機関」とされているとき、主に何をする機関？',a:['法律をつくる','裁判をする','警察を指揮する','税金を集める'],correct:0},
-{q:'内閣総理大臣を指名するのはどこ？',a:['国会','最高裁判所','天皇','都道府県知事'],correct:0},
+{q:'内閣総理大臣を指名するのはどこ？',a:['最高裁判所','天皇','国会','都道府県知事'],correct:2},
 {q:'衆議院と参議院で異なる議決をしたとき、衆議院の決定が優先される場合がある。この仕組みを何という？',a:['衆議院の優越','三権分立','地方自治','国民主権'],correct:0},
-{q:'裁判所が、法律などが憲法に違反していないか判断できる権限は？',a:['違憲審査権','拒否権','解散権','予算議決権'],correct:0},
+{q:'裁判所が、法律などが憲法に違反していないか判断できる権限は？',a:['拒否権','解散権','予算議決権','違憲審査権'],correct:3},
 {q:'地方自治で、住民が首長や議員を選ぶことに最も関係する考え方は？',a:['住民自治','市場経済','法の支配','国際協調'],correct:0},
-{q:'需要が増え、供給が変わらない場合、一般に価格はどうなりやすい？',a:['上がる','下がる','必ず同じ','0円になる'],correct:0},
+{q:'需要が増え、供給が変わらない場合、一般に価格はどうなりやすい？',a:['下がる','上がる','必ず同じ','0円になる'],correct:1},
 {q:'物価が全体として継続的に上がることを何という？',a:['インフレーション','デフレーション','円高','不況'],correct:0},
-{q:'税金のうち、所得が多い人ほど税率が高くなる仕組みを何という？',a:['累進課税','直接民主制','定額制','地方分権'],correct:0},
-{q:'選挙で、投票した内容を他人に知られないようにする原則は？',a:['秘密選挙','公開選挙','間接選挙','制限選挙'],correct:0}
-]
+{q:'税金のうち、所得が多い人ほど税率が高くなる仕組みを何という？',a:['直接民主制','定額制','累進課税','地方分権'],correct:2},
+{q:'選挙で、投票した内容を他人に知られないようにする原則は？',a:['公開選挙','間接選挙','制限選挙','秘密選挙'],correct:3}
+];
 const events=[
 {type:'gain',title:'地域経済が活性化',text:'商店街に人が集まり、収入が増えた。',amount:3000},
 {type:'loss',title:'物価が上昇',text:'生活に必要なものの値段が上がり、出費が増えた。',amount:-2500},
@@ -221,13 +221,28 @@ let advancing=false;
 async function advanceIfNeeded(){
  if(advancing||!room)return;advancing=true;try{
   const s=room.state;if(s.phase==='turn'){
-   if(s.turn<5){await assignPlague();await roomRef.child('state').update({turn:s.turn+1,turnEndsAt:Date.now()+90000});await addFeed('TURN '+(s.turn+1)+' 開始');}
-   else{await roomRef.child('state').update({phase:'final',turnEndsAt:Date.now()+60000,finalStartedAt:Date.now()});await addFeed('最終早押しスタート');}
+   if(s.turn<5){await resolveUnfinishedEvents(s.turn);await assignPlague();await roomRef.child('state').update({turn:s.turn+1,turnEndsAt:Date.now()+90000});await addFeed('TURN '+(s.turn+1)+' 開始');}
+   else{await resolveUnfinishedEvents(s.turn);await roomRef.child('state').update({phase:'final',turnEndsAt:Date.now()+60000,finalStartedAt:Date.now()});await addFeed('最終早押しスタート');}
   }else if(s.phase==='final'){await applyFinalSpeedBonuses();await roomRef.child('state').update({phase:'result',turnEndsAt:null});await addFeed('ゲーム終了');}
  }finally{setTimeout(()=>advancing=false,1200)}
 }
 async function startGame(){
  if(!isHost||!room)return;await roomRef.child('state').update({phase:'turn',turn:1,startedAt:Date.now(),turnEndsAt:Date.now()+90000});await addFeed('ゲーム開始。TURN 1');
+}
+async function resolveUnfinishedEvents(turn){
+ const snap=await roomRef.child('players').once('value'),players=snap.val()||{},updates={};
+ Object.entries(players).forEach(([id,p])=>{
+   const pending=p.pendingEvent;
+   if(!pending||pending.turn!==turn)return;
+   const ev=eventForPosition(pending.position);
+   if(ev.type==='gain'||ev.type==='loss'){
+     const nextMoney=(p.money||0)+(ev.amount||0);
+     updates[id+'/money']=nextMoney;
+     if((ev.amount||0)<0)updates[id+'/maxLoss']=Math.max(p.maxLoss||0,Math.abs(ev.amount||0));
+   }
+   updates[id+'/pendingEvent']=null;
+ });
+ if(Object.keys(updates).length)await roomRef.child('players').update(updates);
 }
 async function assignPlague(){
  const ps=sortedPlayers();if(!ps.length)return;const updates={};ps.forEach(p=>updates['players/'+p.id+'/plague']=false);updates['players/'+ps[ps.length-1].id+'/plague']=true;await roomRef.update(updates);await addFeed(ps[ps.length-1].name+'さんに疫病神');
@@ -269,7 +284,7 @@ function renderPendingEvent(body,pending){
  showEvent(ev,pending.dice,body,pending.position);
 }
 function showEvent(ev,dice,body=$('studentBody'),position=null){
- const landed=position===null?'':stations[position];let html=`<div style="text-align:center"><div class="dice">${dice}</div><div class="muted">${dice}マス進みました</div></div>`;
+ const landed=position===null?'':stations[position];let html=`<div style="text-align:center"><div class="dice">${dice}</div><div class="muted">${dice}マス進み、<b>${esc(landed)}</b> に止まりました</div></div>`;
  if(ev.type==='quiz'){const q=quizzes[(room.state.turn-1)%quizzes.length];html+=`<div class="event"><h3>❓ ${esc(q.q)}</h3><div class="choices">${q.a.map((a,i)=>`<button class="choice" onclick="answerQuiz(${i},${q.correct})">${esc(a)}</button>`).join('')}</div></div>`}
  else if(ev.type==='property'){html+=`<div class="event"><h3>🏯 ${ev.title}</h3><p>${ev.text}</p><p><b>価格 ${money(ev.price)} / 資産価値 ${money(ev.value)}</b></p><button class="btn gold" onclick="buyProperty(${ev.price},${ev.value})">購入する</button> <button class="btn ghost" onclick="finishEvent()">見送る</button></div>`}
  else if(ev.type==='decision'){html+=`<div class="event"><h3>⚖️ ${ev.title}</h3><p>${ev.text}</p><div class="choices"><button class="choice" onclick="decision(2500,'将来への投資が成功 +¥2,500')">将来への投資</button><button class="choice" onclick="decision(1000,'今の支援で安定 +¥1,000')">今の支援</button></div></div>`}

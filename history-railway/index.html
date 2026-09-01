@@ -84,7 +84,7 @@ button,input,select{font:inherit}button{cursor:pointer}.hidden{display:none!impo
    <div class="kpi-grid">
     <div class="kpi"><span>参加</span><b id="kPlayers">0</b></div><div class="kpi"><span>ターン</span><b id="kTurn">0/5</b></div><div class="kpi"><span>目的地</span><b id="kDest">京都</b></div><div class="kpi"><span>トップ資産</span><b id="kTop">0</b></div>
    </div>
-   <div class="board-head"><span>GAME MAP</span><span id="boardLegend">Q 問題　＋ 収入　− 支出　P 投資　D 判断</span></div><div id="gameBoard" class="game-board"></div><div id="map" class="map hidden"></div>
+   <div class="board-head"><span>GAME MAP</span><span id="boardLegend">Q 問題　＋ 収入　− 支出　P 投資　D 判断</span></div><div id="turnStrip" class="turn-strip"></div><div id="gameBoard" class="game-board"><div class="zone z1">POLITICS</div><div class="zone z2">ECONOMY</div><div class="zone z3">LOCAL</div><div class="zone z4">SOCIAL</div></div><div id="map" class="map hidden"></div>
    <div id="finalQuestion" class="event hidden" style="color:#201a12;margin-top:18px"></div>
    <div id="awards" class="awards hidden"></div>
   </div>
@@ -254,9 +254,12 @@ function sortedPlayers(){
  const ps=Object.entries(room?.players||{}).map(([id,p])=>({id,...p,total:(p.money||0)+(p.propertyValue||0)}));
  return ps.sort((a,b)=>b.total-a.total);
 }
-function boardHTML(ps,dest,studentId=null){
- const leader=ps[0]?.id;
- let lines='';
+function trolleyHTML(p,idx=0){
+ const offsets=[[-16,-38],[8,-38],[-16,-15],[8,-15],[0,-58]],o=offsets[idx]||[0,-38];
+ return `<span class="trolley" style="--pc:${p.color||'#fff'};--pt:${p.textColor||'#111'};transform:translate(${o[0]}px,${o[1]}px)"><span class="trolley-body"><span class="trolley-num">${p.slot||''}</span></span><span class="trolley-wheel w1"></span><span class="trolley-wheel w2"></span></span>`;
+}
+function boardHTML(ps,dest,studentId=null,reachable=[]){
+ let lines='<div class="zone z1">POLITICS</div><div class="zone z2">ECONOMY</div><div class="zone z3">LOCAL</div><div class="zone z4">SOCIAL</div>';
  for(const e of branchEdges){
    const a=routeXY[e[0]],b=routeXY[e[1]],dx=b[0]-a[0],dy=b[1]-a[1],len=Math.sqrt(dx*dx+dy*dy),ang=Math.atan2(dy,dx)*180/Math.PI;
    lines+=`<div class="route-seg branch" style="left:${a[0]}%;top:${a[1]}%;width:${len}%;transform:rotate(${ang}deg)"></div>`;
@@ -267,9 +270,10 @@ function boardHTML(ps,dest,studentId=null){
  }
  const nodes=stations.map((st,i)=>{
    const typ=spaceTypes[i],inf=spaceInfo[typ],here=ps.filter(p=>p.position===i);
-   const me=studentId&&here.some(p=>p.id===studentId),lead=leader&&here.some(p=>p.id===leader);
-   const markers=here.map((p,idx)=>`<span class="piece" style="--pc:${p.color||'#fff'};--pt:${p.textColor||'#111'};transform:translate(${(idx%3)*15-15}px,${Math.floor(idx/3)*15-28}px)">${p.slot||''}</span>`).join('');
-   return `<div class="board-node ${i===dest?'dest':''} ${me?'me':''} ${lead?'leader':''}" style="left:${routeXY[i][0]}%;top:${routeXY[i][1]}%"><div class="circle">${inf.icon}</div><div class="label">${esc(st)}</div>${markers}</div>`;
+   const me=studentId&&here.some(p=>p.id===studentId);
+   const reach=reachable.includes(i);
+   const trolleys=here.map((p,idx)=>trolleyHTML(p,idx)).join('');
+   return `<div class="board-node ${i===dest?'dest':''} ${me?'me':''} ${reach?'reachable':''}" style="left:${routeXY[i][0]}%;top:${routeXY[i][1]}%"><div class="circle">${inf.icon}</div><div class="label">${esc(st)}</div>${i===dest?'<span class="destination-flag">◆</span>':''}${trolleys}</div>`;
  }).join('');
  return lines+nodes;
 }
@@ -282,7 +286,7 @@ function renderHost(){
  const l=labels[phase]||labels.lobby;$('stageLabel').textContent=l[0];$('stageMain').textContent=l[1];
  $('players').innerHTML=ps.map((p,i)=>`<div class="player"><span class="rank">${i+1}</span><span class="player-badge" style="background:${p.color||'#777'};color:${p.textColor||'#fff'}">${p.slot||'?'}</span><span style="flex:1"><b>${esc(p.name)}</b>${p.plague?' <span class="pill red">疫病神</span>':''}</span><span class="money">${money(p.total)}</span></div>`).join('')||'<div class="muted">参加者を待っています</div>';
  const feed=Object.values(room.feed||{}).sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,10);$('feed').innerHTML=feed.map(f=>`<div class="feed-item">${esc(f.text)}</div>`).join('');
- $('gameBoard').innerHTML=boardHTML(ps,s.destination);
+ $('turnStrip').innerHTML=[1,2,3,4,5].map(n=>`<span class="turn-dot ${n<=(s.turn||0)?'on':''}"></span>`).join('');$('gameBoard').innerHTML=boardHTML(ps,s.destination);
  const arrivals=Object.values(room.feed||{}).filter(f=>String(f.text||'').includes('に到着')).sort((a,b)=>(b.at||0)-(a.at||0));
  if(arrivals[0]&&arrivals[0].at>lastFeedArrivalAt){lastFeedArrivalAt=arrivals[0].at;showArrival(arrivals[0].text)}
  $('finalQuestion').classList.toggle('hidden',phase!=='final'); if(phase==='final')$('finalQuestion').innerHTML='<h3>最終問題</h3><div style="font-size:24px;font-weight:900">日本国憲法で、法律をつくる国の機関はどこ？</div>';
@@ -336,14 +340,15 @@ function renderStudent(){
  const p=room?.players?.[playerId];if(!p){go('home');return}
  $('meName').textContent=p.name;$('meName').style.color=p.color||'';$('meMoney').textContent=money(p.money||0);$('mePos').textContent=stations[p.position||0];$('meProps').textContent=p.properties||0;$('meTurn').textContent=(room.state.turn||0)+'/5';$('plague').classList.toggle('hidden',!p.plague);
  const ps=sortedPlayers(),dest=room.state.destination||0,dist=shortestDistance(p.position||0,dest);$('routeDest').textContent=stations[dest];$('routeDistance').textContent=dist===0?'目的地に到着':'あと '+dist+' マス';
- $('miniBoard').innerHTML=boardHTML(ps,dest,playerId);
+ const reachable=(p.pendingRoll&&p.pendingRoll.turn===room.state.turn)?routeOptions(p.pendingRoll.from,p.pendingRoll.dice,dest).map(o=>o.end):[];
+ $('miniBoard').innerHTML=boardHTML(ps,dest,playerId,reachable);
  const rank=ps.findIndex(x=>x.id===playerId)+1;$('meRank').textContent='順位 '+rank+'/'+ps.length;
  const phase=room.state.phase,body=$('studentBody');
- if(phase==='lobby'){body.innerHTML='<div class="notice success">参加完了。教員の開始を待ってください。</div><p class="muted">開始すると最大5人で同時にサイコロを振ります。</p>';return}
+ if(phase==='lobby'){body.innerHTML='<div class="notice success">参加完了。教員の開始を待ってください。</div><p class="muted">開始すると最大5人。自分の色のトロッコでマップを進みます。</p>';return}
  if(phase==='turn'){
    if(p.pendingRoll&&p.pendingRoll.turn===room.state.turn){
      const opts=routeOptions(p.pendingRoll.from,p.pendingRoll.dice,room.state.destination),best=Math.min(...opts.map(o=>o.distance));
-     body.innerHTML=`<div style="text-align:center"><div class="dice">${p.pendingRoll.dice}</div><h3>進むルートを選ぶ</h3><div class="muted tiny">同じ出目でも、ルートによって止まる駅が変わります。</div></div><div class="route-choice">${opts.map((o,i)=>`<button class="route-btn ${o.distance===best?'best':''}" onclick="chooseRoute(${i})"><span class="route-tag">ROUTE ${i+1}</span><span><b>${esc(stations[o.end])}</b><div class="route-path">${o.path.map(x=>stations[x]).join(' → ')}</div></span><span>目的地まで<br><b>${o.distance}</b>マス</span></button>`).join('')}</div>`;return
+     body.innerHTML=`<div style="text-align:center"><div class="dice">${p.pendingRoll.dice}</div><h3>進むルートを選ぶ</h3><div class="muted tiny">止まるマスの効果を見て選べます。</div></div><div class="route-choice">${opts.map((o,i)=>{const inf=spaceInfo[spaceTypes[o.end]];return `<button class="route-btn ${o.distance===best?'best':''}" onclick="chooseRoute(${i})"><span class="route-tag">${inf.icon} ${inf.label}</span><span><b>${esc(stations[o.end])}</b><div class="route-path">${o.path.map(x=>stations[x]).join(' → ')}</div></span><span>目的地まで<br><b>${o.distance}</b>マス</span></button>`}).join('')}</div>`;return
    }
    if(p.pendingEvent&&p.pendingEvent.turn===room.state.turn){renderPendingEvent(body,p.pendingEvent);return}
    if(p.lastTurnPlayed===room.state.turn){body.innerHTML='<div class="notice success">このターンの行動は完了しました。</div><p class="muted">次のターンを待ってください。</p>';return}
@@ -356,9 +361,15 @@ let rolling=false;
 async function rollDice(){
  if(rolling)return;rolling=true;
  const btn=$('rollBtn');if(btn)btn.disabled=true;
+ const diceEl=document.querySelector('#studentBody .dice');
  try{
   const p=room.players[playerId],turn=room.state.turn;if(p.lastTurnPlayed===turn||p.pendingRoll)return;
+  if(diceEl)diceEl.classList.add('rolling');
+  let preview=1;
+  const anim=setInterval(()=>{preview=Math.floor(Math.random()*6)+1;if(diceEl)diceEl.textContent=preview},90);
+  await new Promise(r=>setTimeout(r,650));clearInterval(anim);
   let dice=Math.floor(Math.random()*6)+1;if(p.plague)dice=Math.max(1,dice-1);
+  if(diceEl){diceEl.classList.remove('rolling');diceEl.textContent=dice}
   await roomRef.child('players/'+playerId).update({pendingRoll:{dice,turn,from:p.position}});
  }finally{rolling=false}
 }
@@ -479,4 +490,24 @@ linear-gradient(-35deg,transparent 47%,#ffffff06 48%,#ffffff06 50%,transparent 5
 .route-seg{background:#7b8792}.route-seg.branch{background:#55738d;height:5px}
 .student-board{height:280px}
 @media(max-width:800px){.game-board{height:330px}.student-board{height:255px}}
+</style><style>
+.game-board{background:
+radial-gradient(circle at 18% 18%,#274556 0 7%,transparent 7.4%),
+radial-gradient(circle at 78% 72%,#233f37 0 8%,transparent 8.4%),
+linear-gradient(155deg,#0d1822 0 42%,#132635 42% 58%,#10202b 58% 100%)}
+.zone{position:absolute;z-index:0;border:1px solid #ffffff12;border-radius:18px;padding:8px 10px;color:#ffffff45;font-size:10px;font-weight:900;letter-spacing:.12em}
+.zone.z1{left:5%;top:8%;width:30%;height:28%}.zone.z2{right:6%;top:7%;width:31%;height:27%}.zone.z3{left:7%;bottom:7%;width:34%;height:28%}.zone.z4{right:7%;bottom:8%;width:34%;height:27%}
+.route-seg{height:7px;background:#7b8792;box-shadow:0 0 0 2px #263744,0 2px 6px #0005}.route-seg.branch{height:6px;background:#5f89a7}
+.board-node .circle{position:relative;z-index:3}
+.trolley{position:absolute;left:50%;top:50%;width:34px;height:22px;z-index:6;transform:translate(-50%,-36px);filter:drop-shadow(0 3px 3px #0008)}
+.trolley-body{position:absolute;left:4px;top:3px;width:26px;height:13px;border-radius:4px 4px 7px 7px;background:var(--pc);border:2px solid #fff}
+.trolley-body:before{content:"";position:absolute;left:4px;top:-6px;width:14px;height:7px;border:2px solid #fff;border-bottom:0;border-radius:5px 5px 0 0}
+.trolley-wheel{position:absolute;top:15px;width:8px;height:8px;border-radius:50%;background:#111;border:2px solid #fff}.trolley-wheel.w1{left:6px}.trolley-wheel.w2{right:6px}
+.trolley-num{position:absolute;inset:0;display:grid;place-items:center;color:var(--pt);font-size:10px;font-weight:1000;z-index:2}
+.board-node.reachable .circle{box-shadow:0 0 0 5px #7fc7ff24,0 0 18px #7fc7ff66;border-color:#8ac6ef}
+.destination-flag{position:absolute;left:50%;top:50%;transform:translate(14px,-34px);z-index:5;color:#f3cd6b;font-size:18px;text-shadow:0 2px 4px #000}
+.turn-strip{display:flex;gap:6px;margin:10px 0 14px}.turn-dot{height:7px;flex:1;border-radius:999px;background:#ffffff18}.turn-dot.on{background:#d8b866}
+.dice.rolling{animation:diceShake .12s linear infinite}
+@keyframes diceShake{0%{transform:rotate(-7deg) scale(.96)}50%{transform:rotate(7deg) scale(1.04)}100%{transform:rotate(-7deg) scale(.96)}}
+.route-btn{transition:.18s transform,.18s box-shadow}.route-btn:active{transform:scale(.98)}
 </style>

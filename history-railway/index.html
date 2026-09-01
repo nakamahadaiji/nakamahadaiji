@@ -49,7 +49,7 @@ button,input,select{font:inherit}button{cursor:pointer}.hidden{display:none!impo
   <h1>歴史鉄道</h1>
   <p>全員同時にサイコロを振り、知識・判断・運で資産を増やす教育用すごろく。教員画面を投影し、生徒はスマホから参加します。</p>
   <div class="mode-grid">
-    <div class="mode"><h2>教員として開始</h2><p class="muted">部屋を作成し、参加者・ターン・ランキングを管理します。</p><button class="btn red big" onclick="showHostSetup()">ゲームを作る</button></div>
+    <div class="mode"><h2>教員として開始</h2><p class="muted">設定なしですぐ部屋を準備し、参加者・ターン・ランキングを管理します。</p><button class="btn red big" onclick="createRoom()">すぐゲームを作る</button></div>
     <div class="mode"><h2>生徒として参加</h2><p class="muted">参加コードは毎回「186800」で固定です。名前だけ入力して参加できます。</p><button class="btn green big" onclick="showJoin()">参加する</button></div>
   </div>
 </section>
@@ -124,24 +124,29 @@ firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 const stations=['江戸','横浜','小田原','静岡','浜松','名古屋','岐阜','彦根','京都','大阪','神戸','姫路','岡山','広島','下関','福岡','熊本','鹿児島','高知','松山'];
 const quizzes=[
-{q:'大政奉還を行った江戸幕府最後の将軍は誰？',a:['徳川家康','徳川慶喜','徳川家茂','徳川吉宗'],correct:1},
-{q:'明治政府が1868年に示した政治方針は？',a:['五箇条の御誓文','武家諸法度','御成敗式目','教育勅語'],correct:0},
-{q:'廃藩置県が実施されたのはどの時代？',a:['江戸時代前期','幕末','明治時代','大正時代'],correct:2},
-{q:'地租改正で地価の3%を何で納めることになった？',a:['米','布','現金','労働'],correct:2},
-{q:'自由民権運動の中心人物の一人は？',a:['板垣退助','伊藤博文','井伊直弼','徳川家光'],correct:0}
-];
+{q:'日本国憲法で、国の政治のあり方を最終的に決める力を持つのは誰？',a:['国民','内閣','裁判所','都道府県'],correct:0},
+{q:'国会が「国の唯一の立法機関」とされているとき、主に何をする機関？',a:['法律をつくる','裁判をする','警察を指揮する','税金を集める'],correct:0},
+{q:'内閣総理大臣を指名するのはどこ？',a:['国会','最高裁判所','天皇','都道府県知事'],correct:0},
+{q:'衆議院と参議院で異なる議決をしたとき、衆議院の決定が優先される場合がある。この仕組みを何という？',a:['衆議院の優越','三権分立','地方自治','国民主権'],correct:0},
+{q:'裁判所が、法律などが憲法に違反していないか判断できる権限は？',a:['違憲審査権','拒否権','解散権','予算議決権'],correct:0},
+{q:'地方自治で、住民が首長や議員を選ぶことに最も関係する考え方は？',a:['住民自治','市場経済','法の支配','国際協調'],correct:0},
+{q:'需要が増え、供給が変わらない場合、一般に価格はどうなりやすい？',a:['上がる','下がる','必ず同じ','0円になる'],correct:0},
+{q:'物価が全体として継続的に上がることを何という？',a:['インフレーション','デフレーション','円高','不況'],correct:0},
+{q:'税金のうち、所得が多い人ほど税率が高くなる仕組みを何という？',a:['累進課税','直接民主制','定額制','地方分権'],correct:0},
+{q:'選挙で、投票した内容を他人に知られないようにする原則は？',a:['秘密選挙','公開選挙','間接選挙','制限選挙'],correct:0}
+]
 const events=[
-{type:'gain',title:'交易成功',text:'港町で商いが成功した。',amount:3000},
-{type:'loss',title:'物価高騰',text:'予想外の出費が発生した。',amount:-2500},
-{type:'quiz',title:'歴史クイズ'},
-{type:'decision',title:'進路を選べ',text:'新しい街道と旧街道、どちらを選ぶ？'},
-{type:'property',title:'物件チャンス',text:'歴史名所の売店を購入できる。',price:4000,value:6000},
-{type:'gain',title:'宿場町に到着',text:'旅人が集まり収入を得た。',amount:2200}
+{type:'gain',title:'地域経済が活性化',text:'商店街に人が集まり、収入が増えた。',amount:3000},
+{type:'loss',title:'物価が上昇',text:'生活に必要なものの値段が上がり、出費が増えた。',amount:-2500},
+{type:'quiz',title:'公共クイズ'},
+{type:'decision',title:'政策を選べ',text:'限られた予算を、将来への投資と今の支援のどちらに多く使う？'},
+{type:'property',title:'地域施設に投資',text:'地域の施設に投資して資産を増やせる。',price:4000,value:6000},
+{type:'gain',title:'地域イベント成功',text:'地域イベントに多くの人が集まり、収入を得た。',amount:2200}
 ];
 let roomCode=null,playerId=null,isHost=false,roomRef=null,room=null,timerHandle=null;
 const $=id=>document.getElementById(id);
 function go(id){['home','hostSetup','join','host','student'].forEach(x=>$(x).classList.add('hidden'));$(id).classList.remove('hidden')}
-function showHostSetup(){go('hostSetup')} function showJoin(){go('join')}
+function showHostSetup(){createRoom()} function showJoin(){go('join')}
 const FIXED_ROOM_CODE='186800';
 function randCode(){return FIXED_ROOM_CODE}
 function uid(){return Math.random().toString(36).slice(2)+Date.now().toString(36)}
@@ -152,7 +157,7 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&l
 async function createRoom(){
  roomCode=FIXED_ROOM_CODE; isHost=true; roomRef=db.ref('historyRailway/rooms/'+roomCode);
  const hostKey=uid(); sessionStorage.setItem('hr_host_'+roomCode,hostKey);
- const data={meta:{theme:$('theme').value,grade:$('grade').value,difficulty:$('difficulty').value,hostKey,createdAt:Date.now()},state:{phase:'lobby',turn:0,destination:8,startedAt:null,turnEndsAt:null},players:{},feed:{welcome:{text:'歴史鉄道へようこそ',at:Date.now()}}};
+ const data={meta:{theme:'公共',contentPolicy:'公共の学習範囲。中学生でも理解できる言葉のみ使用',grade:'高校生',difficulty:'標準よりやや難しい',hostKey,createdAt:Date.now()},state:{phase:'lobby',turn:0,destination:8,startedAt:null,turnEndsAt:null},players:{},feed:{welcome:{text:'歴史鉄道へようこそ',at:Date.now()}}};
  await roomRef.set(data); subscribe(); $('hostCode').textContent=roomCode; $('joinCode').value=FIXED_ROOM_CODE; go('host'); history.replaceState(null,'','#host='+roomCode);
 }
 async function joinRoom(){
@@ -189,7 +194,7 @@ function renderHost(){
  const lead=ps[0]; if(lead&&$('trainIcon')) $('trainIcon').style.left=(8+Math.min(92,(lead.position/(stations.length-1))*92))+'%';
  const arrivals=Object.values(room.feed||{}).filter(f=>String(f.text||'').includes('に到着')).sort((a,b)=>(b.at||0)-(a.at||0));
  if(arrivals[0]&&arrivals[0].at>lastFeedArrivalAt){lastFeedArrivalAt=arrivals[0].at;showArrival(arrivals[0].text)}
- $('finalQuestion').classList.toggle('hidden',phase!=='final'); if(phase==='final')$('finalQuestion').innerHTML='<h3>最終問題</h3><div style="font-size:24px;font-weight:900">明治政府が1871年に実施した、藩を廃止して府県を置く改革は？</div>';
+ $('finalQuestion').classList.toggle('hidden',phase!=='final'); if(phase==='final')$('finalQuestion').innerHTML='<h3>最終問題</h3><div style="font-size:24px;font-weight:900">日本国憲法で、法律をつくる国の機関はどこ？</div>';
  $('awards').classList.toggle('hidden',phase!=='result');if(phase==='result')renderAwards(ps);
  updateTimer();
 }
@@ -240,7 +245,7 @@ function showEvent(ev,dice){
  const body=$('studentBody');let html=`<div style="text-align:center"><div class="dice">${dice}</div><div class="muted">${dice}マス進みました</div></div>`;
  if(ev.type==='quiz'){const q=quizzes[(room.state.turn-1)%quizzes.length];html+=`<div class="event"><h3>❓ ${esc(q.q)}</h3><div class="choices">${q.a.map((a,i)=>`<button class="choice" onclick="answerQuiz(${i},${q.correct})">${esc(a)}</button>`).join('')}</div></div>`}
  else if(ev.type==='property'){html+=`<div class="event"><h3>🏯 ${ev.title}</h3><p>${ev.text}</p><p><b>価格 ${money(ev.price)} / 資産価値 ${money(ev.value)}</b></p><button class="btn gold" onclick="buyProperty(${ev.price},${ev.value})">購入する</button> <button class="btn ghost" onclick="finishEvent()">見送る</button></div>`}
- else if(ev.type==='decision'){html+=`<div class="event"><h3>⚖️ ${ev.title}</h3><p>${ev.text}</p><div class="choices"><button class="choice" onclick="decision(2500,'新街道を選び利益 +¥2,500')">新街道を進む</button><button class="choice" onclick="decision(1000,'旧街道を堅実に進み +¥1,000')">旧街道を進む</button></div></div>`}
+ else if(ev.type==='decision'){html+=`<div class="event"><h3>⚖️ ${ev.title}</h3><p>${ev.text}</p><div class="choices"><button class="choice" onclick="decision(2500,'将来への投資が成功 +¥2,500')">将来への投資</button><button class="choice" onclick="decision(1000,'今の支援で安定 +¥1,000')">今の支援</button></div></div>`}
  else{html+=`<div class="event"><h3>${ev.type==='gain'?'💰':'💸'} ${ev.title}</h3><p>${ev.text}</p><p style="font-size:26px;font-weight:1000">${ev.amount>0?'+':''}${money(ev.amount)}</p><button class="btn" onclick="applySimpleEvent(${ev.amount})">確定</button></div>`}
  body.innerHTML=html;
 }
@@ -251,7 +256,7 @@ async function decision(amount,text){const p=room.players[playerId];await roomRe
 function finishEvent(){$('studentBody').innerHTML='<div class="notice success">行動完了。次のターンを待ってください。</div>'}
 function renderFinal(body,p){
  if(p.finalAnsweredAt){body.innerHTML='<div class="notice success">回答送信済み。結果を待ってください。</div>';return}
- body.innerHTML=`<div class="event"><h3>⚡ 最終早押し</h3><p style="font-weight:900">明治政府が1871年に実施した、藩を廃止して府県を置く改革は？</p><div class="choices"><button class="choice" onclick="finalAnswer('廃藩置県',true)">廃藩置県</button><button class="choice" onclick="finalAnswer('版籍奉還',false)">版籍奉還</button><button class="choice" onclick="finalAnswer('地租改正',false)">地租改正</button><button class="choice" onclick="finalAnswer('徴兵令',false)">徴兵令</button></div></div>`
+ body.innerHTML=`<div class="event"><h3>⚡ 最終早押し</h3><p style="font-weight:900">日本国憲法で、法律をつくる国の機関はどこ？</p><div class="choices"><button class="choice" onclick="finalAnswer('国会',true)">国会</button><button class="choice" onclick="finalAnswer('内閣',false)">内閣</button><button class="choice" onclick="finalAnswer('裁判所',false)">裁判所</button><button class="choice" onclick="finalAnswer('都道府県',false)">都道府県</button></div></div>`
 }
 async function finalAnswer(answer,correct){
  const p=room.players[playerId],at=Date.now();if(p.finalAnsweredAt)return;

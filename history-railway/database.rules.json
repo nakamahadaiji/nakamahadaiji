@@ -1,0 +1,13 @@
+{
+  "rules": {
+    "historyRailway": {
+      "rooms": {
+        "$roomId": {
+          ".read": true,
+          ".write": true,
+          ".validate": "$roomId.matches(/^[0-9]{6}$/)"
+        }
+      }
+    }
+  }
+}

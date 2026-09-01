@@ -37,6 +37,10 @@ button,input,select{font:inherit}button{cursor:pointer}.hidden{display:none!impo
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .station{transition:transform .2s,background .2s}.station.dest{animation:pulseDest 1.4s infinite}
 @keyframes pulseDest{50%{transform:translateY(-3px);box-shadow:0 0 22px #d8aa4566}}
+.station .space-icon{font-size:20px;line-height:1}.station .space-name{font-weight:900}.station .space-kind{font-size:9px;opacity:.75}
+.station.space-gain{background:#315e8d55}.station.space-loss{background:#b93a2f55}.station.space-quiz{background:#71549b66}.station.space-property{background:#2f6f5266}.station.space-decision{background:#bd862055}.station.space-start{background:#ffffff22}
+.route-info{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 0;padding:12px 14px;border-radius:14px;background:#201a12;color:#fff}.route-info b{font-size:20px}
+.mini-board{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:12px 0}.mini-space{min-height:44px;border-radius:9px;display:grid;place-items:center;background:#eee3ca;font-size:11px;text-align:center;padding:3px;position:relative}.mini-space.me{outline:3px solid #201a12}.mini-space.dest{box-shadow:inset 0 0 0 3px #d8aa45}.mini-space .dot{font-size:16px}
 @media(max-width:800px){.mode-grid,.host-grid{grid-template-columns:1fr}.wrap{padding:12px}.screen{min-height:420px}.kpi-grid{grid-template-columns:1fr 1fr}.map{grid-template-columns:repeat(5,1fr)}.awards{grid-template-columns:1fr 1fr}.top{position:static}.code{font-size:34px}}
 </style>
 </head>
@@ -57,10 +61,10 @@ button,input,select{font:inherit}button{cursor:pointer}.hidden{display:none!impo
 <section id="hostSetup" class="card hidden">
  <div class="row between"><h2>ゲーム設定</h2><button class="btn ghost" onclick="go('home')">戻る</button></div>
  <div class="form">
-  <div class="field"><label>テーマ</label><input id="theme" value="日本史：幕末から明治維新"></div>
+  <div class="field"><label>テーマ</label><input id="theme" value="公共"></div>
   <div class="row">
-   <div class="field" style="flex:1"><label>対象</label><select id="grade"><option>高校1年</option><option selected>高校2年</option><option>高校3年</option><option>中学生</option></select></div>
-   <div class="field" style="flex:1"><label>難易度</label><select id="difficulty"><option>基礎</option><option selected>標準</option><option>発展</option></select></div>
+   <div class="field" style="flex:1"><label>対象</label><select id="grade"><option selected>高校生</option></select></div>
+   <div class="field" style="flex:1"><label>難易度</label><select id="difficulty"><option selected>標準よりやや難しい</option></select></div>
   </div>
   <div class="notice">参加コードは <b>186800</b> で固定です。「部屋を準備」を押すと前回の参加者・結果を消して、新しい授業として開始します。</div>
   <button class="btn red big" onclick="createRoom()">この授業の部屋を準備</button>
@@ -109,6 +113,8 @@ button,input,select{font:inherit}button{cursor:pointer}.hidden{display:none!impo
    <div class="kpi" style="background:#f3ead4"><span>TURN</span><b id="meTurn">0/5</b></div>
   </div>
   <div id="plague" class="pill red hidden">疫病神が取り憑いています</div>
+  <div id="routeInfo" class="route-info"><span>目的地</span><b id="routeDest">--</b><span id="routeDistance">あと -- マス</span></div>
+  <div id="miniBoard" class="mini-board"></div>
   <div id="studentBody"></div>
  </div>
 </section>
@@ -123,6 +129,16 @@ const firebaseConfig={apiKey:'AIzaSyBXRVlcx-eZKrF6NpboKl8Z87w2sIkrOq4',authDomai
 firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 const stations=['江戸','横浜','小田原','静岡','浜松','名古屋','岐阜','彦根','京都','大阪','神戸','姫路','岡山','広島','下関','福岡','熊本','鹿児島','高知','松山'];
+const spaceTypes=['start','gain','quiz','loss','property','decision','gain','quiz','property','loss','decision','gain','quiz','property','loss','gain','quiz','decision','property','gain'];
+const spaceInfo={
+ start:{icon:'🚉',label:'出発'},gain:{icon:'💰',label:'利益'},loss:{icon:'💸',label:'損失'},
+ quiz:{icon:'❓',label:'クイズ'},decision:{icon:'⚖️',label:'決断'},property:{icon:'🏯',label:'物件'}
+};
+function distanceToDestination(pos,dest){return (dest-pos+stations.length)%stations.length}
+function eventForPosition(pos){
+ const type=spaceTypes[pos]||'gain';
+ return events.find(e=>e.type===type)||events[0];
+}
 const quizzes=[
 {q:'日本国憲法で、国の政治のあり方を最終的に決める力を持つのは誰？',a:['国民','内閣','裁判所','都道府県'],correct:0},
 {q:'国会が「国の唯一の立法機関」とされているとき、主に何をする機関？',a:['法律をつくる','裁判をする','警察を指揮する','税金を集める'],correct:0},
@@ -190,7 +206,7 @@ function renderHost(){
  const l=labels[phase]||labels.lobby;$('stageLabel').textContent=l[0];$('stageMain').textContent=l[1];
  $('players').innerHTML=ps.map((p,i)=>`<div class="player"><span class="rank">${i+1}</span><span style="flex:1"><b>${esc(p.name)}</b>${p.plague?' <span class="pill red">疫病神</span>':''}</span><span class="money">${money(p.total)}</span></div>`).join('')||'<div class="muted">参加者を待っています</div>';
  const feed=Object.values(room.feed||{}).sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,10);$('feed').innerHTML=feed.map(f=>`<div class="feed-item">${esc(f.text)}</div>`).join('');
- $('map').innerHTML=stations.map((st,i)=>{const n=ps.filter(p=>p.position===i).length;return `<div class="station ${i===s.destination?'dest':''}">${esc(st)}${n?`<span class="pin">${n}</span>`:''}</div>`}).join('');
+ $('map').innerHTML=stations.map((st,i)=>{const n=ps.filter(p=>p.position===i).length,typ=spaceTypes[i],inf=spaceInfo[typ];return `<div class="station space-${typ} ${i===s.destination?'dest':''}"><span class="space-icon">${inf.icon}</span><span class="space-name">${esc(st)}</span><span class="space-kind">${inf.label}</span>${n?`<span class="pin">${n}</span>`:''}</div>`}).join('');
  const lead=ps[0]; if(lead&&$('trainIcon')) $('trainIcon').style.left=(8+Math.min(92,(lead.position/(stations.length-1))*92))+'%';
  const arrivals=Object.values(room.feed||{}).filter(f=>String(f.text||'').includes('に到着')).sort((a,b)=>(b.at||0)-(a.at||0));
  if(arrivals[0]&&arrivals[0].at>lastFeedArrivalAt){lastFeedArrivalAt=arrivals[0].at;showArrival(arrivals[0].text)}
@@ -207,7 +223,7 @@ async function advanceIfNeeded(){
   const s=room.state;if(s.phase==='turn'){
    if(s.turn<5){await assignPlague();await roomRef.child('state').update({turn:s.turn+1,turnEndsAt:Date.now()+90000});await addFeed('TURN '+(s.turn+1)+' 開始');}
    else{await roomRef.child('state').update({phase:'final',turnEndsAt:Date.now()+60000,finalStartedAt:Date.now()});await addFeed('最終早押しスタート');}
-  }else if(s.phase==='final'){await roomRef.child('state').update({phase:'result',turnEndsAt:null});await addFeed('ゲーム終了');}
+  }else if(s.phase==='final'){await applyFinalSpeedBonuses();await roomRef.child('state').update({phase:'result',turnEndsAt:null});await addFeed('ゲーム終了');}
  }finally{setTimeout(()=>advancing=false,1200)}
 }
 async function startGame(){
@@ -219,55 +235,67 @@ async function assignPlague(){
 function renderStudent(){
  const p=room?.players?.[playerId];if(!p){go('home');return}
  $('meName').textContent=p.name;$('meMoney').textContent=money(p.money||0);$('mePos').textContent=stations[p.position||0];$('meProps').textContent=p.properties||0;$('meTurn').textContent=(room.state.turn||0)+'/5';$('plague').classList.toggle('hidden',!p.plague);
+ const dest=room.state.destination||0,dist=distanceToDestination(p.position||0,dest);$('routeDest').textContent=stations[dest];$('routeDistance').textContent=dist===0?'目的地に到着':'あと '+dist+' マス';
+ $('miniBoard').innerHTML=stations.map((st,i)=>{const inf=spaceInfo[spaceTypes[i]];return `<div class="mini-space ${i===(p.position||0)?'me':''} ${i===dest?'dest':''}"><span class="dot">${inf.icon}</span><span>${esc(st)}</span></div>`}).join('');
  const ps=sortedPlayers(),rank=ps.findIndex(x=>x.id===playerId)+1;$('meRank').textContent='順位 '+rank+'/'+ps.length;
  const phase=room.state.phase,body=$('studentBody');
  if(phase==='lobby'){body.innerHTML='<div class="notice success">参加完了。教員の開始を待ってください。</div><p class="muted">開始すると全員同時にサイコロを振ります。</p>';return}
  if(phase==='turn'){
+   if(p.pendingEvent&&p.pendingEvent.turn===room.state.turn){renderPendingEvent(body,p.pendingEvent);return}
    if(p.lastTurnPlayed===room.state.turn){body.innerHTML='<div class="notice success">このターンの行動は完了しました。</div><p class="muted">次のターンを待ってください。</p>';return}
-   body.innerHTML=`<div style="text-align:center"><div class="pill">TURN ${room.state.turn}</div><div class="dice">?</div><button class="btn red big" style="width:100%" onclick="rollDice()">サイコロを振る</button><p class="muted tiny">全員同時進行。1ターンにつき1回です。</p></div>`;return
+   body.innerHTML=`<div style="text-align:center"><div class="pill">TURN ${room.state.turn}</div><div class="dice">?</div><button id="rollBtn" class="btn red big" style="width:100%" onclick="rollDice()">サイコロを振る</button><p class="muted tiny">止まった駅のマス効果が発生します。1ターンにつき1回です。</p></div>`;return
  }
  if(phase==='final'){renderFinal(body,p);return}
  if(phase==='result'){body.innerHTML=`<div class="event"><h3>結果発表</h3><p>あなたの総資産</p><div style="font-size:38px;font-weight:1000">${money((p.money||0)+(p.propertyValue||0))}</div><p>総合 ${rank}位 / ${ps.length}人</p></div>`;return}
 }
+let rolling=false;
 async function rollDice(){
- const p=room.players[playerId],turn=room.state.turn;if(p.lastTurnPlayed===turn)return;
- let dice=Math.floor(Math.random()*6)+1;if(p.plague)dice=Math.max(1,dice-1);
- let pos=(p.position+dice)%stations.length,bonus=0,destinationHit=pos===room.state.destination;
- const ev=events[(pos+turn)%events.length];
- const updates={position:pos,diceSum:(p.diceSum||0)+dice,diceCount:(p.diceCount||0)+1,lastTurnPlayed:turn};
- if(p.plague){updates.money=(p.money||0)-1000;updates.maxLoss=Math.max(p.maxLoss||0,1000)}
- if(destinationHit){bonus=5000;updates.money=(updates.money??p.money)+bonus}
- await roomRef.child('players/'+playerId).update(updates);
- if(destinationHit){await addFeed(p.name+'さんが'+stations[pos]+'に到着。+¥5,000');let next=(room.state.destination+5)%stations.length;await roomRef.child('state/destination').set(next)}
- showEvent(ev,dice);
+ if(rolling)return;rolling=true;
+ const btn=$('rollBtn');if(btn)btn.disabled=true;
+ try{
+  const p=room.players[playerId],turn=room.state.turn;if(p.lastTurnPlayed===turn)return;
+  let dice=Math.floor(Math.random()*6)+1;if(p.plague)dice=Math.max(1,dice-1);
+  let pos=(p.position+dice)%stations.length,destinationHit=pos===room.state.destination;
+  const ev=eventForPosition(pos);
+  const updates={position:pos,diceSum:(p.diceSum||0)+dice,diceCount:(p.diceCount||0)+1,lastTurnPlayed:turn,pendingEvent:{type:ev.type,dice,turn,position:pos}};
+  if(p.plague){updates.money=(p.money||0)-1000;updates.maxLoss=Math.max(p.maxLoss||0,1000)}
+  if(destinationHit){updates.money=(updates.money??p.money)+5000}
+  await roomRef.child('players/'+playerId).update(updates);
+  if(destinationHit){await addFeed(p.name+'さんが'+stations[pos]+'に到着。+¥5,000');let next=(room.state.destination+5)%stations.length;await roomRef.child('state/destination').set(next)}
+ }finally{rolling=false}
 }
-function showEvent(ev,dice){
- const body=$('studentBody');let html=`<div style="text-align:center"><div class="dice">${dice}</div><div class="muted">${dice}マス進みました</div></div>`;
+function renderPendingEvent(body,pending){
+ const ev=eventForPosition(pending.position);
+ showEvent(ev,pending.dice,body,pending.position);
+}
+function showEvent(ev,dice,body=$('studentBody'),position=null){
+ const landed=position===null?'':stations[position];let html=`<div style="text-align:center"><div class="dice">${dice}</div><div class="muted">${dice}マス進みました</div></div>`;
  if(ev.type==='quiz'){const q=quizzes[(room.state.turn-1)%quizzes.length];html+=`<div class="event"><h3>❓ ${esc(q.q)}</h3><div class="choices">${q.a.map((a,i)=>`<button class="choice" onclick="answerQuiz(${i},${q.correct})">${esc(a)}</button>`).join('')}</div></div>`}
  else if(ev.type==='property'){html+=`<div class="event"><h3>🏯 ${ev.title}</h3><p>${ev.text}</p><p><b>価格 ${money(ev.price)} / 資産価値 ${money(ev.value)}</b></p><button class="btn gold" onclick="buyProperty(${ev.price},${ev.value})">購入する</button> <button class="btn ghost" onclick="finishEvent()">見送る</button></div>`}
  else if(ev.type==='decision'){html+=`<div class="event"><h3>⚖️ ${ev.title}</h3><p>${ev.text}</p><div class="choices"><button class="choice" onclick="decision(2500,'将来への投資が成功 +¥2,500')">将来への投資</button><button class="choice" onclick="decision(1000,'今の支援で安定 +¥1,000')">今の支援</button></div></div>`}
  else{html+=`<div class="event"><h3>${ev.type==='gain'?'💰':'💸'} ${ev.title}</h3><p>${ev.text}</p><p style="font-size:26px;font-weight:1000">${ev.amount>0?'+':''}${money(ev.amount)}</p><button class="btn" onclick="applySimpleEvent(${ev.amount})">確定</button></div>`}
  body.innerHTML=html;
 }
-async function applySimpleEvent(amount){const p=room.players[playerId];await roomRef.child('players/'+playerId).update({money:(p.money||0)+amount,maxLoss:amount<0?Math.max(p.maxLoss||0,Math.abs(amount)):(p.maxLoss||0)});finishEvent()}
-async function answerQuiz(i,correct){const p=room.players[playerId],ok=i===correct,reward=ok?(p.plague?4000:2000):0;await roomRef.child('players/'+playerId).update({money:(p.money||0)+reward,quizTotal:(p.quizTotal||0)+1,quizCorrect:(p.quizCorrect||0)+(ok?1:0),plague:ok?false:p.plague});$('studentBody').innerHTML=`<div class="notice ${ok?'success':'error'}">${ok?'正解。+'+money(reward):'不正解'}</div><p class="muted">次のターンを待ってください。</p>`}
-async function buyProperty(price,value){const p=room.players[playerId];if((p.money||0)<price){alert('所持金が足りません');return}await roomRef.child('players/'+playerId).update({money:p.money-price,properties:(p.properties||0)+1,propertyValue:(p.propertyValue||0)+value});finishEvent()}
-async function decision(amount,text){const p=room.players[playerId];await roomRef.child('players/'+playerId).update({money:p.money+amount});$('studentBody').innerHTML='<div class="notice success">'+esc(text)+'</div>'}
-function finishEvent(){$('studentBody').innerHTML='<div class="notice success">行動完了。次のターンを待ってください。</div>'}
+async function applySimpleEvent(amount){const p=room.players[playerId];await roomRef.child('players/'+playerId).update({money:(p.money||0)+amount,maxLoss:amount<0?Math.max(p.maxLoss||0,Math.abs(amount)):(p.maxLoss||0),pendingEvent:null})}
+async function answerQuiz(i,correct){const p=room.players[playerId],ok=i===correct,reward=ok?(p.plague?4000:2000):0;await roomRef.child('players/'+playerId).update({money:(p.money||0)+reward,quizTotal:(p.quizTotal||0)+1,quizCorrect:(p.quizCorrect||0)+(ok?1:0),plague:ok?false:p.plague,pendingEvent:null});$('studentBody').innerHTML=`<div class="notice ${ok?'success':'error'}">${ok?'正解。+'+money(reward):'不正解'}</div><p class="muted">次のターンを待ってください。</p>`}
+async function buyProperty(price,value){const p=room.players[playerId];if((p.money||0)<price){alert('所持金が足りません');return}await roomRef.child('players/'+playerId).update({money:p.money-price,properties:(p.properties||0)+1,propertyValue:(p.propertyValue||0)+value,pendingEvent:null})}
+async function decision(amount,text){const p=room.players[playerId];await roomRef.child('players/'+playerId).update({money:p.money+amount,pendingEvent:null});$('studentBody').innerHTML='<div class="notice success">'+esc(text)+'</div>'}
+async function finishEvent(){await roomRef.child('players/'+playerId+'/pendingEvent').set(null)}
 function renderFinal(body,p){
  if(p.finalAnsweredAt){body.innerHTML='<div class="notice success">回答送信済み。結果を待ってください。</div>';return}
  body.innerHTML=`<div class="event"><h3>⚡ 最終早押し</h3><p style="font-weight:900">日本国憲法で、法律をつくる国の機関はどこ？</p><div class="choices"><button class="choice" onclick="finalAnswer('国会',true)">国会</button><button class="choice" onclick="finalAnswer('内閣',false)">内閣</button><button class="choice" onclick="finalAnswer('裁判所',false)">裁判所</button><button class="choice" onclick="finalAnswer('都道府県',false)">都道府県</button></div></div>`
 }
 async function finalAnswer(answer,correct){
- const p=room.players[playerId],at=Date.now();if(p.finalAnsweredAt)return;
- const base=correct?10000:0;await roomRef.child('players/'+playerId).update({finalAnswer:answer,finalCorrect:correct,finalAnsweredAt:at,money:(p.money||0)+base});
- if(correct)await awardSpeedBonuses();$('studentBody').innerHTML='<div class="notice success">回答を送信しました。</div>'
+ const p=room.players[playerId];if(p.finalAnsweredAt)return;
+ const base=correct?10000:0;await roomRef.child('players/'+playerId).update({finalAnswer:answer,finalCorrect:correct,finalAnsweredAt:firebase.database.ServerValue.TIMESTAMP,money:(p.money||0)+base});
+ $('studentBody').innerHTML='<div class="notice success">回答を送信しました。</div>'
 }
-async function awardSpeedBonuses(){
- await new Promise(r=>setTimeout(r,350));
- const snap=await roomRef.child('players').once('value'),ps=Object.entries(snap.val()||{}).map(([id,p])=>({id,...p})).filter(p=>p.finalCorrect&&p.finalAnsweredAt).sort((a,b)=>a.finalAnsweredAt-b.finalAnsweredAt);
- const bonus=[30000,20000,10000],updates={};ps.slice(0,3).forEach((p,i)=>{if(!p.speedBonus){updates[p.id+'/money']=(p.money||0)+bonus[i];updates[p.id+'/speedBonus']=bonus[i]}});
- if(Object.keys(updates).length)await roomRef.child('players').update(updates)
+async function applyFinalSpeedBonuses(){
+ const snap=await roomRef.child('players').once('value');
+ const ps=Object.entries(snap.val()||{}).map(([id,p])=>({id,...p})).filter(p=>p.finalCorrect&&typeof p.finalAnsweredAt==='number').sort((a,b)=>a.finalAnsweredAt-b.finalAnsweredAt);
+ const bonus=[30000,20000,10000],updates={};
+ ps.slice(0,3).forEach((p,i)=>{if(!p.speedBonus){updates[p.id+'/money']=(p.money||0)+bonus[i];updates[p.id+'/speedBonus']=bonus[i]}});
+ if(Object.keys(updates).length)await roomRef.child('players').update(updates);
 }
 function renderAwards(ps){
  if(!ps.length)return;const quiz=[...ps].sort((a,b)=>((b.quizCorrect||0)/(b.quizTotal||1))-((a.quizCorrect||0)/(a.quizTotal||1)))[0];const land=[...ps].sort((a,b)=>(b.properties||0)-(a.properties||0))[0];const luck=[...ps].sort((a,b)=>((b.diceSum||0)/(b.diceCount||1))-((a.diceSum||0)/(a.diceCount||1)))[0];const drama=[...ps].sort((a,b)=>(b.maxLoss||0)-(a.maxLoss||0))[0];
@@ -279,8 +307,19 @@ function showArrival(text){
 }
 function copyJoinLink(){const u=location.origin+location.pathname+'#join='+FIXED_ROOM_CODE;navigator.clipboard?.writeText(u);alert('参加URLをコピーしました')}
 window.addEventListener('load',async()=>{
- $('conn').textContent='接続中：Firebase';
- const hash=location.hash;$('joinCode').value=FIXED_ROOM_CODE;if(hash.startsWith('#join=')){showJoin()}
+ $('conn').textContent='接続中：Firebase';$('joinCode').value=FIXED_ROOM_CODE;
+ const hash=location.hash;
+ if(hash.startsWith('#host=')){
+   const key=sessionStorage.getItem('hr_host_'+FIXED_ROOM_CODE);
+   const snap=await db.ref('historyRailway/rooms/'+FIXED_ROOM_CODE).once('value');
+   if(key&&snap.exists()&&snap.val()?.meta?.hostKey===key){roomCode=FIXED_ROOM_CODE;isHost=true;roomRef=db.ref('historyRailway/rooms/'+roomCode);subscribe();go('host');return}
+ }
+ if(hash.startsWith('#join=')){
+   const saved=localStorage.getItem('hr_player_'+FIXED_ROOM_CODE);
+   const snap=await db.ref('historyRailway/rooms/'+FIXED_ROOM_CODE).once('value');
+   if(saved&&snap.exists()&&snap.val()?.players?.[saved]){roomCode=FIXED_ROOM_CODE;playerId=saved;roomRef=db.ref('historyRailway/rooms/'+roomCode);subscribe();go('student');return}
+   showJoin();return
+ }
 });
 </script>
 </body>

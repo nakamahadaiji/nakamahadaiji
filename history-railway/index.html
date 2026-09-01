@@ -92,7 +92,7 @@ button,input,select{font:inherit}button{cursor:pointer}.hidden{display:none!impo
    <div class="kpi-grid">
     <div class="kpi"><span>参加</span><b id="kPlayers">0</b></div><div class="kpi"><span>ターン</span><b id="kTurn">0/5</b></div><div class="kpi"><span>目的地</span><b id="kDest">京都</b></div><div class="kpi"><span>トップ資産</span><b id="kTop">0</b></div>
    </div>
-   <div class="rail-wrap"><div class="rail-line"></div><div id="trainIcon" class="train">●</div></div><div id="map" class="map"></div>
+   <div class="board-head"><span>GAME MAP</span><span id="boardLegend">Q 問題　＋ 収入　− 支出　P 投資　D 判断</span></div><div id="gameBoard" class="game-board"></div><div id="map" class="map hidden"></div>
    <div id="finalQuestion" class="event hidden" style="color:#201a12;margin-top:18px"></div>
    <div id="awards" class="awards hidden"></div>
   </div>
@@ -114,7 +114,7 @@ button,input,select{font:inherit}button{cursor:pointer}.hidden{display:none!impo
   </div>
   <div id="plague" class="pill red hidden">疫病神が取り憑いています</div>
   <div id="routeInfo" class="route-info"><span>目的地</span><b id="routeDest">--</b><span id="routeDistance">あと -- マス</span></div>
-  <div id="miniBoard" class="mini-board"></div>
+  <div class="student-map-title">MAP <span>● 現在地　◎ 目的地</span></div><div id="miniBoard" class="student-board"></div>
   <div id="studentBody"></div>
  </div>
 </section>
@@ -130,6 +130,10 @@ firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 const stations=['江戸','横浜','小田原','静岡','浜松','名古屋','岐阜','彦根','京都','大阪','神戸','姫路','岡山','広島','下関','福岡','熊本','鹿児島','高知','松山'];
 const spaceTypes=['start','gain','quiz','loss','property','decision','gain','quiz','property','loss','decision','gain','quiz','property','loss','gain','quiz','decision','property','gain'];
+const routeXY=[
+[8,72],[16,82],[27,78],[36,66],[31,50],[18,45],[11,31],[22,20],[37,24],[47,38],
+[57,50],[67,38],[62,22],[74,15],[88,24],[82,40],[91,54],[83,70],[68,76],[53,68]
+];
 const spaceInfo={
  start:{icon:'S',label:'出発'},gain:{icon:'＋',label:'収入'},loss:{icon:'−',label:'支出'},
  quiz:{icon:'Q',label:'問題'},decision:{icon:'D',label:'判断'},property:{icon:'P',label:'投資'}
@@ -197,6 +201,22 @@ function sortedPlayers(){
  const ps=Object.entries(room?.players||{}).map(([id,p])=>({id,...p,total:(p.money||0)+(p.propertyValue||0)}));
  return ps.sort((a,b)=>b.total-a.total);
 }
+function boardHTML(ps,dest,studentId=null){
+ const leader=ps[0]?.id;
+ let lines='';
+ for(let i=0;i<routeXY.length;i++){
+   const a=routeXY[i],b=routeXY[(i+1)%routeXY.length],dx=b[0]-a[0],dy=b[1]-a[1];
+   const len=Math.sqrt(dx*dx+dy*dy),ang=Math.atan2(dy,dx)*180/Math.PI;
+   lines+=`<div class="route-seg" style="left:${a[0]}%;top:${a[1]}%;width:${len}%;transform:rotate(${ang}deg)"></div>`;
+ }
+ const nodes=stations.map((st,i)=>{
+   const typ=spaceTypes[i],inf=spaceInfo[typ],n=ps.filter(p=>p.position===i).length;
+   const me=studentId&&ps.some(p=>p.id===studentId&&p.position===i);
+   const lead=leader&&ps.some(p=>p.id===leader&&p.position===i);
+   return `<div class="board-node ${i===dest?'dest':''} ${me?'me':''} ${lead?'leader':''}" style="left:${routeXY[i][0]}%;top:${routeXY[i][1]}%"><div class="circle">${inf.icon}</div><div class="label">${esc(st)}</div>${n?`<span class="crowd">${n}</span>`:''}</div>`;
+ }).join('');
+ return lines+nodes;
+}
 let lastFeedArrivalAt=0;
 function renderHost(){
  const s=room.state||{},ps=sortedPlayers(),phase=s.phase;
@@ -206,8 +226,7 @@ function renderHost(){
  const l=labels[phase]||labels.lobby;$('stageLabel').textContent=l[0];$('stageMain').textContent=l[1];
  $('players').innerHTML=ps.map((p,i)=>`<div class="player"><span class="rank">${i+1}</span><span style="flex:1"><b>${esc(p.name)}</b>${p.plague?' <span class="pill red">疫病神</span>':''}</span><span class="money">${money(p.total)}</span></div>`).join('')||'<div class="muted">参加者を待っています</div>';
  const feed=Object.values(room.feed||{}).sort((a,b)=>(b.at||0)-(a.at||0)).slice(0,10);$('feed').innerHTML=feed.map(f=>`<div class="feed-item">${esc(f.text)}</div>`).join('');
- $('map').innerHTML=stations.map((st,i)=>{const n=ps.filter(p=>p.position===i).length,typ=spaceTypes[i],inf=spaceInfo[typ];return `<div class="station space-${typ} ${i===s.destination?'dest':''}"><span class="space-icon">${inf.icon}</span><span class="space-name">${esc(st)}</span><span class="space-kind">${inf.label}</span>${n?`<span class="pin">${n}</span>`:''}</div>`}).join('');
- const lead=ps[0]; if(lead&&$('trainIcon')) $('trainIcon').style.left=(8+Math.min(92,(lead.position/(stations.length-1))*92))+'%';
+ $('gameBoard').innerHTML=boardHTML(ps,s.destination);
  const arrivals=Object.values(room.feed||{}).filter(f=>String(f.text||'').includes('に到着')).sort((a,b)=>(b.at||0)-(a.at||0));
  if(arrivals[0]&&arrivals[0].at>lastFeedArrivalAt){lastFeedArrivalAt=arrivals[0].at;showArrival(arrivals[0].text)}
  $('finalQuestion').classList.toggle('hidden',phase!=='final'); if(phase==='final')$('finalQuestion').innerHTML='<h3>最終問題</h3><div style="font-size:24px;font-weight:900">日本国憲法で、法律をつくる国の機関はどこ？</div>';
@@ -250,9 +269,9 @@ async function assignPlague(){
 function renderStudent(){
  const p=room?.players?.[playerId];if(!p){go('home');return}
  $('meName').textContent=p.name;$('meMoney').textContent=money(p.money||0);$('mePos').textContent=stations[p.position||0];$('meProps').textContent=p.properties||0;$('meTurn').textContent=(room.state.turn||0)+'/5';$('plague').classList.toggle('hidden',!p.plague);
- const dest=room.state.destination||0,dist=distanceToDestination(p.position||0,dest);$('routeDest').textContent=stations[dest];$('routeDistance').textContent=dist===0?'目的地に到着':'あと '+dist+' マス';
- $('miniBoard').innerHTML=stations.map((st,i)=>{const inf=spaceInfo[spaceTypes[i]];return `<div class="mini-space ${i===(p.position||0)?'me':''} ${i===dest?'dest':''}"><span class="dot">${inf.icon}</span><span>${esc(st)}</span></div>`}).join('');
- const ps=sortedPlayers(),rank=ps.findIndex(x=>x.id===playerId)+1;$('meRank').textContent='順位 '+rank+'/'+ps.length;
+ const ps=sortedPlayers(),dest=room.state.destination||0,dist=distanceToDestination(p.position||0,dest);$('routeDest').textContent=stations[dest];$('routeDistance').textContent=dist===0?'目的地に到着':'あと '+dist+' マス';
+ $('miniBoard').innerHTML=boardHTML(ps,dest,playerId);
+ const rank=ps.findIndex(x=>x.id===playerId)+1;$('meRank').textContent='順位 '+rank+'/'+ps.length;
  const phase=room.state.phase,body=$('studentBody');
  if(phase==='lobby'){body.innerHTML='<div class="notice success">参加完了。教員の開始を待ってください。</div><p class="muted">開始すると全員同時にサイコロを振ります。</p>';return}
  if(phase==='turn'){
@@ -272,7 +291,7 @@ async function rollDice(){
   let dice=Math.floor(Math.random()*6)+1;if(p.plague)dice=Math.max(1,dice-1);
   let pos=(p.position+dice)%stations.length,destinationHit=pos===room.state.destination;
   const ev=eventForPosition(pos);
-  const updates={position:pos,diceSum:(p.diceSum||0)+dice,diceCount:(p.diceCount||0)+1,lastTurnPlayed:turn,pendingEvent:{type:ev.type,dice,turn,position:pos}};
+  const updates={position:pos,diceSum:(p.diceSum||0)+dice,diceCount:(p.diceCount||0)+1,lastTurnPlayed:turn,pendingEvent:{type:ev.type,dice,turn,position:pos,from:p.position}};
   if(p.plague){updates.money=(p.money||0)-1000;updates.maxLoss=Math.max(p.maxLoss||0,1000)}
   if(destinationHit){updates.money=(updates.money??p.money)+5000}
   await roomRef.child('players/'+playerId).update(updates);
@@ -284,7 +303,7 @@ function renderPendingEvent(body,pending){
  showEvent(ev,pending.dice,body,pending.position);
 }
 function showEvent(ev,dice,body=$('studentBody'),position=null){
- const landed=position===null?'':stations[position];let html=`<div style="text-align:center"><div class="dice">${dice}</div><div class="muted">${dice}マス進み、<b>${esc(landed)}</b> に止まりました</div></div>`;
+ const landed=position===null?'':stations[position];let html=`<div style="text-align:center"><div class="dice">${dice}</div><div class="muted">${dice}マス進む → <b>${esc(landed)}</b></div></div>`;
  if(ev.type==='quiz'){const q=quizzes[(room.state.turn-1)%quizzes.length];html+=`<div class="event"><h3>問題｜${esc(q.q)}</h3><div class="choices">${q.a.map((a,i)=>`<button class="choice" onclick="answerQuiz(${i},${q.correct})">${esc(a)}</button>`).join('')}</div></div>`}
  else if(ev.type==='property'){html+=`<div class="event"><h3>投資｜${ev.title}</h3><p>${ev.text}</p><p><b>価格 ${money(ev.price)} / 資産価値 ${money(ev.value)}</b></p><button class="btn gold" onclick="buyProperty(${ev.price},${ev.value})">購入する</button> <button class="btn ghost" onclick="finishEvent()">見送る</button></div>`}
  else if(ev.type==='decision'){html+=`<div class="event"><h3>判断｜${ev.title}</h3><p>${ev.text}</p><div class="choices"><button class="choice" onclick="decision(2500,'将来への投資が成功 +¥2,500')">将来への投資</button><button class="choice" onclick="decision(1000,'今の支援で安定 +¥1,000')">今の支援</button></div></div>`}
@@ -350,4 +369,29 @@ window.addEventListener('load',async()=>{
 .mini-space{background:#f1f3f5;border:1px solid #e0e4e8}
 .mini-space .dot{width:22px;height:22px;border-radius:999px;background:#18202a;color:#fff;display:grid;place-items:center;font-size:10px;font-weight:900}
 .arrival-card .big{font-size:clamp(34px,7vw,66px)}
+</style><style>
+.board-head{display:flex;justify-content:space-between;align-items:center;margin-top:18px;color:#aeb8c4;font-size:11px;font-weight:800;letter-spacing:.08em}
+.game-board{position:relative;height:360px;margin-top:8px;border-radius:20px;overflow:hidden;background:
+radial-gradient(circle at 18% 24%,#213444 0 3%,transparent 3.4%),
+radial-gradient(circle at 72% 64%,#213444 0 4%,transparent 4.4%),
+linear-gradient(145deg,#0e1923,#162635);border:1px solid #2a3946}
+.game-board:before{content:"";position:absolute;inset:0;background:
+linear-gradient(25deg,transparent 47%,#ffffff08 48%,#ffffff08 50%,transparent 51%),
+linear-gradient(-35deg,transparent 47%,#ffffff06 48%,#ffffff06 50%,transparent 51%);background-size:90px 90px;opacity:.5}
+.route-seg{position:absolute;height:6px;background:#657585;border-radius:999px;transform-origin:0 50%;z-index:1}
+.board-node{position:absolute;transform:translate(-50%,-50%);z-index:2;width:58px;text-align:center;color:#e9eef2;font-size:10px}
+.board-node .circle{width:34px;height:34px;margin:auto;border-radius:50%;background:#1c2b37;border:3px solid #82909d;display:grid;place-items:center;font-weight:1000;font-size:12px;box-shadow:0 4px 12px #0005}
+.board-node.dest .circle{border-color:#e0bb5b;box-shadow:0 0 0 5px #e0bb5b22,0 0 20px #e0bb5b55}
+.board-node .label{margin-top:3px;white-space:nowrap;text-shadow:0 2px 3px #000}
+.board-node .crowd{position:absolute;top:-8px;right:3px;background:#fff;color:#18202a;border-radius:99px;min-width:19px;height:19px;padding:0 4px;display:grid;place-items:center;font-weight:900}
+.board-node.leader .circle:after{content:"●";position:absolute;color:#fff;transform:translate(18px,-18px);font-size:15px;text-shadow:0 2px 4px #000}
+.student-map-title{display:flex;justify-content:space-between;margin:14px 2px 6px;font-size:11px;font-weight:900;color:#6c7782}
+.student-board{position:relative;height:245px;border-radius:16px;background:#162431;overflow:hidden;border:1px solid #d9dee5}
+.student-board .route-seg{height:4px}
+.student-board .board-node{width:42px;font-size:8px}
+.student-board .board-node .circle{width:25px;height:25px;border-width:2px;font-size:9px}
+.student-board .board-node .label{font-size:8px}
+.student-board .board-node.me .circle{background:#fff;color:#18202a;border-color:#fff;box-shadow:0 0 0 5px #ffffff22}
+.student-board .board-node.me:after{content:"YOU";position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#fff;color:#18202a;border-radius:5px;padding:1px 4px;font-size:7px;font-weight:1000}
+@media(max-width:800px){.game-board{height:310px}.board-head #boardLegend{display:none}}
 </style>

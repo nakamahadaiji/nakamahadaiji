@@ -6,6 +6,7 @@ on:
     paths:
       - 'justice-divider/**'
       - '5min-mvp/**'
+      - 'stock-classroom-maeoka/**'
       - '.github/workflows/deploy-justice-divider.yml'
   workflow_dispatch:
 
@@ -31,8 +32,10 @@ jobs:
       - name: Build Pages artifact
         run: |
           mkdir -p public/5min-mvp
+          mkdir -p public/stock-classroom-maeoka
           cp -R justice-divider/. public/
           cp -R 5min-mvp/. public/5min-mvp/
+          cp -R stock-classroom-maeoka/. public/stock-classroom-maeoka/
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

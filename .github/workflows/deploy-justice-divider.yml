@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'justice-divider/**'
+      - 'maeoka-vote/**'
       - '5min-mvp/**'
       - 'stock-classroom-maeoka/**'
       - '.github/workflows/deploy-justice-divider.yml'
@@ -31,6 +32,8 @@ jobs:
 
       - name: Build Pages artifact
         run: |
+          mkdir -p public/maeoka-vote
+          cp -R maeoka-vote/. public/maeoka-vote/
           mkdir -p public/5min-mvp
           mkdir -p public/stock-classroom-maeoka
           cp -R justice-divider/. public/
